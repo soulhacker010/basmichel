@@ -202,31 +202,32 @@ export default function Home() {
       <section className="relative h-screen">
         <div className="absolute inset-0">
           <img 
-            src="https://images-pw.pixieset.com/site/2kZAYq/n0yx4n/28-2391eb03-1500.jpg"
+            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/6d15af1a9_image.png"
             alt="Hero"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute inset-0 bg-black/30" />
         </div>
         
-        <div className="relative h-full flex items-center justify-center">
-          <div className="text-center text-white px-6 max-w-4xl">
-            <motion.h1 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="text-5xl md:text-6xl lg:text-7xl font-light mb-6 leading-tight"
-            >
-              Elke Woning Een Verhaal
-            </motion.h1>
-            <motion.p 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-lg md:text-xl mb-10 font-light max-w-2xl mx-auto"
-            >
-              Verhalen die door beeld tot leven komen
-            </motion.p>
+        <div className="relative h-full flex items-center">
+          <div className="max-w-7xl mx-auto px-6 lg:px-12 w-full">
+            <div className="text-white max-w-2xl">
+              <motion.h1 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="text-5xl md:text-6xl lg:text-7xl font-light mb-4 leading-tight"
+              >
+                Elke Woning Een Verhaal
+              </motion.h1>
+              <motion.p 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="text-xs md:text-sm tracking-[0.3em] font-light uppercase"
+              >
+                Verhalen die door beeld tot leven komen
+              </motion.p>
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
