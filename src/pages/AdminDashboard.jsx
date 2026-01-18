@@ -80,8 +80,8 @@ export default function AdminDashboard() {
           icon={Images}
         />
         <StatsCard 
-          title="Komende Sessies"
-          value={upcomingSessions}
+          title="Komende Shoots"
+          value={upcomingBookings}
           icon={Calendar}
         />
       </div>
