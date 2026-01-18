@@ -42,18 +42,18 @@ const services = [
 ];
 
 const portfolioImages = [
-  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&auto=format&fit=crop&q=80'
+  'https://images-pw.pixieset.com/site/2kZAYq/n0yx4n/28-2391eb03-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/Y8x0Wp/18-c0df2033-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/5wYxAo/18-a7ac6f3d-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/MwejZR/37-81220a67-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/q8Ywmp/17-44e2a40d-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/1QPWOp/9-9aac2383-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/xyelwP/27-022c7d3f-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/p3ajLE/19-427c3857-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/0kvr5Y/21-8b2fd28a-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/dV0RMD/26-f6ce7864-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/D7ejaW/30-3faffc91-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/WlxE63/18-f670d36a-1500.jpg'
 ];
 
 export default function Home() {
