@@ -457,7 +457,7 @@ export default function Home() {
               <img 
                 src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/d493012a0_BasMichel_K102.png" 
                 alt="Bas Michel" 
-                className="h-8 mb-3 brightness-0 invert"
+                className="h-16 mb-3 brightness-0 invert"
               />
               <p className="text-sm text-gray-400 mt-3">
                 Bas Michel zet jouw woningen op een manier die werkt en verkoopt.
