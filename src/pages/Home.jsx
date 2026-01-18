@@ -215,14 +215,15 @@ export default function Home() {
                   </Button>
                 </Link>
               ) : (
-                <Button 
-                  onClick={handleLogin} 
-                  className={`rounded px-6 h-9 text-sm transition-colors ${
-                    scrolled ? 'bg-black hover:bg-gray-900 text-white' : 'bg-white hover:bg-gray-100 text-black'
-                  }`}
-                >
-                  Inloggen voor Makelaars
-                </Button>
+                <Link to={createPageUrl('ClientDashboard')}>
+                  <Button 
+                    className={`rounded px-6 h-9 text-sm transition-colors ${
+                      scrolled ? 'bg-black hover:bg-gray-900 text-white' : 'bg-white hover:bg-gray-100 text-black'
+                    }`}
+                  >
+                    Inloggen voor Makelaars
+                  </Button>
+                </Link>
               )}
             </div>
 
