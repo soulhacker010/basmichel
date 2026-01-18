@@ -82,6 +82,7 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -106,6 +107,14 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 100);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const handleLogin = () => {
     base44.auth.redirectToLogin();
   };
@@ -113,36 +122,48 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm">
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? 'bg-transparent' : 'bg-white/95 backdrop-blur-sm'
+      }`}>
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="flex items-center justify-between h-20">
             <img 
               src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/41d5ec5ec_BasMichel_K152.png" 
               alt="Bas Michel" 
-              className="h-16"
+              className={`h-16 transition-all duration-300 ${scrolled ? 'brightness-0 invert' : ''}`}
             />
             
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-12">
-              <a href="#diensten" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+              <a href="#diensten" className={`text-sm transition-colors ${
+                scrolled ? 'text-white hover:text-gray-200' : 'text-gray-600 hover:text-gray-900'
+              }`}>
                 Diensten
               </a>
-              <a href="#portfolio" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+              <a href="#portfolio" className={`text-sm transition-colors ${
+                scrolled ? 'text-white hover:text-gray-200' : 'text-gray-600 hover:text-gray-900'
+              }`}>
                 Portfolio
               </a>
-              <a href="#contact" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+              <a href="#contact" className={`text-sm transition-colors ${
+                scrolled ? 'text-white hover:text-gray-200' : 'text-gray-600 hover:text-gray-900'
+              }`}>
                 Contact
               </a>
               {isAuthenticated ? (
                 <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientDashboard')}>
-                  <Button className="bg-black hover:bg-gray-900 text-white rounded px-6 h-9 text-sm">
-                    Mijn Portal
+                  <Button className={`rounded px-6 h-9 text-sm transition-colors ${
+                    scrolled ? 'bg-white hover:bg-gray-100 text-black' : 'bg-black hover:bg-gray-900 text-white'
+                  }`}>
+                    Mijn Account
                   </Button>
                 </Link>
               ) : (
                 <Button 
                   onClick={handleLogin} 
-                  className="bg-black hover:bg-gray-900 text-white rounded px-6 h-9 text-sm"
+                  className={`rounded px-6 h-9 text-sm transition-colors ${
+                    scrolled ? 'bg-white hover:bg-gray-100 text-black' : 'bg-black hover:bg-gray-900 text-white'
+                  }`}
                 >
                   Inloggen voor Makelaars
                 </Button>
@@ -151,7 +172,9 @@ export default function Home() {
 
             {/* Mobile Menu Button */}
             <button 
-              className="md:hidden p-2 text-gray-600"
+              className={`md:hidden p-2 transition-colors ${
+                scrolled ? 'text-white' : 'text-gray-600'
+              }`}
               onClick={() => setMenuOpen(!menuOpen)}
             >
               {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -375,7 +398,7 @@ export default function Home() {
             {isAuthenticated ? (
               <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientDashboard')}>
                 <Button size="lg" className="bg-white hover:bg-gray-100 text-black rounded px-8 h-12">
-                  Naar Mijn Portal
+                  Naar Mijn Account
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </Link>
@@ -436,7 +459,7 @@ export default function Home() {
               {isAuthenticated ? (
                 <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientDashboard')}>
                   <Button size="lg" className="bg-black hover:bg-gray-900 text-white rounded px-8 h-12 w-full">
-                    Naar Mijn Portal
+                    Naar Mijn Account
                   </Button>
                 </Link>
               ) : (
