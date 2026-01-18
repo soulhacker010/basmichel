@@ -437,10 +437,10 @@ export default function Home() {
           <div className="mt-12 pt-8 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-gray-400">© {new Date().getFullYear()} Basmichel. Alle rechten voorbehouden.</p>
             <Link 
-              to={createPageUrl('AdminDashboard')}
+              to={createPageUrl('AdminLogin')}
               className="text-xs text-gray-300 hover:text-gray-400 transition-colors"
             >
-              Beheer
+              Studio Manager
             </Link>
           </div>
         </div>
