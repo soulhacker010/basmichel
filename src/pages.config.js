@@ -14,6 +14,9 @@ import ClientGalleries from './pages/ClientGalleries';
 import GalleryView from './pages/GalleryView';
 import Home from './pages/Home';
 import ClientDashboard from './pages/ClientDashboard';
+import ClientProjects from './pages/ClientProjects';
+import ClientProjectDetail from './pages/ClientProjectDetail';
+import ClientInvoices from './pages/ClientInvoices';
 import __Layout from './Layout.jsx';
 
 
@@ -34,6 +37,9 @@ export const PAGES = {
     "GalleryView": GalleryView,
     "Home": Home,
     "ClientDashboard": ClientDashboard,
+    "ClientProjects": ClientProjects,
+    "ClientProjectDetail": ClientProjectDetail,
+    "ClientInvoices": ClientInvoices,
 }
 
 export const pagesConfig = {
