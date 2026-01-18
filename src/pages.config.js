@@ -6,6 +6,9 @@ import AdminBookings from './pages/AdminBookings';
 import AdminInbox from './pages/AdminInbox';
 import AdminPayments from './pages/AdminPayments';
 import AdminDocuments from './pages/AdminDocuments';
+import AdminTemplates from './pages/AdminTemplates';
+import AdminDiscounts from './pages/AdminDiscounts';
+import AdminSettings from './pages/AdminSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -18,6 +21,9 @@ export const PAGES = {
     "AdminInbox": AdminInbox,
     "AdminPayments": AdminPayments,
     "AdminDocuments": AdminDocuments,
+    "AdminTemplates": AdminTemplates,
+    "AdminDiscounts": AdminDiscounts,
+    "AdminSettings": AdminSettings,
 }
 
 export const pagesConfig = {
