@@ -9,6 +9,9 @@ import AdminDocuments from './pages/AdminDocuments';
 import AdminTemplates from './pages/AdminTemplates';
 import AdminDiscounts from './pages/AdminDiscounts';
 import AdminSettings from './pages/AdminSettings';
+import ClientGalleries from './pages/ClientGalleries';
+import GalleryView from './pages/GalleryView';
+import BookingPage from './pages/BookingPage';
 import __Layout from './Layout.jsx';
 
 
@@ -24,6 +27,9 @@ export const PAGES = {
     "AdminTemplates": AdminTemplates,
     "AdminDiscounts": AdminDiscounts,
     "AdminSettings": AdminSettings,
+    "ClientGalleries": ClientGalleries,
+    "GalleryView": GalleryView,
+    "BookingPage": BookingPage,
 }
 
 export const pagesConfig = {
