@@ -33,7 +33,7 @@ const adminPages = [
   { name: 'Boekingen', page: 'AdminBookings', icon: Calendar },
   { name: 'Documenten', page: 'AdminDocuments', icon: FileText },
   { name: 'Sjablonen', page: 'AdminTemplates', icon: FileCode },
-  { name: 'Kortingen', page: 'AdminDiscounts', icon: CreditCard },
+  { name: 'Kortingen', page: 'AdminDiscounts', icon: Tag },
   { name: 'Instellingen', page: 'AdminSettings', icon: Settings },
 ];
 
