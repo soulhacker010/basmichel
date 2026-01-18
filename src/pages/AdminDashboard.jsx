@@ -163,10 +163,10 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {/* Upcoming Sessions */}
+        {/* Upcoming Bookings */}
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden lg:col-span-2">
           <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
-            <h2 className="text-lg font-medium text-gray-900">Komende Sessies</h2>
+            <h2 className="text-lg font-medium text-gray-900">Komende Shoots</h2>
             <Link 
               to={createPageUrl('AdminBookings')}
               className="text-sm text-[#5C6B52] hover:text-[#4A5A42] flex items-center gap-1"
@@ -174,43 +174,45 @@ export default function AdminDashboard() {
               Bekijk kalender <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          {sessions.filter(s => new Date(s.start_datetime) > new Date()).length === 0 ? (
+          {bookings.filter(b => b.status === 'bevestigd' && new Date(b.start_datetime) > new Date()).length === 0 ? (
             <EmptyState 
               icon={Calendar}
-              title="Geen komende sessies"
-              description="Er zijn momenteel geen sessies gepland"
+              title="Geen komende shoots"
+              description="Er zijn momenteel geen shoots gepland"
             />
           ) : (
             <div className="divide-y divide-gray-50">
-              {sessions
-                .filter(s => new Date(s.start_datetime) > new Date())
+              {bookings
+                .filter(b => b.status === 'bevestigd' && new Date(b.start_datetime) > new Date())
                 .slice(0, 5)
-                .map(session => (
+                .map(booking => (
                 <div
-                  key={session.id}
+                  key={booking.id}
                   className="flex items-center justify-between px-6 py-4"
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-lg bg-[#E8EDE5] flex flex-col items-center justify-center">
                       <span className="text-xs text-[#5C6B52] uppercase">
-                        {session.start_datetime && format(new Date(session.start_datetime), 'MMM', { locale: nl })}
+                        {booking.start_datetime && format(new Date(booking.start_datetime), 'MMM', { locale: nl })}
                       </span>
                       <span className="text-lg font-medium text-[#5C6B52]">
-                        {session.start_datetime && format(new Date(session.start_datetime), 'd')}
+                        {booking.start_datetime && format(new Date(booking.start_datetime), 'd')}
                       </span>
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{session.location || 'Geen locatie'}</p>
+                      <p className="font-medium text-gray-900">{booking.address || 'Geen adres'}</p>
                       <div className="flex items-center gap-2 text-sm text-gray-500">
                         <Clock className="w-3.5 h-3.5" />
                         <span>
-                          {session.start_datetime && format(new Date(session.start_datetime), 'HH:mm')} - 
-                          {session.end_datetime && format(new Date(session.end_datetime), 'HH:mm')}
+                          {booking.start_datetime && format(new Date(booking.start_datetime), 'HH:mm')} - 
+                          {booking.end_datetime && format(new Date(booking.end_datetime), 'HH:mm')}
                         </span>
                       </div>
                     </div>
                   </div>
-                  <StatusBadge status={session.status} />
+                  <span className="px-2.5 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
+                    Bevestigd
+                  </span>
                 </div>
               ))}
             </div>
