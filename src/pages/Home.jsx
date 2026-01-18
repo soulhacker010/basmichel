@@ -539,53 +539,6 @@ export default function Home() {
 
 
 
-      {/* Contact */}
-      <section id="contact" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-            <div>
-              <h2 className="text-4xl md:text-5xl font-light text-gray-900 mb-6">
-                Nieuwe samenwerkingen
-              </h2>
-              <p className="text-lg text-gray-600 mb-12 leading-relaxed">
-                Interesse in een samenwerking? Neem vrijblijvend contact op voor een kennismaking.
-              </p>
-              
-              <div className="space-y-6">
-                <div>
-                  <p className="text-sm text-gray-400 uppercase tracking-wide mb-2">E-mail</p>
-                  <a href="mailto:info@basmichel.nl" className="text-xl text-gray-900 hover:text-gray-600 transition-colors">
-                    info@basmichel.nl
-                  </a>
-                </div>
-
-                <div>
-                  <p className="text-sm text-gray-400 uppercase tracking-wide mb-2">Werkgebied</p>
-                  <p className="text-xl text-gray-900">Noord-Brabant & Limburg</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gray-50 p-8 lg:p-12 rounded">
-              <h3 className="text-2xl font-light text-gray-900 mb-6">Bestaande klant?</h3>
-              <p className="text-gray-600 mb-8">
-                Log in op uw persoonlijke portal om shoots te boeken, projecten te bekijken en facturen in te zien.
-              </p>
-              {isAuthenticated ? (
-                <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientDashboard')}>
-                  <Button size="lg" className="bg-black hover:bg-gray-900 text-white rounded px-8 h-12 w-full">
-                    Naar Mijn Account
-                  </Button>
-                </Link>
-              ) : (
-                <Button onClick={handleLogin} size="lg" className="bg-black hover:bg-gray-900 text-white rounded px-8 h-12 w-full">
-                  Inloggen
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Footer */}
       <footer className="py-16 bg-black text-white">
