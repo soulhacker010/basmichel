@@ -34,9 +34,9 @@ export default function AdminDashboard() {
     queryFn: () => base44.entities.Gallery.list('-created_date', 5),
   });
 
-  const { data: sessions = [] } = useQuery({
-    queryKey: ['sessions'],
-    queryFn: () => base44.entities.Session.list('-start_datetime', 5),
+  const { data: bookings = [] } = useQuery({
+    queryKey: ['bookings'],
+    queryFn: () => base44.entities.Booking.list('-start_datetime', 10),
   });
 
   const { data: allProjects = [] } = useQuery({
@@ -49,10 +49,10 @@ export default function AdminDashboard() {
     queryFn: () => base44.entities.Gallery.list(),
   });
 
-  const activeProjects = allProjects.filter(p => p.status === 'in_behandeling').length;
+  const activeProjects = allProjects.filter(p => ['geboekt', 'shoot_uitgevoerd', 'wordt_bewerkt'].includes(p.status)).length;
   const publishedGalleries = allGalleries.filter(g => g.status === 'gepubliceerd').length;
-  const upcomingSessions = sessions.filter(s => 
-    s.status === 'bevestigd' && new Date(s.start_datetime) > new Date()
+  const upcomingBookings = bookings.filter(b => 
+    b.status === 'bevestigd' && new Date(b.start_datetime) > new Date()
   ).length;
 
   return (
