@@ -84,6 +84,17 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [scrolled, setScrolled] = useState(false);
 
+  const heroSlides = [
+    'https://images-pw.pixieset.com/site/2kZAYq/n0yx4n/28-2391eb03-1500.jpg',
+    'https://images-pw.pixieset.com/site/2kZAYq/Y8x0Wp/18-c0df2033-1500.jpg',
+    'https://images-pw.pixieset.com/site/2kZAYq/5wYxAo/18-a7ac6f3d-1500.jpg',
+    'https://images-pw.pixieset.com/site/2kZAYq/q8Ywmp/17-44e2a40d-1500.jpg',
+    'https://images-pw.pixieset.com/site/2kZAYq/1QPWOp/9-9aac2383-1500.jpg',
+    'https://images-pw.pixieset.com/site/2kZAYq/r6V0l6/15-28d0c836-1500.jpg',
+    'https://images-pw.pixieset.com/site/2kZAYq/yQjbQa/24-583310a6-1500.jpg',
+    'https://images-pw.pixieset.com/site/2kZAYq/aQxj5b/13-366c5ab5-1500.jpg'
+  ];
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -102,7 +113,7 @@ export default function Home() {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % 3);
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
     return () => clearInterval(timer);
   }, []);
@@ -199,13 +210,22 @@ export default function Home() {
       </nav>
 
       {/* Hero Slider */}
-      <section className="relative h-screen">
+      <section className="relative h-screen overflow-hidden">
         <div className="absolute inset-0">
-          <img 
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/6d15af1a9_image.png"
-            alt="Hero"
-            className="w-full h-full object-cover"
-          />
+          {heroSlides.map((slide, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                index === currentSlide ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <img 
+                src={slide}
+                alt={`Slide ${index + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
           <div className="absolute inset-0 bg-black/30" />
         </div>
         
@@ -260,7 +280,7 @@ export default function Home() {
 
         {/* Slide indicators */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
-          {[0, 1, 2].map((i) => (
+          {heroSlides.map((_, i) => (
             <button
               key={i}
               onClick={() => setCurrentSlide(i)}
