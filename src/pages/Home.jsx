@@ -211,28 +211,37 @@ export default function Home() {
         
         <div className="relative h-full flex items-center">
           <div className="max-w-7xl mx-auto px-6 lg:px-12 w-full">
-            <div className="text-white max-w-2xl">
+            <div className="text-white max-w-2xl text-center mx-auto">
               <motion.h1 
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
-                className="text-5xl md:text-6xl lg:text-7xl font-light mb-4 leading-tight"
+                className="text-5xl md:text-6xl lg:text-7xl font-light mb-2 leading-tight"
               >
-                Elke Woning Een Verhaal
+                Elke Woning
               </motion.h1>
+              <motion.h2
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.1 }}
+                className="text-5xl md:text-6xl lg:text-7xl italic mb-8 leading-tight"
+                style={{ fontFamily: 'Georgia, serif' }}
+              >
+                Een Verhaal
+              </motion.h2>
               <motion.p 
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="text-xs md:text-sm tracking-[0.3em] font-light uppercase"
+                className="text-sm md:text-base font-light leading-relaxed max-w-xl mx-auto"
               >
-                Verhalen die door beeld tot leven komen
+                Professionele vastgoedfoto's die woningen op hun beste dat plaatse. Elke shoot een inspirerende ervaring.
               </motion.p>
               <motion.div 
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className="flex flex-col sm:flex-row gap-4 mt-10"
+                className="flex flex-col sm:flex-row gap-4 mt-10 justify-center"
               >
                 <a href="#contact">
                   <Button size="lg" className="bg-white hover:bg-gray-100 text-black rounded px-8 h-12">
