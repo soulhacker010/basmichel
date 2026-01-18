@@ -80,31 +80,33 @@ export default function ClientDashboard() {
   const openInvoices = invoices.filter(i => i.status === 'verzonden');
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-light text-gray-900">
-          Welkom terug{user?.full_name ? `, ${user.full_name.split(' ')[0]}` : ''}
+      <div className="mb-10">
+        <h1 className="text-3xl font-light text-gray-900">
+          Welkom{user?.full_name ? `, ${user.full_name.split(' ')[0]}` : ''}
         </h1>
-        <p className="text-gray-500 mt-1">Hier is een overzicht van uw projecten</p>
+        <p className="text-gray-400 mt-2">Uw projecten en boekingen op één plek</p>
       </div>
 
       {/* Notifications */}
       {notifications.length > 0 && (
-        <div className="mb-8 space-y-3">
-          {notifications.slice(0, 3).map(notification => (
+        <div className="mb-10 space-y-3">
+          {notifications.slice(0, 2).map(notification => (
             <div 
               key={notification.id}
-              className="bg-[#E8EDE5] border border-[#A8B5A0]/20 rounded-xl p-4 flex items-start gap-4"
+              className="bg-[#F8FAF7] rounded-xl p-5 flex items-start gap-4"
             >
-              <Bell className="w-5 h-5 text-[#5C6B52] flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
+              <div className="w-10 h-10 rounded-full bg-[#E8EDE5] flex items-center justify-center flex-shrink-0">
+                <Bell className="w-5 h-5 text-[#5C6B52]" />
+              </div>
+              <div className="flex-1 min-w-0">
                 <p className="font-medium text-gray-900">{notification.title}</p>
-                <p className="text-sm text-gray-600">{notification.message}</p>
+                <p className="text-sm text-gray-500 mt-0.5">{notification.message}</p>
               </div>
               {notification.link && (
                 <Link to={createPageUrl(notification.link)}>
-                  <Button size="sm" variant="outline">Bekijk</Button>
+                  <Button size="sm" variant="ghost" className="text-[#5C6B52]">Bekijk</Button>
                 </Link>
               )}
             </div>
@@ -113,69 +115,76 @@ export default function ClientDashboard() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center">
-              <FolderKanban className="w-6 h-6 text-blue-600" />
-            </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-sm transition-shadow">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-semibold text-gray-900">{activeProjects.length}</p>
-              <p className="text-sm text-gray-500">Actieve projecten</p>
+              <p className="text-sm text-gray-400 mb-1">Actieve projecten</p>
+              <p className="text-3xl font-light text-gray-900">{activeProjects.length}</p>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-[#E8EDE5] flex items-center justify-center">
+              <FolderKanban className="w-6 h-6 text-[#5C6B52]" />
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-amber-600" />
-            </div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-sm transition-shadow">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-semibold text-gray-900">{upcomingBookings.length}</p>
-              <p className="text-sm text-gray-500">Komende shoots</p>
+              <p className="text-sm text-gray-400 mb-1">Komende shoots</p>
+              <p className="text-3xl font-light text-gray-900">{upcomingBookings.length}</p>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-[#E8EDE5] flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-[#5C6B52]" />
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center">
-              <FileText className="w-6 h-6 text-red-600" />
-            </div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-sm transition-shadow">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-2xl font-semibold text-gray-900">{openInvoices.length}</p>
-              <p className="text-sm text-gray-500">Openstaande facturen</p>
+              <p className="text-sm text-gray-400 mb-1">Openstaand</p>
+              <p className="text-3xl font-light text-gray-900">{openInvoices.length}</p>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center">
+              <FileText className="w-6 h-6 text-amber-600" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="mb-8">
+      {/* Quick Action */}
+      <div className="mb-10">
         <Link to={createPageUrl('ClientBooking')}>
-          <Button size="lg" className="bg-[#A8B5A0] hover:bg-[#97A690] text-white">
+          <Button size="lg" className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full px-8 h-12">
             <Calendar className="w-5 h-5 mr-2" />
-            Nieuwe Shoot Boeken
+            Nieuwe shoot boeken
           </Button>
         </Link>
       </div>
 
       {/* Projects */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden mb-8">
-        <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
-          <h2 className="text-lg font-medium text-gray-900">Uw Projecten</h2>
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-8">
+        <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
+          <h2 className="text-lg font-medium text-gray-900">Uw projecten</h2>
           <Link 
             to={createPageUrl('ClientProjects')}
-            className="text-sm text-[#5C6B52] hover:text-[#4A5A42] flex items-center gap-1"
+            className="text-sm text-[#5C6B52] hover:text-[#4A5A42] flex items-center gap-1.5"
           >
             Bekijk alle <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
         
         {projects.length === 0 ? (
-          <div className="py-12 text-center">
-            <FolderKanban className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">Nog geen projecten</p>
-            <p className="text-sm text-gray-400">Boek een shoot om te beginnen</p>
+          <div className="py-16 text-center">
+            <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-4">
+              <FolderKanban className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="text-gray-900 font-medium mb-1">Nog geen projecten</p>
+            <p className="text-sm text-gray-400 mb-6">Boek een shoot om te beginnen</p>
+            <Link to={createPageUrl('ClientBooking')}>
+              <Button className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full">
+                Shoot boeken
+              </Button>
+            </Link>
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
@@ -185,21 +194,20 @@ export default function ClientDashboard() {
                 <Link
                   key={project.id}
                   to={createPageUrl(`ClientProjectDetail?id=${project.id}`)}
-                  className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-between px-6 py-5 hover:bg-gray-50/50 transition-colors"
                 >
                   <div className="flex items-center gap-4">
-                    <div className={cn("w-2 h-2 rounded-full", status?.color)} />
+                    <div className={cn("w-2.5 h-2.5 rounded-full", status?.color)} />
                     <div>
                       <p className="font-medium text-gray-900">{project.title}</p>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <MapPin className="w-3.5 h-3.5" />
-                        <span>{project.address || 'Geen adres'}</span>
-                      </div>
+                      {project.address && (
+                        <p className="text-sm text-gray-400 mt-0.5">{project.address}</p>
+                      )}
                     </div>
                   </div>
                   <div className="text-right">
                     <span className={cn(
-                      "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                      "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium",
                       project.status === 'klaar' ? "bg-green-50 text-green-700" :
                       project.status === 'geboekt' ? "bg-blue-50 text-blue-700" :
                       project.status === 'shoot_uitgevoerd' ? "bg-amber-50 text-amber-700" :
@@ -208,7 +216,7 @@ export default function ClientDashboard() {
                       {status?.label}
                     </span>
                     {project.delivery_datetime && project.status !== 'klaar' && (
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-gray-400 mt-1.5">
                         Levering: {format(new Date(project.delivery_datetime), 'd MMM', { locale: nl })}
                       </p>
                     )}
@@ -222,34 +230,34 @@ export default function ClientDashboard() {
 
       {/* Upcoming Bookings */}
       {upcomingBookings.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-50">
-            <h2 className="text-lg font-medium text-gray-900">Komende Shoots</h2>
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-50">
+            <h2 className="text-lg font-medium text-gray-900">Komende shoots</h2>
           </div>
           <div className="divide-y divide-gray-50">
             {upcomingBookings.slice(0, 3).map(booking => (
               <div
                 key={booking.id}
-                className="flex items-center justify-between px-6 py-4"
+                className="flex items-center justify-between px-6 py-5"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-[#E8EDE5] flex flex-col items-center justify-center">
-                    <span className="text-xs text-[#5C6B52] uppercase">
+                <div className="flex items-center gap-5">
+                  <div className="w-16 h-16 rounded-xl bg-[#F8FAF7] flex flex-col items-center justify-center">
+                    <span className="text-xs text-[#5C6B52] uppercase font-medium">
                       {format(new Date(booking.start_datetime), 'MMM', { locale: nl })}
                     </span>
-                    <span className="text-xl font-medium text-[#5C6B52]">
+                    <span className="text-2xl font-light text-[#5C6B52]">
                       {format(new Date(booking.start_datetime), 'd')}
                     </span>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{booking.address || 'Geen adres'}</p>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Clock className="w-3.5 h-3.5" />
+                    <p className="font-medium text-gray-900">{booking.address || 'Locatie nog niet bekend'}</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
+                      <Clock className="w-4 h-4" />
                       <span>{format(new Date(booking.start_datetime), 'HH:mm')} - {booking.end_datetime && format(new Date(booking.end_datetime), 'HH:mm')}</span>
                     </div>
                   </div>
                 </div>
-                <span className="px-2.5 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
+                <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">
                   Bevestigd
                 </span>
               </div>
