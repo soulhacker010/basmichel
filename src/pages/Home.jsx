@@ -186,7 +186,7 @@ export default function Home() {
             <img 
               src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/41d5ec5ec_BasMichel_K152.png" 
               alt="Bas Michel" 
-              className={`h-16 transition-all duration-300 ${scrolled ? '' : 'brightness-0 invert'}`}
+              className={`h-20 transition-all duration-300 ${scrolled ? '' : 'brightness-0 invert'}`}
             />
             
             {/* Desktop Nav */}
