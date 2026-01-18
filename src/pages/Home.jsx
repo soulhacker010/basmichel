@@ -300,7 +300,7 @@ export default function Home() {
                 transition={{ duration: 0.8, delay: 0.2 }}
                 className="text-sm md:text-base font-light leading-relaxed max-w-xl mx-auto"
               >
-                Professionele vastgoedfoto's die woningen op hun beste dat plaatse. Elke shoot een inspirerende ervaring.
+                "Verhalen die door beeld tot leven komen"
               </motion.p>
               <motion.div 
                 initial={{ opacity: 0, y: 30 }}
