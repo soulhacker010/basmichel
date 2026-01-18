@@ -217,9 +217,7 @@ export default function Home() {
               transition={{ duration: 0.8 }}
               className="text-5xl md:text-6xl lg:text-7xl font-light mb-6 leading-tight"
             >
-              Professionele
-              <br />
-              <span className="italic">Vastgoedfotografie</span>
+              Elke Woning Een Verhaal
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 30 }}
@@ -227,7 +225,7 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-lg md:text-xl mb-10 font-light max-w-2xl mx-auto"
             >
-              Beelden die uw woningen tot leven brengen en uw expertise als makelaar versterken
+              Verhalen die door beeld tot leven komen
             </motion.p>
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
