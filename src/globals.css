@@ -4,26 +4,26 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 20 14.3% 4.1%;
+    --background: 0 0% 99%;
+    --foreground: 0 0% 15%;
     --card: 0 0% 100%;
-    --card-foreground: 20 14.3% 4.1%;
+    --card-foreground: 0 0% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 20 14.3% 4.1%;
-    --primary: 90 15% 67%;
-    --primary-foreground: 90 20% 25%;
-    --secondary: 60 4.8% 95.9%;
-    --secondary-foreground: 24 9.8% 10%;
-    --muted: 60 4.8% 95.9%;
-    --muted-foreground: 25 5.3% 44.7%;
-    --accent: 90 15% 90%;
-    --accent-foreground: 90 20% 25%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 60 9.1% 97.8%;
-    --border: 20 5.9% 90%;
-    --input: 20 5.9% 90%;
-    --ring: 90 15% 67%;
-    --radius: 0.75rem;
+    --popover-foreground: 0 0% 15%;
+    --primary: 90 12% 65%;
+    --primary-foreground: 90 20% 20%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 20%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 90 12% 92%;
+    --accent-foreground: 90 20% 20%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 92%;
+    --input: 0 0% 92%;
+    --ring: 90 12% 65%;
+    --radius: 0.5rem;
   }
 }
 
@@ -32,8 +32,10 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
@@ -56,16 +58,25 @@
   background: #9ca3af;
 }
 
-/* Smooth transitions */
-* {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+/* Smooth transitions - only for interactive elements */
+button, a, input, select, textarea, [role="button"] {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
+  transition-duration: 200ms;
 }
 
 /* Typography refinements */
 h1, h2, h3, h4, h5, h6 {
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+}
+
+h1 {
+  font-weight: 300;
+}
+
+p {
+  line-height: 1.65;
 }
 
 /* Focus styles */
@@ -98,11 +109,28 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Card hover effect */
 .card-hover {
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .card-hover:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+}
+
+/* Soft card style */
+.soft-card {
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+/* Subtle hover */
+.subtle-hover {
+  transition: background-color 0.2s ease;
+}
+
+.subtle-hover:hover {
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
 /* Button refinements */
