@@ -7,7 +7,6 @@ import {
   FolderKanban, 
   Users, 
   Images, 
-  Mail, 
   CreditCard, 
   Calendar, 
   FileText, 
@@ -17,7 +16,8 @@ import {
   X,
   LogOut,
   ChevronRight,
-  Tag
+  Tag,
+  Bell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -28,9 +28,8 @@ const adminPages = [
   { name: 'Projecten', page: 'AdminProjects', icon: FolderKanban },
   { name: 'Klanten', page: 'AdminClients', icon: Users },
   { name: 'Galerijen', page: 'AdminGalleries', icon: Images },
-  { name: 'Inbox', page: 'AdminInbox', icon: Mail },
-  { name: 'Betalingen', page: 'AdminPayments', icon: CreditCard, disabled: true },
   { name: 'Boekingen', page: 'AdminBookings', icon: Calendar },
+  { name: 'Facturen', page: 'AdminInvoices', icon: CreditCard },
   { name: 'Documenten', page: 'AdminDocuments', icon: FileText },
   { name: 'Sjablonen', page: 'AdminTemplates', icon: FileCode },
   { name: 'Kortingen', page: 'AdminDiscounts', icon: Tag },
@@ -39,11 +38,14 @@ const adminPages = [
 
 // Klant pagina's
 const clientPages = [
-  { name: 'Mijn Galerijen', page: 'ClientGalleries', icon: Images },
+  { name: 'Dashboard', page: 'ClientDashboard', icon: LayoutDashboard },
+  { name: 'Projecten', page: 'ClientProjects', icon: FolderKanban },
+  { name: 'Boeken', page: 'ClientBooking', icon: Calendar },
+  { name: 'Facturen', page: 'ClientInvoices', icon: CreditCard },
 ];
 
 // Publieke pagina's (geen layout)
-const publicPages = ['BookingPage', 'GalleryView'];
+const publicPages = ['Home', 'BookingPage', 'GalleryView'];
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -68,7 +70,7 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const handleLogout = () => {
-    base44.auth.logout();
+    base44.auth.logout(createPageUrl('Home'));
   };
 
   // Publieke pagina - geen layout
@@ -105,6 +107,12 @@ export default function Layout({ children, currentPageName }) {
 
   const isAdmin = user.role === 'admin';
   const navigation = isAdmin ? adminPages : clientPages;
+
+  // Check if client is trying to access admin pages
+  if (!isAdmin && currentPageName?.startsWith('Admin')) {
+    window.location.href = createPageUrl('ClientDashboard');
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-[#FAFAF9]">
@@ -145,13 +153,26 @@ export default function Layout({ children, currentPageName }) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="h-20 flex items-center justify-center border-b border-gray-50">
-            <span className="text-xl font-light text-gray-900 tracking-wide">Basmichel</span>
+            <Link to={createPageUrl('Home')} className="text-xl font-light text-gray-900 tracking-wide hover:text-[#5C6B52] transition-colors">
+              Basmichel
+            </Link>
+          </div>
+
+          {/* User Type Badge */}
+          <div className="px-4 py-3 border-b border-gray-50">
+            <span className={cn(
+              "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium",
+              isAdmin ? "bg-purple-100 text-purple-700" : "bg-[#E8EDE5] text-[#5C6B52]"
+            )}>
+              {isAdmin ? 'Studio Manager' : 'Klantportaal'}
+            </span>
           </div>
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
-              const isActive = currentPageName === item.page;
+              const isActive = currentPageName === item.page || 
+                (item.page === 'ClientProjects' && currentPageName === 'ClientProjectDetail');
               const Icon = item.icon;
               
               if (item.disabled) {
