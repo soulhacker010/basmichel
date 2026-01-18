@@ -558,12 +558,7 @@ export default function Home() {
                     info@basmichel.nl
                   </a>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-400 uppercase tracking-wide mb-2">Telefoon</p>
-                  <a href="tel:+31612345678" className="text-xl text-gray-900 hover:text-gray-600 transition-colors">
-                    +31 6 12 34 56 78
-                  </a>
-                </div>
+
                 <div>
                   <p className="text-sm text-gray-400 uppercase tracking-wide mb-2">Werkgebied</p>
                   <p className="text-xl text-gray-900">Noord-Brabant & Limburg</p>
