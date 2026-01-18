@@ -76,34 +76,34 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#FCFCFB]">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-6">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="flex items-center justify-between h-20">
-            <span className="text-lg font-light text-gray-900 tracking-wide">Basmichel</span>
+            <span className="text-xl font-light text-gray-900 tracking-tight">basmichel</span>
             
             {/* Desktop Nav */}
-            <div className="hidden md:flex items-center gap-10">
-              <a href="#diensten" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+            <div className="hidden md:flex items-center gap-12">
+              <a href="#diensten" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">
                 Diensten
               </a>
-              <a href="#portfolio" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+              <a href="#portfolio" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">
                 Portfolio
               </a>
-              <a href="#contact" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+              <a href="#contact" className="text-sm text-gray-400 hover:text-gray-900 transition-colors">
                 Contact
               </a>
               {isAuthenticated ? (
                 <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientDashboard')}>
-                  <Button className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full px-6">
+                  <Button className="bg-gray-900 hover:bg-gray-800 text-white rounded-full px-6 h-10 text-sm">
                     Mijn Account
                   </Button>
                 </Link>
               ) : (
                 <Button 
                   onClick={handleLogin} 
-                  className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full px-6"
+                  className="bg-gray-900 hover:bg-gray-800 text-white rounded-full px-6 h-10 text-sm"
                 >
                   Inloggen
                 </Button>
@@ -112,7 +112,7 @@ export default function Home() {
 
             {/* Mobile Menu Button */}
             <button 
-              className="md:hidden p-2 text-gray-600"
+              className="md:hidden p-2 text-gray-400"
               onClick={() => setMenuOpen(!menuOpen)}
             >
               {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -127,23 +127,23 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             className="md:hidden bg-white border-t border-gray-100 px-6 py-6 space-y-4"
           >
-            <a href="#diensten" className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
+            <a href="#diensten" className="block text-gray-500 py-2" onClick={() => setMenuOpen(false)}>
               Diensten
             </a>
-            <a href="#portfolio" className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
+            <a href="#portfolio" className="block text-gray-500 py-2" onClick={() => setMenuOpen(false)}>
               Portfolio
             </a>
-            <a href="#contact" className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
+            <a href="#contact" className="block text-gray-500 py-2" onClick={() => setMenuOpen(false)}>
               Contact
             </a>
             {isAuthenticated ? (
               <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientDashboard')} onClick={() => setMenuOpen(false)}>
-                <Button className="w-full bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full">
+                <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-full h-11">
                   Mijn Account
                 </Button>
               </Link>
             ) : (
-              <Button onClick={handleLogin} className="w-full bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full">
+              <Button onClick={handleLogin} className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-full h-11">
                 Inloggen
               </Button>
             )}
@@ -152,65 +152,48 @@ export default function Home() {
       </nav>
 
       {/* Hero */}
-      <section className="pt-32 pb-24 md:pt-44 md:pb-32">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="max-w-2xl">
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-sm text-[#5C6B52] font-medium tracking-wide uppercase mb-4"
-            >
-              Vastgoedfotografie
-            </motion.p>
+      <section className="pt-40 pb-32 md:pt-56 md:pb-48">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="max-w-3xl">
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-4xl md:text-5xl lg:text-6xl font-light text-gray-900 leading-[1.1] mb-6"
+              transition={{ duration: 0.6 }}
+              className="text-5xl md:text-6xl lg:text-7xl font-light text-gray-900 leading-[1.05] mb-8 tracking-tight"
             >
-              Beelden die
+              Vastgoed
               <br />
-              <span className="text-[#5C6B52]">verkopen</span>
+              fotografie
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-lg text-gray-500 leading-relaxed mb-10 max-w-lg"
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-xl text-gray-400 leading-relaxed mb-12 max-w-xl font-light"
             >
-              Professionele vastgoedfotografie voor makelaars. Van woningfotografie tot drone-opnames en video tours.
+              Professionele beelden voor makelaars die het verschil maken
             </motion.p>
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
               className="flex flex-col sm:flex-row gap-4"
             >
-              {isAuthenticated ? (
-                <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientBooking')}>
-                  <Button size="lg" className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full px-8 h-12">
-                    Shoot boeken
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </Link>
-              ) : (
+              <a href="#contact">
                 <Button 
                   size="lg" 
-                  onClick={handleLogin} 
-                  className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full px-8 h-12"
+                  className="bg-gray-900 hover:bg-gray-800 text-white rounded-full px-8 h-12 text-base font-light"
                 >
-                  Inloggen om te boeken
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  Neem contact op
                 </Button>
-              )}
+              </a>
               <a href="#portfolio">
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="rounded-full px-8 h-12 border-gray-200 text-gray-700 hover:bg-gray-50"
+                  className="rounded-full px-8 h-12 border-gray-200 text-gray-600 hover:bg-gray-50 text-base font-light"
                 >
-                  Bekijk werk
+                  Bekijk portfolio
                 </Button>
               </a>
             </motion.div>
@@ -218,52 +201,29 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Hero Image */}
-      <section className="pb-24">
-        <div className="max-w-6xl mx-auto px-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
-            className="rounded-2xl overflow-hidden"
-          >
-            <img 
-              src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1600&auto=format&fit=crop&q=80"
-              alt="Professionele vastgoedfotografie"
-              className="w-full h-[350px] md:h-[500px] object-cover"
-            />
-          </motion.div>
-        </div>
-      </section>
-
       {/* Services */}
-      <section id="diensten" className="py-24 bg-[#FAFAF9]">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="max-w-xl mb-16">
-            <p className="text-sm text-[#5C6B52] font-medium tracking-wide uppercase mb-3">Diensten</p>
-            <h2 className="text-3xl md:text-4xl font-light text-gray-900 mb-4">
-              Alles voor uw vastgoedpresentatie
+      <section id="diensten" className="py-32">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="max-w-2xl mb-24">
+            <h2 className="text-4xl md:text-5xl font-light text-gray-900 mb-6 tracking-tight">
+              Diensten
             </h2>
-            <p className="text-gray-500 leading-relaxed">
-              Van professionele fotografie tot video tours. Wij zorgen voor beelden die uw listings doen opvallen.
+            <p className="text-xl text-gray-400 leading-relaxed font-light">
+              Professionele beeldvorming voor elk type vastgoed
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-20">
             {services.map((service, index) => (
               <motion.div
                 key={service.title}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="bg-white rounded-xl p-8 border border-gray-100 hover:border-gray-200 transition-colors"
               >
-                <div className="w-12 h-12 rounded-xl bg-[#E8EDE5] flex items-center justify-center mb-5">
-                  <service.icon className="w-6 h-6 text-[#5C6B52]" />
-                </div>
-                <h3 className="text-xl font-medium text-gray-900 mb-2">{service.title}</h3>
-                <p className="text-gray-500 leading-relaxed">{service.description}</p>
+                <h3 className="text-2xl font-light text-gray-900 mb-4">{service.title}</h3>
+                <p className="text-gray-400 leading-relaxed font-light">{service.description}</p>
               </motion.div>
             ))}
           </div>
@@ -271,32 +231,31 @@ export default function Home() {
       </section>
 
       {/* Portfolio */}
-      <section id="portfolio" className="py-24">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="max-w-xl mb-16">
-            <p className="text-sm text-[#5C6B52] font-medium tracking-wide uppercase mb-3">Portfolio</p>
-            <h2 className="text-3xl md:text-4xl font-light text-gray-900 mb-4">
-              Recent werk
+      <section id="portfolio" className="py-32 bg-white">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="max-w-2xl mb-24">
+            <h2 className="text-4xl md:text-5xl font-light text-gray-900 mb-6 tracking-tight">
+              Portfolio
             </h2>
-            <p className="text-gray-500 leading-relaxed">
-              Een selectie van onze recente projecten voor makelaars in de regio.
+            <p className="text-xl text-gray-400 leading-relaxed font-light">
+              Een selectie van recent werk
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {portfolioImages.map((image, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="aspect-[4/3] rounded-xl overflow-hidden group cursor-pointer"
+                className="aspect-[3/2] overflow-hidden group cursor-pointer"
               >
                 <img 
                   src={image}
                   alt={`Project ${index + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  className="w-full h-full object-cover group-hover:opacity-90 transition-opacity duration-500"
                 />
               </motion.div>
             ))}
@@ -304,143 +263,69 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-24 bg-[#5C6B52]">
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-4xl font-light text-white mb-4">
-            Klaar om te beginnen?
-          </h2>
-          <p className="text-lg text-white/70 mb-8">
-            Log in om direct een fotoshoot te plannen voor uw volgende listing.
-          </p>
-          {isAuthenticated ? (
-            <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientBooking')}>
-              <Button 
-                size="lg" 
-                className="bg-white text-[#5C6B52] hover:bg-gray-100 rounded-full px-8 h-12"
-              >
-                Shoot boeken
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          ) : (
-            <Button 
-              size="lg" 
-              onClick={handleLogin} 
-              className="bg-white text-[#5C6B52] hover:bg-gray-100 rounded-full px-8 h-12"
-            >
-              Inloggen
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          )}
-        </div>
-      </section>
+
 
       {/* Contact */}
-      <section id="contact" className="py-24 bg-[#FAFAF9]">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-            <div>
-              <p className="text-sm text-[#5C6B52] font-medium tracking-wide uppercase mb-3">Contact</p>
-              <h2 className="text-3xl md:text-4xl font-light text-gray-900 mb-4">
-                Neem contact op
-              </h2>
-              <p className="text-gray-500 leading-relaxed mb-10">
-                Heeft u vragen of wilt u meer informatie? We staan voor u klaar.
-              </p>
-              
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center">
-                    <Mail className="w-5 h-5 text-[#5C6B52]" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400">E-mail</p>
-                    <a href="mailto:info@basmichel.nl" className="text-gray-900 hover:text-[#5C6B52] transition-colors">
-                      info@basmichel.nl
-                    </a>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center">
-                    <Phone className="w-5 h-5 text-[#5C6B52]" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400">Telefoon</p>
-                    <a href="tel:+31612345678" className="text-gray-900 hover:text-[#5C6B52] transition-colors">
-                      +31 6 12 34 56 78
-                    </a>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center">
-                    <MapPin className="w-5 h-5 text-[#5C6B52]" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-400">Regio</p>
-                    <p className="text-gray-900">Noord-Brabant & Limburg</p>
-                  </div>
-                </div>
+      <section id="contact" className="py-32">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="max-w-2xl mb-24">
+            <h2 className="text-4xl md:text-5xl font-light text-gray-900 mb-6 tracking-tight">
+              Contact
+            </h2>
+            <p className="text-xl text-gray-400 leading-relaxed font-light mb-12">
+              Interesse in een samenwerking? Neem gerust contact op
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
+            <div className="space-y-10">
+              <div>
+                <p className="text-sm text-gray-400 uppercase tracking-wide mb-2 font-light">E-mail</p>
+                <a href="mailto:info@basmichel.nl" className="text-2xl text-gray-900 hover:text-gray-600 transition-colors font-light">
+                  info@basmichel.nl
+                </a>
               </div>
-            </div>
-            
-            <div className="bg-white rounded-2xl p-8 border border-gray-100">
-              <h3 className="text-xl font-medium text-gray-900 mb-6">Stuur een bericht</h3>
-              <form className="space-y-5">
-                <div>
-                  <input 
-                    type="text"
-                    placeholder="Uw naam"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#A8B5A0] focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
-                  />
-                </div>
-                <div>
-                  <input 
-                    type="email"
-                    placeholder="E-mailadres"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#A8B5A0] focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
-                  />
-                </div>
-                <div>
-                  <textarea 
-                    placeholder="Uw bericht"
-                    rows={4}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#A8B5A0] focus:border-transparent bg-white text-gray-900 placeholder-gray-400 resize-none"
-                  />
-                </div>
-                <Button 
-                  type="button" 
-                  className="w-full bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full h-12"
-                >
-                  Versturen
-                </Button>
-              </form>
+              <div>
+                <p className="text-sm text-gray-400 uppercase tracking-wide mb-2 font-light">Telefoon</p>
+                <a href="tel:+31612345678" className="text-2xl text-gray-900 hover:text-gray-600 transition-colors font-light">
+                  +31 6 12 34 56 78
+                </a>
+              </div>
+              <div>
+                <p className="text-sm text-gray-400 uppercase tracking-wide mb-2 font-light">Werkgebied</p>
+                <p className="text-2xl text-gray-900 font-light">Noord-Brabant & Limburg</p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-16 bg-white border-t border-gray-100">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+      <footer className="py-20 bg-white border-t border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-12 mb-16">
             <div>
-              <span className="text-lg font-light text-gray-900 tracking-wide">Basmichel</span>
-              <p className="text-sm text-gray-400 mt-1">Professionele vastgoedfotografie</p>
+              <span className="text-2xl font-light text-gray-900 tracking-tight">basmichel</span>
+              <p className="text-sm text-gray-400 mt-2 font-light">Vastgoedfotografie</p>
             </div>
-            <div className="flex items-center gap-8">
-              <a href="#diensten" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">Diensten</a>
-              <a href="#portfolio" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">Portfolio</a>
-              <a href="#contact" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">Contact</a>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8 sm:gap-12">
+              <a href="#diensten" className="text-sm text-gray-400 hover:text-gray-900 transition-colors font-light">Diensten</a>
+              <a href="#portfolio" className="text-sm text-gray-400 hover:text-gray-900 transition-colors font-light">Portfolio</a>
+              <a href="#contact" className="text-sm text-gray-400 hover:text-gray-900 transition-colors font-light">Contact</a>
+              {isAuthenticated && (
+                <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientDashboard')} className="text-sm text-gray-400 hover:text-gray-900 transition-colors font-light">
+                  Mijn Account
+                </Link>
+              )}
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-gray-400">© {new Date().getFullYear()} Basmichel. Alle rechten voorbehouden.</p>
+          <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <p className="text-sm text-gray-300 font-light">© {new Date().getFullYear()} basmichel</p>
             <Link 
               to={createPageUrl('AdminLogin')}
-              className="text-xs text-gray-300 hover:text-gray-400 transition-colors"
+              className="text-xs text-gray-200 hover:text-gray-400 transition-colors font-light"
             >
-              Studio Manager
+              Beheer
             </Link>
           </div>
         </div>
