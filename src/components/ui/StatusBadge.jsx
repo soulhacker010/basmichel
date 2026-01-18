@@ -2,7 +2,13 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 const statusStyles = {
-  // Project statuses
+  // Project statuses (new)
+  geboekt: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Geboekt' },
+  shoot_uitgevoerd: { bg: 'bg-amber-50', text: 'text-amber-700', label: 'Shoot uitgevoerd' },
+  wordt_bewerkt: { bg: 'bg-purple-50', text: 'text-purple-700', label: 'Wordt bewerkt' },
+  klaar: { bg: 'bg-green-50', text: 'text-green-700', label: 'Klaar' },
+  
+  // Legacy statuses
   lead: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Lead' },
   in_behandeling: { bg: 'bg-amber-50', text: 'text-amber-700', label: 'In behandeling' },
   afgerond: { bg: 'bg-green-50', text: 'text-green-700', label: 'Afgerond' },
