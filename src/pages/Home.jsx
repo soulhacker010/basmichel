@@ -228,23 +228,24 @@ export default function Home() {
               >
                 Verhalen die door beeld tot leven komen
               </motion.p>
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-            >
-              <a href="#contact">
-                <Button size="lg" className="bg-white hover:bg-gray-100 text-black rounded px-8 h-12">
-                  Neem Contact Op
-                </Button>
-              </a>
-              <a href="#portfolio">
-                <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 rounded px-8 h-12">
-                  Bekijk Portfolio
-                </Button>
-              </a>
-            </motion.div>
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="flex flex-col sm:flex-row gap-4 mt-10"
+              >
+                <a href="#contact">
+                  <Button size="lg" className="bg-white hover:bg-gray-100 text-black rounded px-8 h-12">
+                    Neem Contact Op
+                  </Button>
+                </a>
+                <a href="#portfolio">
+                  <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 rounded px-8 h-12">
+                    Bekijk Portfolio
+                  </Button>
+                </a>
+              </motion.div>
+            </div>
           </div>
         </div>
 
