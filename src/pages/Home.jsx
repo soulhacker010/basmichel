@@ -159,7 +159,11 @@ export default function Home() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="flex items-center justify-between h-20">
-            <span className="text-xl font-light text-gray-900 tracking-[0.2em] uppercase">Framestate</span>
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/41d5ec5ec_BasMichel_K152.png" 
+              alt="Bas Michel" 
+              className="h-8"
+            />
             
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-12">
@@ -540,9 +544,13 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             <div>
-              <span className="text-xl font-light tracking-[0.2em] uppercase">Framestate</span>
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/d493012a0_BasMichel_K102.png" 
+                alt="Bas Michel" 
+                className="h-8 mb-3 brightness-0 invert"
+              />
               <p className="text-sm text-gray-400 mt-3">
-                Framestate zet jouw woningen op een manier die werkt en verkoop.
+                Bas Michel zet jouw woningen op een manier die werkt en verkoopt.
               </p>
             </div>
             
@@ -583,7 +591,7 @@ export default function Home() {
           </div>
 
           <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-gray-500">© {new Date().getFullYear()} Framestate. Alle rechten voorbehouden.</p>
+            <p className="text-sm text-gray-500">© {new Date().getFullYear()} Bas Michel. Alle rechten voorbehouden.</p>
             <div className="flex gap-6 text-sm text-gray-500">
               <a href="#" className="hover:text-white transition-colors">Privacy</a>
               <a href="#" className="hover:text-white transition-colors">Voorwaarden</a>
