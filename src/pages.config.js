@@ -2,6 +2,10 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminClients from './pages/AdminClients';
 import AdminProjects from './pages/AdminProjects';
 import AdminGalleries from './pages/AdminGalleries';
+import AdminBookings from './pages/AdminBookings';
+import AdminInbox from './pages/AdminInbox';
+import AdminPayments from './pages/AdminPayments';
+import AdminDocuments from './pages/AdminDocuments';
 import __Layout from './Layout.jsx';
 
 
@@ -10,6 +14,10 @@ export const PAGES = {
     "AdminClients": AdminClients,
     "AdminProjects": AdminProjects,
     "AdminGalleries": AdminGalleries,
+    "AdminBookings": AdminBookings,
+    "AdminInbox": AdminInbox,
+    "AdminPayments": AdminPayments,
+    "AdminDocuments": AdminDocuments,
 }
 
 export const pagesConfig = {
