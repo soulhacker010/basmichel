@@ -4,16 +4,17 @@ import { createPageUrl } from '@/utils';
 import { base44 } from '@/api/base44Client';
 import { 
   Camera, 
-  Home as HomeIcon, 
-  Building2, 
-  Plane,
   Video,
+  Maximize,
+  Home as HomeIcon,
   ArrowRight,
   Menu,
   X,
-  Mail,
-  MapPin,
-  Phone
+  Clock,
+  Star,
+  Users,
+  ThumbsUp,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -21,45 +22,109 @@ import { motion } from 'framer-motion';
 const services = [
   {
     icon: Camera,
-    title: 'Woningfotografie',
-    description: 'Professionele foto\'s die uw woning perfect in beeld brengen voor een snelle verkoop.'
-  },
-  {
-    icon: Building2,
-    title: 'Bedrijfsfotografie',
-    description: 'Zakelijke fotografie voor kantoren, winkels en commercieel vastgoed.'
-  },
-  {
-    icon: Plane,
-    title: 'Drone Fotografie',
-    description: 'Luchtfoto\'s voor een uniek perspectief op uw object en omgeving.'
+    title: 'Fotografie',
+    description: 'Hoogwaardige foto\'s met professionele belichting en composities die de sfeer van uw woning optimaal vastleggen.'
   },
   {
     icon: Video,
     title: 'Video Tours',
-    description: 'Dynamische video\'s die potentiële kopers meenemen door het pand.'
+    description: 'Cinematische walkthroughs die een emotionele connectie maken met potentiële kopers.'
+  },
+  {
+    icon: Maximize,
+    title: '360° Virtuele Tours',
+    description: 'Interactieve en digitale tours zodat bezoekers vanuit hun luie stoel een rondje door uw woning kunnen lopen.'
+  },
+  {
+    icon: HomeIcon,
+    title: 'Plattegronden',
+    description: 'Heldere en nauwkeurige plattegronden die de indeling en afmetingen duidelijk in beeld brengen.'
+  }
+];
+
+const usps = [
+  {
+    icon: Clock,
+    title: 'Snelle Levering',
+    description: 'Wij leveren uw werk snel en op tijd, zonder in te boeten op de kwaliteit.'
+  },
+  {
+    icon: Star,
+    title: 'Premium Kwaliteit',
+    description: 'Elke opname wordt zorgvuldig bewerkt tot aan perfecte details die verkopen.'
+  },
+  {
+    icon: Users,
+    title: 'Persoonlijke Aandacht',
+    description: 'Persoonlijke aanpak waarbij u en uw wensen altijd op de eerste plaats staan.'
+  },
+  {
+    icon: ThumbsUp,
+    title: 'Betrouwbaar Boeken',
+    description: 'Eenvoudig een tijdslot boeken dat bij u past en altijd op afspraak komen.'
+  }
+];
+
+const packages = [
+  {
+    name: 'Basis',
+    price: '199',
+    description: 'Essentieel fotografie pakket voor snelle woningfotografie',
+    features: [
+      'Tot 20 foto\'s',
+      'Professionele bewerking',
+      'Levering binnen 48 uur',
+      'Web-geoptimaliseerde foto\'s',
+      'Print-klare bestanden'
+    ],
+    highlighted: false
+  },
+  {
+    name: 'Uitgebreid',
+    price: '349',
+    description: 'Compleet pakket met foto\'s en plattegronden',
+    features: [
+      '20-30 plattegronden',
+      '360° foto\'s',
+      'Professionele bewerking',
+      'Levering binnen 48 uur',
+      'Drone opnames (indien toegestaan)'
+    ],
+    highlighted: true
+  },
+  {
+    name: 'Compleet',
+    price: '549',
+    description: 'Premium pakket met alle visuele formats',
+    features: [
+      '20-30 plattegronden',
+      'Video tour',
+      'Gedetailleerde foto\'s',
+      'Drone fotografie',
+      'Virtuele tour',
+      'Marketing op platorm'
+    ],
+    highlighted: false
   }
 ];
 
 const portfolioImages = [
   'https://images-pw.pixieset.com/site/2kZAYq/n0yx4n/28-2391eb03-1500.jpg',
   'https://images-pw.pixieset.com/site/2kZAYq/Y8x0Wp/18-c0df2033-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/q8Ywmp/17-44e2a40d-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/r6V0l6/15-28d0c836-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/yQjbQa/24-583310a6-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/aQxj5b/13-366c5ab5-1500.jpg',
   'https://images-pw.pixieset.com/site/2kZAYq/5wYxAo/18-a7ac6f3d-1500.jpg',
   'https://images-pw.pixieset.com/site/2kZAYq/MwejZR/37-81220a67-1500.jpg',
-  'https://images-pw.pixieset.com/site/2kZAYq/q8Ywmp/17-44e2a40d-1500.jpg',
-  'https://images-pw.pixieset.com/site/2kZAYq/1QPWOp/9-9aac2383-1500.jpg',
-  'https://images-pw.pixieset.com/site/2kZAYq/xyelwP/27-022c7d3f-1500.jpg',
-  'https://images-pw.pixieset.com/site/2kZAYq/p3ajLE/19-427c3857-1500.jpg',
-  'https://images-pw.pixieset.com/site/2kZAYq/0kvr5Y/21-8b2fd28a-1500.jpg',
-  'https://images-pw.pixieset.com/site/2kZAYq/dV0RMD/26-f6ce7864-1500.jpg',
-  'https://images-pw.pixieset.com/site/2kZAYq/D7ejaW/30-3faffc91-1500.jpg',
-  'https://images-pw.pixieset.com/site/2kZAYq/WlxE63/18-f670d36a-1500.jpg'
+  'https://images-pw.pixieset.com/site/2kZAYq/1QPWOp/9-9aac2383-1500.jpg'
 ];
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -75,6 +140,13 @@ export default function Home() {
       }
     };
     checkAuth();
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % 3);
+    }, 5000);
+    return () => clearInterval(timer);
   }, []);
 
   const handleLogin = () => {
