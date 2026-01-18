@@ -124,32 +124,32 @@ export default function ClientProjectDetail() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       {/* Back Button */}
       <Link 
         to={createPageUrl('ClientProjects')}
-        className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-6 transition-colors"
+        className="inline-flex items-center gap-2 text-gray-400 hover:text-gray-600 mb-8 transition-colors text-sm"
       >
         <ArrowLeft className="w-4 h-4" />
         Terug naar projecten
       </Link>
 
       {/* Progress Bar Header */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6 mb-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-8">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-10">
           <div>
-            <h1 className="text-2xl font-light text-gray-900">{project.title}</h1>
+            <h1 className="text-2xl md:text-3xl font-light text-gray-900">{project.title}</h1>
             {project.address && (
-              <div className="flex items-center gap-1.5 text-gray-500 mt-1">
+              <div className="flex items-center gap-2 text-gray-400 mt-2">
                 <MapPin className="w-4 h-4" />
                 <span>{project.address}{project.city && `, ${project.city}`}</span>
               </div>
             )}
           </div>
           {project.delivery_datetime && project.status !== 'klaar' && (
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Verwachte levering</p>
-              <p className="font-medium text-gray-900">
+            <div className="text-left md:text-right bg-[#F8FAF7] rounded-xl px-5 py-3">
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Verwachte levering</p>
+              <p className="font-medium text-[#5C6B52]">
                 {format(new Date(project.delivery_datetime), 'd MMMM yyyy', { locale: nl })}
               </p>
             </div>
@@ -157,10 +157,10 @@ export default function ClientProjectDetail() {
         </div>
 
         {/* Progress Steps */}
-        <div className="relative">
-          <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200">
+        <div className="relative pt-2">
+          <div className="absolute top-7 left-6 right-6 h-0.5 bg-gray-100">
             <div 
-              className="h-full bg-[#A8B5A0] transition-all duration-500"
+              className="h-full bg-[#5C6B52] transition-all duration-700 ease-out"
               style={{ width: `${(currentStepIndex / (statusSteps.length - 1)) * 100}%` }}
             />
           </div>
@@ -171,10 +171,10 @@ export default function ClientProjectDetail() {
               return (
                 <div key={step.key} className="flex flex-col items-center">
                   <div className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors",
+                    "w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300 bg-white",
                     isCompleted 
-                      ? "bg-[#A8B5A0] border-[#A8B5A0] text-white" 
-                      : "bg-white border-gray-200 text-gray-400"
+                      ? "bg-[#5C6B52] border-[#5C6B52] text-white" 
+                      : "border-gray-200 text-gray-300"
                   )}>
                     {isCompleted ? (
                       <CheckCircle2 className="w-5 h-5" />
@@ -183,12 +183,12 @@ export default function ClientProjectDetail() {
                     )}
                   </div>
                   <p className={cn(
-                    "text-sm mt-2 font-medium text-center",
-                    isCurrent ? "text-[#5C6B52]" : isCompleted ? "text-gray-700" : "text-gray-400"
+                    "text-sm mt-3 font-medium text-center",
+                    isCurrent ? "text-[#5C6B52]" : isCompleted ? "text-gray-700" : "text-gray-300"
                   )}>
                     {step.label}
                   </p>
-                  <p className="text-xs text-gray-400 text-center hidden sm:block">{step.description}</p>
+                  <p className="text-xs text-gray-400 text-center hidden md:block mt-0.5">{step.description}</p>
                 </div>
               );
             })}
@@ -196,30 +196,35 @@ export default function ClientProjectDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-8">
           {/* Gallery */}
           {project.status === 'klaar' && gallery && mediaItems.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="px-6 py-5 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <Images className="w-5 h-5 text-[#5C6B52]" />
-                  <h2 className="text-lg font-medium text-gray-900">Galerij</h2>
-                  <span className="text-sm text-gray-500">({mediaItems.length} foto's)</span>
+                  <div className="w-10 h-10 rounded-xl bg-[#E8EDE5] flex items-center justify-center">
+                    <Images className="w-5 h-5 text-[#5C6B52]" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-medium text-gray-900">Galerij</h2>
+                    <p className="text-sm text-gray-400">{mediaItems.length} foto's beschikbaar</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={selectAllImages}
+                    className="rounded-full"
                   >
-                    {selectedImages.length === mediaItems.length ? 'Deselecteer alles' : 'Selecteer alles'}
+                    {selectedImages.length === mediaItems.length ? 'Deselecteer' : 'Selecteer alles'}
                   </Button>
                   {selectedImages.length > 0 && (
                     <Button
                       size="sm"
-                      className="bg-[#A8B5A0] hover:bg-[#97A690] text-white"
+                      className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Download ({selectedImages.length})
@@ -228,34 +233,34 @@ export default function ClientProjectDetail() {
                 </div>
               </div>
               <div className="p-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {mediaItems.map((item, index) => (
                     <div 
                       key={item.id}
-                      className="relative aspect-[4/3] rounded-lg overflow-hidden group cursor-pointer"
+                      className="relative aspect-[4/3] rounded-xl overflow-hidden group cursor-pointer"
                       onClick={() => setLightboxIndex(index)}
                     >
                       <img 
                         src={item.thumbnail_url || item.file_url}
                         alt=""
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                        <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                        <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                       </div>
                       {/* Selection Checkbox */}
                       <div 
-                        className="absolute top-2 left-2"
+                        className="absolute top-3 left-3"
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleImageSelection(item.id);
                         }}
                       >
                         <div className={cn(
-                          "w-6 h-6 rounded border-2 flex items-center justify-center transition-colors cursor-pointer",
+                          "w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer shadow-sm",
                           selectedImages.includes(item.id)
-                            ? "bg-[#A8B5A0] border-[#A8B5A0]"
-                            : "bg-white/80 border-gray-300 hover:border-[#A8B5A0]"
+                            ? "bg-[#5C6B52]"
+                            : "bg-white/90 hover:bg-white"
                         )}>
                           {selectedImages.includes(item.id) && (
                             <CheckCircle2 className="w-4 h-4 text-white" />
@@ -271,20 +276,22 @@ export default function ClientProjectDetail() {
 
           {/* Booking Info */}
           {booking && (
-            <div className="bg-white rounded-xl border border-gray-100 p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Calendar className="w-5 h-5 text-[#5C6B52]" />
+            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-xl bg-[#E8EDE5] flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-[#5C6B52]" />
+                </div>
                 <h2 className="text-lg font-medium text-gray-900">Boeking</h2>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm text-gray-500">Datum</p>
+                  <p className="text-sm text-gray-400 mb-1">Datum</p>
                   <p className="font-medium text-gray-900">
                     {format(new Date(booking.start_datetime), 'd MMMM yyyy', { locale: nl })}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Tijd</p>
+                  <p className="text-sm text-gray-400 mb-1">Tijd</p>
                   <p className="font-medium text-gray-900">
                     {format(new Date(booking.start_datetime), 'HH:mm')} - {booking.end_datetime && format(new Date(booking.end_datetime), 'HH:mm')}
                   </p>
@@ -295,16 +302,21 @@ export default function ClientProjectDetail() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Invoices */}
-          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-3">
-              <FileText className="w-5 h-5 text-[#5C6B52]" />
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-50 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#E8EDE5] flex items-center justify-center">
+                <FileText className="w-5 h-5 text-[#5C6B52]" />
+              </div>
               <h2 className="text-lg font-medium text-gray-900">Facturen</h2>
             </div>
             {invoices.length === 0 ? (
-              <div className="p-6 text-center">
-                <p className="text-gray-500">Nog geen facturen</p>
+              <div className="py-12 px-6 text-center">
+                <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3">
+                  <FileText className="w-6 h-6 text-gray-300" />
+                </div>
+                <p className="text-gray-400">Nog geen facturen</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-50">
@@ -312,27 +324,25 @@ export default function ClientProjectDetail() {
                   <div key={invoice.id} className="px-6 py-4 flex items-center justify-between">
                     <div>
                       <p className="font-medium text-gray-900">€{invoice.total_amount?.toFixed(2)}</p>
-                      <p className="text-sm text-gray-500">{invoice.invoice_number}</p>
+                      <p className="text-sm text-gray-400">{invoice.invoice_number}</p>
                     </div>
-                    <div className="text-right">
-                      <span className={cn(
-                        "inline-flex px-2 py-0.5 rounded-full text-xs font-medium",
-                        invoice.status === 'betaald' ? "bg-green-50 text-green-700" :
-                        invoice.status === 'verzonden' ? "bg-amber-50 text-amber-700" :
-                        "bg-gray-100 text-gray-600"
-                      )}>
-                        {invoice.status === 'betaald' ? 'Betaald' : invoice.status === 'verzonden' ? 'Open' : 'Concept'}
-                      </span>
-                    </div>
+                    <span className={cn(
+                      "inline-flex px-3 py-1 rounded-full text-xs font-medium",
+                      invoice.status === 'betaald' ? "bg-green-50 text-green-700" :
+                      invoice.status === 'verzonden' ? "bg-amber-50 text-amber-700" :
+                      "bg-gray-100 text-gray-500"
+                    )}>
+                      {invoice.status === 'betaald' ? 'Betaald' : invoice.status === 'verzonden' ? 'Open' : 'Concept'}
+                    </span>
                   </div>
                 ))}
               </div>
             )}
             {invoices.filter(i => i.status === 'verzonden').length > 0 && (
-              <div className="p-4 border-t border-gray-50">
+              <div className="p-5 border-t border-gray-50">
                 <Link to={createPageUrl('ClientInvoices')}>
-                  <Button className="w-full bg-[#A8B5A0] hover:bg-[#97A690] text-white">
-                    Facturen Betalen
+                  <Button className="w-full bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full h-11">
+                    Facturen betalen
                   </Button>
                 </Link>
               </div>
