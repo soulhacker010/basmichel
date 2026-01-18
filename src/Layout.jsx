@@ -115,11 +115,11 @@ export default function Layout({ children, currentPageName }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
+    <div className="min-h-screen bg-[#FCFCFB]">
       <style>{`
         :root {
           --sage: #A8B5A0;
-          --sage-dark: #97A690;
+          --sage-dark: #5C6B52;
           --sage-light: #E8EDE5;
         }
       `}</style>
@@ -146,47 +146,34 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-100 z-50 transition-transform duration-300 ease-out",
+        "fixed top-0 left-0 h-full w-64 bg-white z-50 transition-transform duration-300 ease-out",
         "lg:translate-x-0",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="h-20 flex items-center justify-center border-b border-gray-50">
-            <Link to={createPageUrl('Home')} className="text-xl font-light text-gray-900 tracking-wide hover:text-[#5C6B52] transition-colors">
+          <div className="h-20 flex items-center px-6">
+            <Link to={createPageUrl('Home')} className="text-lg font-light text-gray-900 tracking-wide hover:text-[#5C6B52] transition-colors">
               Basmichel
             </Link>
           </div>
 
           {/* User Type Badge */}
-          <div className="px-4 py-3 border-b border-gray-50">
+          <div className="px-6 pb-6">
             <span className={cn(
-              "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium",
-              isAdmin ? "bg-purple-100 text-purple-700" : "bg-[#E8EDE5] text-[#5C6B52]"
+              "inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium",
+              isAdmin ? "bg-gray-900 text-white" : "bg-[#E8EDE5] text-[#5C6B52]"
             )}>
               {isAdmin ? 'Studio Manager' : 'Klantportaal'}
             </span>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = currentPageName === item.page || 
                 (item.page === 'ClientProjects' && currentPageName === 'ClientProjectDetail');
               const Icon = item.icon;
-              
-              if (item.disabled) {
-                return (
-                  <div
-                    key={item.page}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300 cursor-not-allowed"
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="text-sm">{item.name}</span>
-                    <span className="ml-auto text-xs bg-gray-100 text-gray-400 px-2 py-0.5 rounded">Binnenkort</span>
-                  </div>
-                );
-              }
 
               return (
                 <Link
@@ -194,40 +181,41 @@ export default function Layout({ children, currentPageName }) {
                   to={createPageUrl(item.page)}
                   onClick={() => setSidebarOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
                     isActive 
-                      ? "bg-[#E8EDE5] text-[#5C6B52]" 
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      ? "bg-[#F8FAF7] text-[#5C6B52]" 
+                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                   )}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className={cn("w-5 h-5", isActive && "text-[#5C6B52]")} />
                   <span className="text-sm font-medium">{item.name}</span>
-                  {isActive && <ChevronRight className="w-4 h-4 ml-auto" />}
                 </Link>
               );
             })}
           </nav>
 
           {/* User Section */}
-          <div className="p-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 rounded-full bg-[#E8EDE5] flex items-center justify-center">
-                <span className="text-sm font-medium text-[#5C6B52]">
-                  {user.full_name?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
-                </span>
+          <div className="p-4 mt-auto">
+            <div className="bg-[#F8FAF7] rounded-xl p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-[#E8EDE5] flex items-center justify-center">
+                  <span className="text-sm font-medium text-[#5C6B52]">
+                    {user.full_name?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{user.full_name || 'Gebruiker'}</p>
+                  <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{user.full_name || 'Gebruiker'}</p>
-                <p className="text-xs text-gray-500 truncate">{user.email}</p>
-              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-500 hover:text-gray-700 rounded-lg transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Uitloggen</span>
+              </button>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Uitloggen</span>
-            </button>
           </div>
         </div>
       </aside>
@@ -238,7 +226,7 @@ export default function Layout({ children, currentPageName }) {
         "lg:ml-64",
         "pt-16 lg:pt-0"
       )}>
-        <div className="p-4 lg:p-8">
+        <div className="p-6 lg:p-10 lg:pt-8">
           {children}
         </div>
       </main>
