@@ -68,13 +68,28 @@ const values = [
 const portfolioImages = [
   'https://images-pw.pixieset.com/site/2kZAYq/n0yx4n/28-2391eb03-1500.jpg',
   'https://images-pw.pixieset.com/site/2kZAYq/Y8x0Wp/18-c0df2033-1500.jpg',
-  'https://images-pw.pixieset.com/site/2kZAYq/q8Ywmp/17-44e2a40d-1500.jpg',
-  'https://images-pw.pixieset.com/site/2kZAYq/r6V0l6/15-28d0c836-1500.jpg',
-  'https://images-pw.pixieset.com/site/2kZAYq/yQjbQa/24-583310a6-1500.jpg',
-  'https://images-pw.pixieset.com/site/2kZAYq/aQxj5b/13-366c5ab5-1500.jpg',
   'https://images-pw.pixieset.com/site/2kZAYq/5wYxAo/18-a7ac6f3d-1500.jpg',
   'https://images-pw.pixieset.com/site/2kZAYq/MwejZR/37-81220a67-1500.jpg',
-  'https://images-pw.pixieset.com/site/2kZAYq/1QPWOp/9-9aac2383-1500.jpg'
+  'https://images-pw.pixieset.com/site/2kZAYq/q8Ywmp/17-44e2a40d-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/1QPWOp/9-9aac2383-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/xyelwP/27-022c7d3f-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/p3ajLE/19-427c3857-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/0kvr5Y/21-8b2fd28a-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/dV0RMD/26-f6ce7864-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/D7ejaW/30-3faffc91-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/WlxE63/18-f670d36a-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/zaj8yl/27-defce31b-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/r6V0l6/15-28d0c836-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/LVekX1/20-bf11417c-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/yQj3G0/53-e9ee0c17-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/P9XjwG/19-d6d04d10-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/jm7kYO/08-80bbc095-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/ewlWvo/16-0669292d-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/aQx8wd/17-ee1ea6d3-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/aQxj5b/13-366c5ab5-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/4VaOAG/12-b65526fe-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/0kvrv7/20-88238abf-1500.jpg',
+  'https://images-pw.pixieset.com/site/2kZAYq/yQjbQa/24-583310a6-1500.jpg'
 ];
 
 export default function Home() {
@@ -83,6 +98,8 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [scrolled, setScrolled] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const heroSlides = [
     'https://images-pw.pixieset.com/site/2kZAYq/n0yx4n/28-2391eb03-1500.jpg',
@@ -129,6 +146,34 @@ export default function Home() {
   const handleLogin = () => {
     base44.auth.redirectToLogin();
   };
+
+  const openLightbox = (index) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const closeLightbox = () => {
+    setLightboxOpen(false);
+  };
+
+  const nextImage = () => {
+    setLightboxIndex((prev) => (prev + 1) % portfolioImages.length);
+  };
+
+  const prevImage = () => {
+    setLightboxIndex((prev) => (prev - 1 + portfolioImages.length) % portfolioImages.length);
+  };
+
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (!lightboxOpen) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowRight') nextImage();
+      if (e.key === 'ArrowLeft') prevImage();
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [lightboxOpen]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -371,35 +416,81 @@ export default function Home() {
 
 
       {/* Portfolio */}
-      <section id="portfolio" className="py-24 bg-gray-50">
+      <section id="portfolio" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="text-center mb-16">
-            <p className="text-sm uppercase tracking-wide text-gray-500 mb-3">Portfolio</p>
-            <h2 className="text-4xl md:text-5xl font-light text-gray-900">
-              Recent <span className="italic">werk</span>
+            <h2 className="text-4xl md:text-5xl font-light text-gray-900 mb-4">
+              Impressie
             </h2>
+            <p className="text-gray-600">Een selectie van recent werk</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {portfolioImages.map((image, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.05 }}
+                transition={{ duration: 0.4, delay: index * 0.02 }}
                 viewport={{ once: true }}
-                className="aspect-[4/3] overflow-hidden group cursor-pointer"
+                className="aspect-square overflow-hidden group cursor-pointer bg-gray-100"
+                onClick={() => openLightbox(index)}
               >
                 <img 
                   src={image}
                   alt={`Project ${index + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  loading="lazy"
                 />
               </motion.div>
             ))}
           </div>
         </div>
       </section>
+
+      {/* Lightbox */}
+      {lightboxOpen && (
+        <div 
+          className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center"
+          onClick={closeLightbox}
+        >
+          <button
+            onClick={closeLightbox}
+            className="absolute top-4 right-4 md:top-8 md:right-8 text-white hover:text-gray-300 transition-colors z-50"
+          >
+            <X className="w-8 h-8 md:w-10 md:h-10" />
+          </button>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); prevImage(); }}
+            className="absolute left-2 md:left-8 text-white hover:text-gray-300 transition-colors p-2"
+          >
+            <ArrowRight className="w-8 h-8 md:w-12 md:h-12 rotate-180" />
+          </button>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); nextImage(); }}
+            className="absolute right-2 md:right-8 text-white hover:text-gray-300 transition-colors p-2"
+          >
+            <ArrowRight className="w-8 h-8 md:w-12 md:h-12" />
+          </button>
+
+          <div 
+            className="relative w-full h-full flex items-center justify-center p-4 md:p-12"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img 
+              src={portfolioImages[lightboxIndex]}
+              alt={`Project ${lightboxIndex + 1}`}
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
+
+          <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 text-white text-sm">
+            {lightboxIndex + 1} / {portfolioImages.length}
+          </div>
+        </div>
+      )}
 
       {/* CTA Section */}
       <section className="relative py-32 overflow-hidden">
