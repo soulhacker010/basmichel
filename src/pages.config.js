@@ -17,6 +17,7 @@ import ClientDashboard from './pages/ClientDashboard';
 import ClientProjects from './pages/ClientProjects';
 import ClientProjectDetail from './pages/ClientProjectDetail';
 import ClientInvoices from './pages/ClientInvoices';
+import ClientBooking from './pages/ClientBooking';
 import __Layout from './Layout.jsx';
 
 
@@ -40,6 +41,7 @@ export const PAGES = {
     "ClientProjects": ClientProjects,
     "ClientProjectDetail": ClientProjectDetail,
     "ClientInvoices": ClientInvoices,
+    "ClientBooking": ClientBooking,
 }
 
 export const pagesConfig = {
