@@ -28,12 +28,12 @@ const adminPages = [
 ];
 
 export default function Layout({ children, currentPageName }) {
-  // Public pages - no layout, no authentication
+  // Public pages - no layout, no authentication required
   if (publicPages.includes(currentPageName)) {
     return <PublicShell>{children}</PublicShell>;
   }
 
-  // Client pages
+  // Client portal pages - require authentication + client role
   if (clientPages.includes(currentPageName)) {
     return (
       <ClientPortalShell currentPageName={currentPageName}>
@@ -42,7 +42,7 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  // Admin pages
+  // Admin portal pages - require authentication + admin role
   if (adminPages.includes(currentPageName)) {
     return (
       <AdminPortalShell currentPageName={currentPageName}>
@@ -51,6 +51,6 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  // Fallback to public shell for unknown pages
+  // Fallback - unknown pages default to public shell
   return <PublicShell>{children}</PublicShell>;
 }

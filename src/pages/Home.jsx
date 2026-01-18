@@ -42,69 +42,26 @@ const services = [
   }
 ];
 
-const usps = [
+const values = [
   {
     icon: Clock,
-    title: 'Snelle Levering',
-    description: 'Wij leveren uw werk snel en op tijd, zonder in te boeten op de kwaliteit.'
+    title: 'Betrouwbaar',
+    description: 'Altijd op tijd en volgens afspraak. Uw planning staat voorop.'
   },
   {
     icon: Star,
-    title: 'Premium Kwaliteit',
-    description: 'Elke opname wordt zorgvuldig bewerkt tot aan perfecte details die verkopen.'
+    title: 'Hoogwaardige Kwaliteit',
+    description: 'Elke opname wordt met oog voor detail bewerkt en afgeleverd.'
   },
   {
     icon: Users,
-    title: 'Persoonlijke Aandacht',
-    description: 'Persoonlijke aanpak waarbij u en uw wensen altijd op de eerste plaats staan.'
+    title: 'Persoonlijke Samenwerking',
+    description: 'Direct contact, maatwerk en begrip voor uw unieke wensen.'
   },
   {
     icon: ThumbsUp,
-    title: 'Betrouwbaar Boeken',
-    description: 'Eenvoudig een tijdslot boeken dat bij u past en altijd op afspraak komen.'
-  }
-];
-
-const packages = [
-  {
-    name: 'Basis',
-    price: '199',
-    description: 'Essentieel fotografie pakket voor snelle woningfotografie',
-    features: [
-      'Tot 20 foto\'s',
-      'Professionele bewerking',
-      'Levering binnen 48 uur',
-      'Web-geoptimaliseerde foto\'s',
-      'Print-klare bestanden'
-    ],
-    highlighted: false
-  },
-  {
-    name: 'Uitgebreid',
-    price: '349',
-    description: 'Compleet pakket met foto\'s en plattegronden',
-    features: [
-      '20-30 plattegronden',
-      '360° foto\'s',
-      'Professionele bewerking',
-      'Levering binnen 48 uur',
-      'Drone opnames (indien toegestaan)'
-    ],
-    highlighted: true
-  },
-  {
-    name: 'Compleet',
-    price: '549',
-    description: 'Premium pakket met alle visuele formats',
-    features: [
-      '20-30 plattegronden',
-      'Video tour',
-      'Gedetailleerde foto\'s',
-      'Drone fotografie',
-      'Virtuele tour',
-      'Marketing op platorm'
-    ],
-    highlighted: false
+    title: 'Ervaring',
+    description: 'Jarenlange expertise in vastgoedfotografie voor makelaars.'
   }
 ];
 
@@ -170,19 +127,16 @@ export default function Home() {
               <a href="#diensten" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                 Diensten
               </a>
-              <a href="#pakketten" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                Prijzen
-              </a>
               <a href="#portfolio" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                 Portfolio
               </a>
               <a href="#contact" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                Boeken
+                Contact
               </a>
               {isAuthenticated ? (
                 <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientDashboard')}>
                   <Button className="bg-black hover:bg-gray-900 text-white rounded px-6 h-9 text-sm">
-                    Inloggen
+                    Mijn Portal
                   </Button>
                 </Link>
               ) : (
@@ -190,7 +144,7 @@ export default function Home() {
                   onClick={handleLogin} 
                   className="bg-black hover:bg-gray-900 text-white rounded px-6 h-9 text-sm"
                 >
-                  Klant Nu
+                  Inloggen voor Makelaars
                 </Button>
               )}
             </div>
@@ -211,14 +165,11 @@ export default function Home() {
             <a href="#diensten" className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
               Diensten
             </a>
-            <a href="#pakketten" className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
-              Prijzen
-            </a>
             <a href="#portfolio" className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
               Portfolio
             </a>
             <a href="#contact" className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
-              Boeken
+              Contact
             </a>
           </div>
         )}
@@ -243,9 +194,9 @@ export default function Home() {
               transition={{ duration: 0.8 }}
               className="text-5xl md:text-6xl lg:text-7xl font-light mb-6 leading-tight"
             >
-              Elke Woning,
+              Professionele
               <br />
-              <span className="italic">Een Verhaal</span>
+              <span className="italic">Vastgoedfotografie</span>
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 30 }}
@@ -253,9 +204,7 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-lg md:text-xl mb-10 font-light max-w-2xl mx-auto"
             >
-              Professionele vastgoedfotografie die woningen tot leven brengt en uw trackrecord
-              <br className="hidden md:block" />
-              zichtbaar maakt en verstevigt
+              Beelden die uw woningen tot leven brengen en uw expertise als makelaar versterken
             </motion.p>
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
@@ -263,22 +212,16 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
-              {isAuthenticated ? (
-                <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientBooking')}>
-                  <Button size="lg" className="bg-white hover:bg-gray-100 text-black rounded px-8 h-12">
-                    Boek een Sessie
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </Link>
-              ) : (
-                <Button onClick={handleLogin} size="lg" className="bg-white hover:bg-gray-100 text-black rounded px-8 h-12">
-                  Boek een Sessie
-                  <ArrowRight className="ml-2 w-4 h-4" />
+              <a href="#contact">
+                <Button size="lg" className="bg-white hover:bg-gray-100 text-black rounded px-8 h-12">
+                  Neem Contact Op
                 </Button>
-              )}
-              <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 rounded px-8 h-12">
-                Bekijk Portfolio
-              </Button>
+              </a>
+              <a href="#portfolio">
+                <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 rounded px-8 h-12">
+                  Bekijk Portfolio
+                </Button>
+              </a>
             </motion.div>
           </div>
         </div>
@@ -297,13 +240,21 @@ export default function Home() {
         </div>
       </section>
 
-      {/* USPs */}
+      {/* Values */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-light text-gray-900 mb-4">
+              Samenwerken met <span className="italic">Bas Michel</span>
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Al jaren partner van toonaangevende makelaars in de regio
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-            {usps.map((usp, index) => (
+            {values.map((value, index) => (
               <motion.div
-                key={usp.title}
+                key={value.title}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -311,10 +262,10 @@ export default function Home() {
                 className="text-center"
               >
                 <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <usp.icon className="w-10 h-10 text-gray-700" />
+                  <value.icon className="w-10 h-10 text-gray-700" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">{usp.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{usp.description}</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">{value.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{value.description}</p>
               </motion.div>
             ))}
           </div>
@@ -365,78 +316,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Packages */}
-      <section id="pakketten" className="py-24 bg-black text-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="text-center mb-16">
-            <p className="text-sm uppercase tracking-wide text-gray-400 mb-3">Prijzen</p>
-            <h2 className="text-4xl md:text-5xl font-light mb-4">
-              Kies jouw <span className="italic">pakket</span>
-            </h2>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {packages.map((pkg, index) => (
-              <motion.div
-                key={pkg.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className={`relative p-8 border ${
-                  pkg.highlighted 
-                    ? 'bg-white text-black border-white' 
-                    : 'bg-black border-gray-700'
-                }`}
-              >
-                {pkg.highlighted && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-blue-500 text-white text-xs px-4 py-1 rounded-full">
-                      MEEST GEKOZEN
-                    </span>
-                  </div>
-                )}
-                
-                <h3 className="text-2xl font-medium mb-2">{pkg.name}</h3>
-                <p className={`text-sm mb-6 ${pkg.highlighted ? 'text-gray-600' : 'text-gray-400'}`}>
-                  {pkg.description}
-                </p>
-                
-                <div className="mb-6">
-                  <span className="text-5xl font-light">€{pkg.price}</span>
-                  <span className={`text-sm ml-2 ${pkg.highlighted ? 'text-gray-600' : 'text-gray-400'}`}>
-                    /shoot
-                  </span>
-                </div>
-
-                <ul className="space-y-3 mb-8">
-                  {pkg.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <Check className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                        pkg.highlighted ? 'text-green-600' : 'text-green-500'
-                      }`} />
-                      <span className={`text-sm ${pkg.highlighted ? 'text-gray-700' : 'text-gray-300'}`}>
-                        {feature}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button 
-                  className={`w-full ${
-                    pkg.highlighted 
-                      ? 'bg-black hover:bg-gray-900 text-white' 
-                      : 'bg-white hover:bg-gray-100 text-black'
-                  }`}
-                  onClick={handleLogin}
-                >
-                  Nu Boeken
-                </Button>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Portfolio */}
       <section id="portfolio" className="py-24 bg-gray-50">
@@ -482,60 +362,90 @@ export default function Home() {
         
         <div className="relative max-w-4xl mx-auto text-center px-6 text-white">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-light mb-6 leading-tight">
-            Klaar om je woningen
+            Werk je samen
             <br />
-            <span className="italic">naar een hoger niveau te tillen?</span>
+            <span className="italic">met Bas Michel?</span>
           </h2>
           <p className="text-xl mb-10 font-light opacity-90">
-            Sta je web op de hoosfdolor worden die slaat, wij helpen om uw
+            Log in op uw portal om projecten te beheren, galerijen te bekijken
             <br className="hidden md:block" />
-            woning op het best te presenteren
+            en nieuwe shoots te boeken
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {isAuthenticated ? (
-              <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientBooking')}>
+              <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientDashboard')}>
                 <Button size="lg" className="bg-white hover:bg-gray-100 text-black rounded px-8 h-12">
-                  Boek een Sessie
+                  Naar Mijn Portal
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </Link>
             ) : (
               <Button onClick={handleLogin} size="lg" className="bg-white hover:bg-gray-100 text-black rounded px-8 h-12">
-                Boek een Sessie
+                Inloggen
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             )}
-            <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 rounded px-8 h-12">
-              Prijslijst Aanvragen
-            </Button>
+            <a href="#contact">
+              <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 rounded px-8 h-12">
+                Neem Contact Op
+              </Button>
+            </a>
           </div>
         </div>
       </section>
 
 
 
-      {/* Contact/Booking */}
+      {/* Contact */}
       <section id="contact" className="py-24 bg-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-4xl md:text-5xl font-light text-gray-900 mb-6">
-            Boek jouw sessie
-            <br />
-            <span className="italic">eenvoudig online</span>
-          </h2>
-          <p className="text-lg text-gray-600 mb-10">
-            Plan gemakkelijk jouw moment in via onze agenda
-          </p>
-          {isAuthenticated ? (
-            <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientBooking')}>
-              <Button size="lg" className="bg-black hover:bg-gray-900 text-white rounded px-10 h-12">
-                Boek hier
-              </Button>
-            </Link>
-          ) : (
-            <Button onClick={handleLogin} size="lg" className="bg-black hover:bg-gray-900 text-white rounded px-10 h-12">
-              Boek hier
-            </Button>
-          )}
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+            <div>
+              <h2 className="text-4xl md:text-5xl font-light text-gray-900 mb-6">
+                Nieuwe samenwerkingen
+              </h2>
+              <p className="text-lg text-gray-600 mb-12 leading-relaxed">
+                Interesse in een samenwerking? Neem vrijblijvend contact op voor een kennismaking.
+              </p>
+              
+              <div className="space-y-6">
+                <div>
+                  <p className="text-sm text-gray-400 uppercase tracking-wide mb-2">E-mail</p>
+                  <a href="mailto:info@basmichel.nl" className="text-xl text-gray-900 hover:text-gray-600 transition-colors">
+                    info@basmichel.nl
+                  </a>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400 uppercase tracking-wide mb-2">Telefoon</p>
+                  <a href="tel:+31612345678" className="text-xl text-gray-900 hover:text-gray-600 transition-colors">
+                    +31 6 12 34 56 78
+                  </a>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400 uppercase tracking-wide mb-2">Werkgebied</p>
+                  <p className="text-xl text-gray-900">Noord-Brabant & Limburg</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 p-8 lg:p-12 rounded">
+              <h3 className="text-2xl font-light text-gray-900 mb-6">Bestaande klant?</h3>
+              <p className="text-gray-600 mb-8">
+                Log in op uw persoonlijke portal om shoots te boeken, projecten te bekijken en facturen in te zien.
+              </p>
+              {isAuthenticated ? (
+                <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientDashboard')}>
+                  <Button size="lg" className="bg-black hover:bg-gray-900 text-white rounded px-8 h-12 w-full">
+                    Naar Mijn Portal
+                  </Button>
+                </Link>
+              ) : (
+                <Button onClick={handleLogin} size="lg" className="bg-black hover:bg-gray-900 text-white rounded px-8 h-12 w-full">
+                  Inloggen
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -559,18 +469,17 @@ export default function Home() {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><a href="#diensten" className="hover:text-white transition-colors">Fotografie</a></li>
                 <li><a href="#diensten" className="hover:text-white transition-colors">Video Tours</a></li>
-                <li><a href="#diensten" className="hover:text-white transition-colors">Virtuele Tours</a></li>
+                <li><a href="#diensten" className="hover:text-white transition-colors">360° Virtuele Tours</a></li>
                 <li><a href="#diensten" className="hover:text-white transition-colors">Plattegronden</a></li>
-                <li><a href="#pakketten" className="hover:text-white transition-colors">Drone</a></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-sm font-medium mb-4 uppercase tracking-wide">Bedrijf</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#portfolio" className="hover:text-white transition-colors">Home</a></li>
-                <li><a href="#diensten" className="hover:text-white transition-colors">Ik Boeken</a></li>
-                <li><a href="#contact" className="hover:text-white transition-colors">Klantencentral</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Home</a></li>
+                <li><a href="#diensten" className="hover:text-white transition-colors">Diensten</a></li>
+                <li><a href="#contact" className="hover:text-white transition-colors">Contact</a></li>
               </ul>
             </div>
 
