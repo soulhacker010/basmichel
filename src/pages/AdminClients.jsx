@@ -139,19 +139,19 @@ export default function AdminClients() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F5F7F4] to-[#E8EDE5]">
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-3xl font-light text-gray-900 mb-2">Klanten</h1>
-              <p className="text-gray-600">Beheer je klanten en hun gegevens</p>
+              <p className="text-gray-500">Beheer je klanten en hun gegevens</p>
             </div>
             <div className="flex gap-3">
               <Button 
                 variant="outline"
                 onClick={() => setIsInviteDialogOpen(true)}
-                className="bg-white border-gray-300 hover:border-[#A8B5A0] hover:bg-[#F9FAF8] shadow-sm"
+                className="border-gray-200 hover:border-[#A8B5A0] hover:bg-white/80"
               >
                 <UserPlus className="w-4 h-4 mr-2" />
                 Klant Uitnodigen
@@ -161,7 +161,7 @@ export default function AdminClients() {
                   setEditingClient(null);
                   setIsDialogOpen(true);
                 }}
-                className="bg-[#5C6B52] hover:bg-[#4A5641] text-white shadow-md"
+                className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Nieuwe Klant
@@ -171,12 +171,12 @@ export default function AdminClients() {
 
           {/* Search */}
           <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               placeholder="Zoek op naam, e-mail of bedrijf..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 bg-white border-gray-300 shadow-sm"
+              className="pl-10 bg-white/80 border-gray-200"
             />
           </div>
         </div>
@@ -206,7 +206,7 @@ export default function AdminClients() {
               return (
                 <div 
                   key={client.id}
-                  className="group bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-[#A8B5A0]"
+                  className="group bg-white/80 backdrop-blur-sm rounded-lg border border-gray-100 p-6 hover:shadow-md transition-all duration-300 hover:border-[#A8B5A0]/30"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
