@@ -201,11 +201,11 @@ export default function Home() {
               }`}>
                 Portfolio
               </a>
-              <a href="#contact" className={`text-sm transition-colors ${
+              <Link to={createPageUrl('Contact')} className={`text-sm transition-colors ${
                 scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-white hover:text-gray-200'
               }`}>
                 Contact
-              </a>
+              </Link>
               {isAuthenticated ? (
                 <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientDashboard')}>
                   <Button className={`rounded px-6 h-9 text-sm transition-colors ${
@@ -247,9 +247,9 @@ export default function Home() {
             <a href="#portfolio" className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
               Portfolio
             </a>
-            <a href="#contact" className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
+            <Link to={createPageUrl('Contact')} className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
               Contact
-            </a>
+            </Link>
           </div>
         )}
       </nav>
@@ -308,14 +308,11 @@ export default function Home() {
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className="flex flex-col sm:flex-row gap-4 mt-10 justify-center"
               >
-                <a href="#contact">
+                <Link to={createPageUrl('Contact')}>
                   <Button size="lg" className="bg-white hover:bg-gray-100 text-black rounded px-8 h-12">
                     Neem Contact Op
                   </Button>
-                </a>
-                <a href="#portfolio">
-
-                </a>
+                </Link>
               </motion.div>
             </div>
           </div>
@@ -526,8 +523,7 @@ export default function Home() {
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             )}
-            <a href="#contact">
-            </a>
+
           </div>
         </div>
       </section>
@@ -565,7 +561,7 @@ export default function Home() {
               <ul className="space-y-2 text-sm text-gray-400">
                 <li><a href="#" className="hover:text-white transition-colors">Home</a></li>
                 <li><a href="#diensten" className="hover:text-white transition-colors">Diensten</a></li>
-                <li><a href="#contact" className="hover:text-white transition-colors">Contact</a></li>
+                <li><Link to={createPageUrl('Contact')} className="hover:text-white transition-colors">Contact</Link></li>
               </ul>
             </div>
 
