@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Mail, Send, CheckCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
+import { Mail, Send, CheckCircle, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +12,38 @@ import { toast } from 'sonner';
 export default function Contact() {
   const [sending, setSending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const auth = await base44.auth.isAuthenticated();
+        setIsAuthenticated(auth);
+        if (auth) {
+          const userData = await base44.auth.me();
+          setUser(userData);
+        }
+      } catch (e) {
+        // Not authenticated
+      }
+    };
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 100);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleLogin = () => {
+    base44.auth.redirectToLogin();
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -69,29 +103,81 @@ ${data.message}
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      {/* Header */}
-      <header className="border-b border-gray-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <a href="/">
-            <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/41d5ec5ec_BasMichel_K152.png" 
-              alt="Bas Michel" 
-              className="h-20"
-            />
-          </a>
-          <nav className="flex items-center gap-8">
-            <a href="/" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              HOME
+      {/* Navigation */}
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? 'bg-white/80 backdrop-blur-md' : 'bg-white/95 backdrop-blur-sm'
+      }`}>
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="flex items-center justify-between h-20">
+            <a href="/">
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/41d5ec5ec_BasMichel_K152.png" 
+                alt="Bas Michel" 
+                className="h-20"
+              />
             </a>
-            <a href="/contact" className="text-sm text-gray-900 font-medium">
-              CONTACT
-            </a>
-            <a href="/booking" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              BOEKEN
-            </a>
-          </nav>
+            
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center gap-12">
+              <a href="/" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                Home
+              </a>
+              <a href="/#diensten" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                Diensten
+              </a>
+              <a href="/#portfolio" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                Portfolio
+              </a>
+              <Link to={createPageUrl('Contact')} className="text-sm text-gray-900 font-medium transition-colors">
+                Contact
+              </Link>
+              {isAuthenticated ? (
+                <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientDashboard')}>
+                  <Button className="rounded px-6 h-9 text-sm bg-black hover:bg-gray-900 text-white transition-colors">
+                    Mijn Account
+                  </Button>
+                </Link>
+              ) : (
+                <Button 
+                  onClick={handleLogin} 
+                  className="rounded px-6 h-9 text-sm bg-black hover:bg-gray-900 text-white transition-colors"
+                >
+                  Inloggen voor Makelaars
+                </Button>
+              )}
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button 
+              className="md:hidden p-2 text-gray-600 transition-colors"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
-      </header>
+
+        {/* Mobile Menu */}
+        {menuOpen && (
+          <div className="md:hidden bg-white border-t border-gray-100 px-6 py-6 space-y-4">
+            <a href="/" className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
+              Home
+            </a>
+            <a href="/#diensten" className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
+              Diensten
+            </a>
+            <a href="/#portfolio" className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
+              Portfolio
+            </a>
+            <Link to={createPageUrl('Contact')} className="block text-gray-900 font-medium py-2" onClick={() => setMenuOpen(false)}>
+              Contact
+            </Link>
+          </div>
+        )}
+      </nav>
+
+      {/* Spacer for fixed nav */}
+      <div className="h-20" />
 
       {/* Hero Images */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 h-[400px] lg:h-[500px]">
