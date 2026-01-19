@@ -1,4 +1,5 @@
 import AdminBookings from './pages/AdminBookings';
+import AdminClients from './pages/AdminClients';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminDiscounts from './pages/AdminDiscounts';
 import AdminDocuments from './pages/AdminDocuments';
@@ -18,15 +19,16 @@ import ClientInvoices from './pages/ClientInvoices';
 import ClientProfile from './pages/ClientProfile';
 import ClientProjectDetail from './pages/ClientProjectDetail';
 import ClientProjects from './pages/ClientProjects';
+import Contact from './pages/Contact';
 import GalleryView from './pages/GalleryView';
 import Home from './pages/Home';
-import AdminClients from './pages/AdminClients';
-import Contact from './pages/Contact';
+import AdminProjectDetail from './pages/AdminProjectDetail';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AdminBookings": AdminBookings,
+    "AdminClients": AdminClients,
     "AdminDashboard": AdminDashboard,
     "AdminDiscounts": AdminDiscounts,
     "AdminDocuments": AdminDocuments,
@@ -46,10 +48,10 @@ export const PAGES = {
     "ClientProfile": ClientProfile,
     "ClientProjectDetail": ClientProjectDetail,
     "ClientProjects": ClientProjects,
+    "Contact": Contact,
     "GalleryView": GalleryView,
     "Home": Home,
-    "AdminClients": AdminClients,
-    "Contact": Contact,
+    "AdminProjectDetail": AdminProjectDetail,
 }
 
 export const pagesConfig = {
