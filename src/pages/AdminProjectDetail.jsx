@@ -67,9 +67,14 @@ export default function AdminProjectDetail() {
   const [rawOpen, setRawOpen] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
   const [invoiceData, setInvoiceData] = useState({
-    description: '',
-    amount: '',
-    vat_amount: '',
+    invoice_date: format(new Date(), 'yyyy-MM-dd'),
+    due_date: format(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+    items: [{ title: '', description: '', quantity: 1, unit_price: '' }],
+    vat_percentage: 21,
+    use_custom_recipient: false,
+    recipient_name: '',
+    recipient_email: '',
+    recipient_address: '',
   });
   
   const queryClient = useQueryClient();
@@ -220,24 +225,47 @@ export default function AdminProjectDetail() {
 
   const createInvoiceMutation = useMutation({
     mutationFn: async (data) => {
-      const totalAmount = parseFloat(data.amount) + parseFloat(data.vat_amount);
+      // Calculate amounts from items
+      const subtotal = data.items.reduce((sum, item) => {
+        const itemTotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0);
+        return sum + itemTotal;
+      }, 0);
+      
+      const vatAmount = subtotal * (data.vat_percentage / 100);
+      const totalAmount = subtotal + vatAmount;
+      
+      // Build description from items
+      const description = data.items
+        .filter(item => item.title)
+        .map(item => `${item.title}${item.description ? ': ' + item.description : ''}`)
+        .join('\n');
+      
       return await base44.entities.ProjectInvoice.create({
         project_id: projectId,
         invoice_number: project.project_number,
-        client_name: user?.full_name || client?.company_name || '',
-        client_address: project.address || '',
-        invoice_date: format(new Date(), 'yyyy-MM-dd'),
-        description: data.description,
-        amount: parseFloat(data.amount),
-        vat_amount: parseFloat(data.vat_amount),
+        client_name: data.use_custom_recipient ? data.recipient_name : (user?.full_name || client?.company_name || ''),
+        client_address: data.use_custom_recipient ? data.recipient_address : (project.address || ''),
+        invoice_date: data.invoice_date,
+        description: description,
+        amount: subtotal,
+        vat_amount: vatAmount,
         total_amount: totalAmount,
-        status: 'verzonden',
+        status: 'concept',
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projectInvoice', projectId] });
       setInvoiceDialogOpen(false);
-      setInvoiceData({ description: '', amount: '', vat_amount: '' });
+      setInvoiceData({
+        invoice_date: format(new Date(), 'yyyy-MM-dd'),
+        due_date: format(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+        items: [{ title: '', description: '', quantity: 1, unit_price: '' }],
+        vat_percentage: 21,
+        use_custom_recipient: false,
+        recipient_name: '',
+        recipient_email: '',
+        recipient_address: '',
+      });
       toast.success('Factuur aangemaakt');
     },
   });
@@ -748,68 +776,283 @@ export default function AdminProjectDetail() {
 
       {/* Invoice Dialog */}
       <Dialog open={invoiceDialogOpen} onOpenChange={setInvoiceDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Factuur Aanmaken</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Factuurnummer</Label>
-              <Input value={project.project_number || ''} disabled className="mt-1.5" />
-            </div>
-            <div>
-              <Label htmlFor="description">Omschrijving</Label>
-              <Textarea
-                id="description"
-                value={invoiceData.description}
-                onChange={(e) => setInvoiceData({...invoiceData, description: e.target.value})}
-                className="mt-1.5"
-                rows={3}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="amount">Bedrag (excl. BTW)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  value={invoiceData.amount}
-                  onChange={(e) => setInvoiceData({...invoiceData, amount: e.target.value})}
-                  className="mt-1.5"
-                />
-              </div>
-              <div>
-                <Label htmlFor="vat">BTW</Label>
-                <Input
-                  id="vat"
-                  type="number"
-                  step="0.01"
-                  value={invoiceData.vat_amount}
-                  onChange={(e) => setInvoiceData({...invoiceData, vat_amount: e.target.value})}
-                  className="mt-1.5"
-                />
+          <div className="space-y-6">
+            {/* A. FACTUURGEGEVENS */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-gray-900">Factuurgegevens</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Factuurnummer</Label>
+                  <Input value={project.project_number || ''} disabled className="mt-1.5 bg-gray-50" />
+                  <p className="text-xs text-gray-500 mt-1">Automatisch (= Projectnummer)</p>
+                </div>
+                <div>
+                  <Label>Project</Label>
+                  <Input value={project.title || ''} disabled className="mt-1.5 bg-gray-50" />
+                </div>
+                <div>
+                  <Label htmlFor="invoice_date">Factuurdatum</Label>
+                  <Input
+                    id="invoice_date"
+                    type="date"
+                    value={invoiceData.invoice_date}
+                    onChange={(e) => setInvoiceData({...invoiceData, invoice_date: e.target.value})}
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="due_date">Vervaldatum</Label>
+                  <Input
+                    id="due_date"
+                    type="date"
+                    value={invoiceData.due_date}
+                    onChange={(e) => setInvoiceData({...invoiceData, due_date: e.target.value})}
+                    className="mt-1.5"
+                  />
+                </div>
               </div>
             </div>
-            {invoiceData.amount && invoiceData.vat_amount && (
-              <div className="pt-4 border-t">
-                <p className="text-sm text-gray-600">
-                  Totaalbedrag: <span className="font-medium text-gray-900">
-                    € {(parseFloat(invoiceData.amount) + parseFloat(invoiceData.vat_amount)).toFixed(2)}
+
+            {/* B. FACTUURONTVANGER */}
+            <div className="space-y-4 pt-4 border-t">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="custom_recipient"
+                  checked={invoiceData.use_custom_recipient}
+                  onChange={(e) => setInvoiceData({...invoiceData, use_custom_recipient: e.target.checked})}
+                  className="w-4 h-4 rounded border-gray-300"
+                />
+                <Label htmlFor="custom_recipient" className="cursor-pointer">
+                  Gebruik afwijkende factuurontvanger
+                </Label>
+              </div>
+              
+              {!invoiceData.use_custom_recipient ? (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-sm text-gray-600">
+                    Factuur wordt verstuurd naar: <span className="font-medium text-gray-900">
+                      {user?.full_name || client?.company_name || 'Projectklant'}
+                    </span>
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">{user?.email || ''}</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="recipient_name">Factuurnaam *</Label>
+                    <Input
+                      id="recipient_name"
+                      value={invoiceData.recipient_name}
+                      onChange={(e) => setInvoiceData({...invoiceData, recipient_name: e.target.value})}
+                      placeholder="Bedrijfsnaam of contactpersoon"
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="recipient_email">Factuur e-mail *</Label>
+                    <Input
+                      id="recipient_email"
+                      type="email"
+                      value={invoiceData.recipient_email}
+                      onChange={(e) => setInvoiceData({...invoiceData, recipient_email: e.target.value})}
+                      placeholder="facturen@bedrijf.nl"
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="recipient_address">Factuuradres *</Label>
+                    <Textarea
+                      id="recipient_address"
+                      value={invoiceData.recipient_address}
+                      onChange={(e) => setInvoiceData({...invoiceData, recipient_address: e.target.value})}
+                      placeholder="Straat 1&#10;1234 AB Plaats"
+                      className="mt-1.5"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* C. FACTUURITEMS */}
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="text-sm font-medium text-gray-900">Factuuritems</h3>
+              <div className="space-y-3">
+                {invoiceData.items.map((item, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 space-y-3">
+                        <div>
+                          <Label htmlFor={`item_title_${index}`}>Titel *</Label>
+                          <Input
+                            id={`item_title_${index}`}
+                            value={item.title}
+                            onChange={(e) => {
+                              const newItems = [...invoiceData.items];
+                              newItems[index].title = e.target.value;
+                              setInvoiceData({...invoiceData, items: newItems});
+                            }}
+                            placeholder="Bijvoorbeeld: Vastgoedfotografie"
+                            className="mt-1.5"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`item_description_${index}`}>Omschrijving</Label>
+                          <Textarea
+                            id={`item_description_${index}`}
+                            value={item.description}
+                            onChange={(e) => {
+                              const newItems = [...invoiceData.items];
+                              newItems[index].description = e.target.value;
+                              setInvoiceData({...invoiceData, items: newItems});
+                            }}
+                            placeholder="Optionele details..."
+                            className="mt-1.5"
+                            rows={2}
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div>
+                            <Label htmlFor={`item_quantity_${index}`}>Aantal *</Label>
+                            <Input
+                              id={`item_quantity_${index}`}
+                              type="number"
+                              step="1"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => {
+                                const newItems = [...invoiceData.items];
+                                newItems[index].quantity = e.target.value;
+                                setInvoiceData({...invoiceData, items: newItems});
+                              }}
+                              className="mt-1.5"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`item_price_${index}`}>Prijs per stuk *</Label>
+                            <Input
+                              id={`item_price_${index}`}
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={item.unit_price}
+                              onChange={(e) => {
+                                const newItems = [...invoiceData.items];
+                                newItems[index].unit_price = e.target.value;
+                                setInvoiceData({...invoiceData, items: newItems});
+                              }}
+                              placeholder="0.00"
+                              className="mt-1.5"
+                            />
+                          </div>
+                          <div>
+                            <Label>Totaal</Label>
+                            <div className="mt-1.5 h-9 px-3 py-2 bg-gray-50 rounded-md flex items-center text-sm font-medium">
+                              € {((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0)).toFixed(2)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {invoiceData.items.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const newItems = invoiceData.items.filter((_, i) => i !== index);
+                            setInvoiceData({...invoiceData, items: newItems});
+                          }}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setInvoiceData({
+                    ...invoiceData,
+                    items: [...invoiceData.items, { title: '', description: '', quantity: 1, unit_price: '' }]
+                  });
+                }}
+                className="w-full"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Item toevoegen
+              </Button>
+            </div>
+
+            {/* D. SAMENVATTING */}
+            <div className="pt-4 border-t">
+              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Subtotaal</span>
+                  <span className="font-medium text-gray-900">
+                    € {invoiceData.items.reduce((sum, item) => {
+                      return sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0));
+                    }, 0).toFixed(2)}
                   </span>
-                </p>
+                </div>
+                <div className="flex justify-between text-sm items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600">BTW</span>
+                    <Input
+                      type="number"
+                      step="1"
+                      min="0"
+                      max="100"
+                      value={invoiceData.vat_percentage}
+                      onChange={(e) => setInvoiceData({...invoiceData, vat_percentage: parseFloat(e.target.value) || 0})}
+                      className="w-16 h-7 text-xs"
+                    />
+                    <span className="text-gray-600">%</span>
+                  </div>
+                  <span className="font-medium text-gray-900">
+                    € {(() => {
+                      const subtotal = invoiceData.items.reduce((sum, item) => {
+                        return sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0));
+                      }, 0);
+                      return (subtotal * (invoiceData.vat_percentage / 100)).toFixed(2);
+                    })()}
+                  </span>
+                </div>
+                <div className="flex justify-between text-base pt-2 border-t border-gray-200">
+                  <span className="font-medium text-gray-900">Totaalbedrag</span>
+                  <span className="font-semibold text-gray-900 text-lg">
+                    € {(() => {
+                      const subtotal = invoiceData.items.reduce((sum, item) => {
+                        return sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0));
+                      }, 0);
+                      const vat = subtotal * (invoiceData.vat_percentage / 100);
+                      return (subtotal + vat).toFixed(2);
+                    })()}
+                  </span>
+                </div>
               </div>
-            )}
+            </div>
+
             <div className="flex justify-end gap-3 pt-4">
               <Button variant="outline" onClick={() => setInvoiceDialogOpen(false)}>
                 Annuleren
               </Button>
               <Button 
                 onClick={() => createInvoiceMutation.mutate(invoiceData)}
-                disabled={!invoiceData.amount || !invoiceData.vat_amount}
+                disabled={
+                  invoiceData.items.some(item => !item.title || !item.unit_price) ||
+                  (invoiceData.use_custom_recipient && (!invoiceData.recipient_name || !invoiceData.recipient_email))
+                }
                 className="bg-green-600 hover:bg-green-700 text-white"
               >
-                Aanmaken
+                Factuur Opslaan
               </Button>
             </div>
           </div>
