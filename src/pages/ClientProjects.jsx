@@ -138,7 +138,7 @@ export default function ClientProjects() {
             return (
               <Link
                 key={project.id}
-                to={createPageUrl(`ClientProjectDetail?id=${project.id}`)}
+                to={`${createPageUrl('ClientProjectDetail2')}?id=${project.id}`}
                 className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group"
               >
                 {/* Status Bar */}

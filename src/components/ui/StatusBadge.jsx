@@ -4,9 +4,9 @@ import { cn } from '@/lib/utils';
 const statusStyles = {
   // Project statuses (new)
   geboekt: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Geboekt' },
-  in_bewerking: { bg: 'bg-purple-50', text: 'text-purple-700', label: 'In Bewerking' },
-  afgerond: { bg: 'bg-green-50', text: 'text-green-700', label: 'Afgerond' },
-  openstaande_factuur: { bg: 'bg-orange-50', text: 'text-orange-700', label: 'Openstaande Factuur' },
+  shoot_uitgevoerd: { bg: 'bg-purple-50', text: 'text-purple-700', label: 'Shoot uitgevoerd' },
+  wordt_bewerkt: { bg: 'bg-amber-50', text: 'text-amber-700', label: 'Wordt bewerkt' },
+  klaar: { bg: 'bg-green-50', text: 'text-green-700', label: 'Klaar' },
   
   // Legacy statuses
   lead: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Lead' },
