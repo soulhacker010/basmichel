@@ -14,8 +14,6 @@ import {
   Clock,
   AlertCircle
 } from 'lucide-react';
-import PageHeader from '@/components/ui/PageHeader';
-import EmptyState from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -121,15 +119,15 @@ export default function AdminInvoices() {
     return matchesSearch && matchesStatus;
   });
 
-  const statusCounts = {
-    all: invoices.length,
-    concept: invoices.filter(i => i.status === 'concept').length,
-    verzonden: invoices.filter(i => i.status === 'verzonden').length,
-    betaald: invoices.filter(i => i.status === 'betaald').length,
-    verlopen: invoices.filter(i => i.status === 'verlopen').length,
-  };
+  const totalPaid = invoices
+    .filter(i => i.status === 'betaald')
+    .reduce((sum, i) => sum + (i.total_amount || 0), 0);
 
-  const totalOpen = invoices
+  const totalDraft = invoices
+    .filter(i => i.status === 'concept')
+    .reduce((sum, i) => sum + (i.total_amount || 0), 0);
+
+  const totalUnpaid = invoices
     .filter(i => i.status === 'verzonden')
     .reduce((sum, i) => sum + (i.total_amount || 0), 0);
 
@@ -165,191 +163,159 @@ export default function AdminInvoices() {
 
   const generateInvoiceNumber = () => {
     const year = new Date().getFullYear();
-    const count = invoices.filter(i => i.invoice_number?.startsWith(`FAC-${year}`)).length + 1;
-    return `FAC-${year}-${String(count).padStart(4, '0')}`;
+    const count = invoices.filter(i => i.invoice_number?.startsWith(`${year}`)).length + 1;
+    return `${year}${String(count).padStart(4, '0')}`;
   };
 
   return (
     <div className="max-w-7xl mx-auto">
-      <PageHeader 
-        title="Facturen"
-        description="Beheer alle facturen"
-        actions={
-          <Button 
-            onClick={() => {
-              setEditingInvoice(null);
-              setIsDialogOpen(true);
-            }}
-            className="bg-[#A8B5A0] hover:bg-[#97A690] text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nieuwe Factuur
-          </Button>
-        }
-      />
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-2xl font-light text-gray-900">Invoices</h1>
+        <Button 
+          onClick={() => {
+            setEditingInvoice(null);
+            setIsDialogOpen(true);
+          }}
+          className="bg-green-600 hover:bg-green-700 text-white rounded px-4"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          New Invoice
+        </Button>
+      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
-          <p className="text-sm text-gray-500">Totaal facturen</p>
-          <p className="text-2xl font-semibold text-gray-900">{invoices.length}</p>
+      {/* Summary Stats */}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="bg-white rounded-lg border border-gray-100 p-5">
+          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Paid</p>
+          <p className="text-2xl font-light text-gray-900">€{totalPaid.toFixed(2)}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
-          <p className="text-sm text-gray-500">Openstaand</p>
-          <p className="text-2xl font-semibold text-amber-600">€{totalOpen.toFixed(2)}</p>
+        <div className="bg-white rounded-lg border border-gray-100 p-5">
+          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Unpaid</p>
+          <p className="text-2xl font-light text-gray-900">€{totalUnpaid.toFixed(2)}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
-          <p className="text-sm text-gray-500">Verzonden</p>
-          <p className="text-2xl font-semibold text-blue-600">{statusCounts.verzonden}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
-          <p className="text-sm text-gray-500">Betaald</p>
-          <p className="text-2xl font-semibold text-green-600">{statusCounts.betaald}</p>
+        <div className="bg-white rounded-lg border border-gray-100 p-5">
+          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Draft</p>
+          <p className="text-2xl font-light text-gray-900">€{totalDraft.toFixed(2)}</p>
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Search and Filters */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
-            placeholder="Zoek op factuurnummer of klant..."
+            placeholder="Search email or contact name"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-10 rounded border-gray-200"
           />
         </div>
-        <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-          <TabsList>
-            <TabsTrigger value="all">Alle</TabsTrigger>
-            <TabsTrigger value="concept">Concept</TabsTrigger>
-            <TabsTrigger value="verzonden">Verzonden</TabsTrigger>
-            <TabsTrigger value="betaald">Betaald</TabsTrigger>
+        <Tabs value={statusFilter} onValueChange={setStatusFilter} className="shrink-0">
+          <TabsList className="bg-white border border-gray-200 h-10">
+            <TabsTrigger value="all" className="text-sm">All Invoices</TabsTrigger>
+            <TabsTrigger value="concept" className="text-sm">Draft</TabsTrigger>
+            <TabsTrigger value="verzonden" className="text-sm">Unpaid</TabsTrigger>
+            <TabsTrigger value="betaald" className="text-sm">Paid</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
-      {/* Invoices List */}
+      {/* Invoices Table */}
       {filteredInvoices.length === 0 ? (
-        <EmptyState 
-          icon={FileText}
-          title={search || statusFilter !== 'all' ? "Geen resultaten" : "Nog geen facturen"}
-          description={search || statusFilter !== 'all' ? "Probeer andere filters" : "Maak je eerste factuur aan"}
-          action={
-            !search && statusFilter === 'all' && (
-              <Button 
-                onClick={() => setIsDialogOpen(true)}
-                className="bg-[#A8B5A0] hover:bg-[#97A690] text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nieuwe Factuur
-              </Button>
-            )
-          }
-        />
+        <div className="bg-white rounded-lg border border-gray-100 p-16 text-center">
+          <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-900 font-medium mb-1">No invoices found</p>
+          <p className="text-sm text-gray-400">Try adjusting your filters</p>
+        </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="divide-y divide-gray-50">
-            {filteredInvoices.map(invoice => (
-              <div 
-                key={invoice.id}
-                className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-start gap-4">
-                  <div className={cn(
-                    "w-10 h-10 rounded-lg flex items-center justify-center",
-                    invoice.status === 'betaald' ? "bg-green-50" :
-                    invoice.status === 'verzonden' ? "bg-amber-50" :
-                    invoice.status === 'verlopen' ? "bg-red-50" :
-                    "bg-gray-100"
-                  )}>
-                    {invoice.status === 'betaald' ? <CheckCircle2 className="w-5 h-5 text-green-600" /> :
-                     invoice.status === 'verzonden' ? <Clock className="w-5 h-5 text-amber-600" /> :
-                     invoice.status === 'verlopen' ? <AlertCircle className="w-5 h-5 text-red-600" /> :
-                     <FileText className="w-5 h-5 text-gray-500" />}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-gray-900">{invoice.invoice_number || 'Concept'}</p>
-                      <span className={cn(
-                        "px-2 py-0.5 rounded-full text-xs font-medium",
-                        invoice.status === 'betaald' ? "bg-green-50 text-green-700" :
-                        invoice.status === 'verzonden' ? "bg-amber-50 text-amber-700" :
-                        invoice.status === 'verlopen' ? "bg-red-50 text-red-700" :
-                        "bg-gray-100 text-gray-600"
-                      )}>
-                        {invoice.status === 'betaald' ? 'Betaald' :
-                         invoice.status === 'verzonden' ? 'Verzonden' :
-                         invoice.status === 'verlopen' ? 'Verlopen' : 'Concept'}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-500">{getClientName(invoice.client_id)}</p>
-                    <p className="text-xs text-gray-400">{getProjectTitle(invoice.project_id)}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-lg font-semibold text-gray-900">€{invoice.total_amount?.toFixed(2)}</p>
-                    {invoice.invoice_date && (
-                      <p className="text-xs text-gray-400">
-                        {format(new Date(invoice.invoice_date), 'd MMM yyyy', { locale: nl })}
-                      </p>
-                    )}
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => {
-                        setEditingInvoice(invoice);
-                        setIsDialogOpen(true);
-                      }}>
-                        <Pencil className="w-4 h-4 mr-2" />
-                        Bewerken
-                      </DropdownMenuItem>
-                      {invoice.status === 'concept' && (
+        <div className="bg-white rounded-lg border border-gray-100">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-100">
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Invoice #</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Client</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Project</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Amount</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Due Date</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
+                <th className="w-8 px-6 py-3"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filteredInvoices.map(invoice => (
+                <tr key={invoice.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{invoice.invoice_number || 'Draft'}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{getClientName(invoice.client_id)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{getProjectTitle(invoice.project_id)}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">€{invoice.total_amount?.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {invoice.due_date ? format(new Date(invoice.due_date), 'd MMM yyyy', { locale: nl }) : '-'}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={cn(
+                      "inline-flex px-2 py-1 rounded text-xs font-medium",
+                      invoice.status === 'betaald' ? "bg-green-50 text-green-700" :
+                      invoice.status === 'verzonden' ? "bg-amber-50 text-amber-700" :
+                      invoice.status === 'verlopen' ? "bg-red-50 text-red-700" :
+                      "bg-gray-100 text-gray-600"
+                    )}>
+                      {invoice.status === 'betaald' ? 'Paid' :
+                       invoice.status === 'verzonden' ? 'Unpaid' :
+                       invoice.status === 'verlopen' ? 'Overdue' : 'Draft'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => {
-                          updateMutation.mutate({ 
-                            id: invoice.id, 
-                            data: { ...invoice, status: 'verzonden' } 
-                          });
+                          setEditingInvoice(invoice);
+                          setIsDialogOpen(true);
                         }}>
-                          <Send className="w-4 h-4 mr-2" />
-                          Verzenden
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Edit
                         </DropdownMenuItem>
-                      )}
-                      {invoice.status === 'verzonden' && (
-                        <DropdownMenuItem onClick={() => {
-                          updateMutation.mutate({ 
-                            id: invoice.id, 
-                            data: { ...invoice, status: 'betaald', paid_date: new Date().toISOString().split('T')[0] } 
-                          });
-                        }}>
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
-                          Markeer als betaald
+                        {invoice.status === 'concept' && (
+                          <DropdownMenuItem onClick={() => {
+                            updateMutation.mutate({ 
+                              id: invoice.id, 
+                              data: { ...invoice, status: 'verzonden' } 
+                            });
+                          }}>
+                            <Send className="w-4 h-4 mr-2" />
+                            Send
+                          </DropdownMenuItem>
+                        )}
+                        {invoice.status === 'verzonden' && (
+                          <DropdownMenuItem onClick={() => {
+                            updateMutation.mutate({ 
+                              id: invoice.id, 
+                              data: { ...invoice, status: 'betaald', paid_date: new Date().toISOString().split('T')[0] } 
+                            });
+                          }}>
+                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                            Mark as paid
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem 
+                          onClick={() => setDeleteId(invoice.id)}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
                         </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem>
-                        <Download className="w-4 h-4 mr-2" />
-                        Download PDF
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => setDeleteId(invoice.id)}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Verwijderen
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            ))}
-          </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -358,13 +324,13 @@ export default function AdminInvoices() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {editingInvoice ? 'Factuur Bewerken' : 'Nieuwe Factuur'}
+              {editingInvoice ? 'Edit Invoice' : 'New Invoice'}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="invoice_number">Factuurnummer</Label>
+                <Label htmlFor="invoice_number">Invoice Number</Label>
                 <Input
                   id="invoice_number"
                   name="invoice_number"
@@ -380,15 +346,15 @@ export default function AdminInvoices() {
                   defaultValue={editingInvoice?.status || 'concept'}
                   className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
                 >
-                  <option value="concept">Concept</option>
-                  <option value="verzonden">Verzonden</option>
-                  <option value="betaald">Betaald</option>
-                  <option value="verlopen">Verlopen</option>
+                  <option value="concept">Draft</option>
+                  <option value="verzonden">Sent</option>
+                  <option value="betaald">Paid</option>
+                  <option value="verlopen">Overdue</option>
                 </select>
               </div>
             </div>
             <div>
-              <Label htmlFor="client_id">Klant *</Label>
+              <Label htmlFor="client_id">Client *</Label>
               <select
                 id="client_id"
                 name="client_id"
@@ -396,7 +362,7 @@ export default function AdminInvoices() {
                 className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
                 required
               >
-                <option value="">Selecteer klant</option>
+                <option value="">Select client</option>
                 {clients.map(client => {
                   const user = users.find(u => u.id === client.user_id);
                   return (
@@ -415,14 +381,14 @@ export default function AdminInvoices() {
                 defaultValue={editingInvoice?.project_id || ''}
                 className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
               >
-                <option value="">Selecteer project</option>
+                <option value="">Select project</option>
                 {projects.map(project => (
                   <option key={project.id} value={project.id}>{project.title}</option>
                 ))}
               </select>
             </div>
             <div>
-              <Label htmlFor="description">Omschrijving</Label>
+              <Label htmlFor="description">Description</Label>
               <Input
                 id="description"
                 name="description"
@@ -432,7 +398,7 @@ export default function AdminInvoices() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="amount">Bedrag (excl. BTW) *</Label>
+                <Label htmlFor="amount">Amount (excl. VAT) *</Label>
                 <Input
                   id="amount"
                   name="amount"
@@ -445,7 +411,7 @@ export default function AdminInvoices() {
                 />
               </div>
               <div>
-                <Label htmlFor="invoice_date">Factuurdatum</Label>
+                <Label htmlFor="invoice_date">Invoice Date</Label>
                 <Input
                   id="invoice_date"
                   name="invoice_date"
@@ -457,7 +423,7 @@ export default function AdminInvoices() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="due_date">Vervaldatum</Label>
+                <Label htmlFor="due_date">Due Date</Label>
                 <Input
                   id="due_date"
                   name="due_date"
@@ -467,7 +433,7 @@ export default function AdminInvoices() {
                 />
               </div>
               <div>
-                <Label htmlFor="payment_link">Betaallink (Revolut)</Label>
+                <Label htmlFor="payment_link">Payment Link</Label>
                 <Input
                   id="payment_link"
                   name="payment_link"
@@ -479,10 +445,10 @@ export default function AdminInvoices() {
             </div>
             <div className="flex justify-end gap-3 pt-4">
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Annuleren
+                Cancel
               </Button>
-              <Button type="submit" className="bg-[#A8B5A0] hover:bg-[#97A690] text-white">
-                {editingInvoice ? 'Opslaan' : 'Aanmaken'}
+              <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
+                {editingInvoice ? 'Save' : 'Create'}
               </Button>
             </div>
           </form>
@@ -493,18 +459,18 @@ export default function AdminInvoices() {
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Factuur Verwijderen</AlertDialogTitle>
+            <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
             <AlertDialogDescription>
-              Weet je zeker dat je deze factuur wilt verwijderen?
+              Are you sure you want to delete this invoice?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteMutation.mutate(deleteId)}
               className="bg-red-600 hover:bg-red-700"
             >
-              Verwijderen
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

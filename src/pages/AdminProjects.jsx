@@ -12,8 +12,6 @@ import {
   Trash2,
   User
 } from 'lucide-react';
-import PageHeader from '@/components/ui/PageHeader';
-import EmptyState from '@/components/ui/EmptyState';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,13 +39,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
@@ -116,9 +107,8 @@ export default function AdminProjects() {
       title: formData.get('title'),
       client_id: formData.get('client_id'),
       status: formData.get('status'),
-      description: formData.get('description'),
+      notes: formData.get('notes'),
       address: formData.get('address'),
-      scheduled_date: formData.get('scheduled_date'),
     };
 
     if (editingProject) {
@@ -130,139 +120,118 @@ export default function AdminProjects() {
 
   const getClientName = (clientId) => {
     const client = clients.find(c => c.id === clientId);
-    if (!client) return 'Geen klant';
+    if (!client) return '-';
     const user = users.find(u => u.id === client.user_id);
-    return user?.full_name || client.company_name || 'Onbekend';
+    return user?.full_name || client.company_name || '-';
   };
 
   const statusCounts = {
     all: projects.length,
-    lead: projects.filter(p => p.status === 'lead').length,
-    in_behandeling: projects.filter(p => p.status === 'in_behandeling').length,
-    afgerond: projects.filter(p => p.status === 'afgerond').length,
+    geboekt: projects.filter(p => p.status === 'geboekt').length,
+    shoot_uitgevoerd: projects.filter(p => p.status === 'shoot_uitgevoerd').length,
+    wordt_bewerkt: projects.filter(p => p.status === 'wordt_bewerkt').length,
+    klaar: projects.filter(p => p.status === 'klaar').length,
   };
 
   return (
     <div className="max-w-7xl mx-auto">
-      <PageHeader 
-        title="Projecten"
-        description="Beheer al je vastgoedprojecten"
-        actions={
-          <Button 
-            onClick={() => {
-              setEditingProject(null);
-              setIsDialogOpen(true);
-            }}
-            className="bg-[#A8B5A0] hover:bg-[#97A690] text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nieuw Project
-          </Button>
-        }
-      />
+      {/* Header - Pixieset style */}
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-2xl font-light text-gray-900">Projects</h1>
+        <Button 
+          onClick={() => {
+            setEditingProject(null);
+            setIsDialogOpen(true);
+          }}
+          className="bg-green-600 hover:bg-green-700 text-white rounded px-4"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          New Project
+        </Button>
+      </div>
 
-      {/* Filters */}
+      {/* Search and Filters */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
-            placeholder="Zoek op titel of adres..."
+            placeholder="Search project or contact name"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-10 rounded border-gray-200"
           />
         </div>
-        <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-          <TabsList className="bg-gray-100">
-            <TabsTrigger value="all">Alle ({statusCounts.all})</TabsTrigger>
-            <TabsTrigger value="lead">Lead ({statusCounts.lead})</TabsTrigger>
-            <TabsTrigger value="in_behandeling">In behandeling ({statusCounts.in_behandeling})</TabsTrigger>
-            <TabsTrigger value="afgerond">Afgerond ({statusCounts.afgerond})</TabsTrigger>
+        <Tabs value={statusFilter} onValueChange={setStatusFilter} className="shrink-0">
+          <TabsList className="bg-white border border-gray-200 h-10">
+            <TabsTrigger value="all" className="text-sm">All Projects</TabsTrigger>
+            <TabsTrigger value="geboekt" className="text-sm">Booked</TabsTrigger>
+            <TabsTrigger value="shoot_uitgevoerd" className="text-sm">Shot</TabsTrigger>
+            <TabsTrigger value="wordt_bewerkt" className="text-sm">Editing</TabsTrigger>
+            <TabsTrigger value="klaar" className="text-sm">Delivered</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
-      {/* Projects */}
+      {/* Projects Grid */}
       {filteredProjects.length === 0 ? (
-        <EmptyState 
-          icon={FolderKanban}
-          title={search || statusFilter !== 'all' ? "Geen resultaten" : "Nog geen projecten"}
-          description={search || statusFilter !== 'all' ? "Probeer andere filters" : "Maak je eerste project aan"}
-          action={
-            !search && statusFilter === 'all' && (
-              <Button 
-                onClick={() => setIsDialogOpen(true)}
-                className="bg-[#A8B5A0] hover:bg-[#97A690] text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nieuw Project
-              </Button>
-            )
-          }
-        />
+        <div className="bg-white rounded-lg border border-gray-100 p-16 text-center">
+          <FolderKanban className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-900 font-medium mb-1">No projects found</p>
+          <p className="text-sm text-gray-400">Try adjusting your filters</p>
+        </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="divide-y divide-gray-50">
-            {filteredProjects.map(project => (
-              <div 
-                key={project.id}
-                className="p-6 hover:bg-gray-50/50 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-medium text-gray-900">{project.title}</h3>
-                      <StatusBadge status={project.status} />
-                    </div>
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1.5">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <span>{getClientName(project.client_id)}</span>
-                      </div>
-                      {project.address && (
-                        <div className="flex items-center gap-1.5">
-                          <MapPin className="w-4 h-4 text-gray-400" />
-                          <span>{project.address}</span>
-                        </div>
-                      )}
-                      {project.scheduled_date && (
-                        <div className="flex items-center gap-1.5">
-                          <CalendarIcon className="w-4 h-4 text-gray-400" />
-                          <span>{format(new Date(project.scheduled_date), 'd MMMM yyyy', { locale: nl })}</span>
-                        </div>
-                      )}
-                    </div>
-                    {project.description && (
-                      <p className="mt-2 text-sm text-gray-600 line-clamp-2">{project.description}</p>
-                    )}
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => {
-                        setEditingProject(project);
-                        setIsDialogOpen(true);
-                      }}>
-                        <Pencil className="w-4 h-4 mr-2" />
-                        Bewerken
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => setDeleteId(project.id)}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Verwijderen
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredProjects.map(project => (
+            <div 
+              key={project.id}
+              className="bg-white rounded-lg border border-gray-100 p-5 hover:shadow-sm transition-all group"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-gray-900 truncate">{project.title}</h3>
+                  <p className="text-sm text-gray-500 truncate">{getClientName(project.client_id)}</p>
                 </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => {
+                      setEditingProject(project);
+                      setIsDialogOpen(true);
+                    }}>
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setDeleteId(project.id)}
+                      className="text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            ))}
-          </div>
+
+              <div className="flex items-center justify-between">
+                <StatusBadge status={project.status} />
+                {project.created_date && (
+                  <span className="text-xs text-gray-400">
+                    {format(new Date(project.created_date), 'd MMM yyyy', { locale: nl })}
+                  </span>
+                )}
+              </div>
+
+              {project.address && (
+                <div className="mt-3 pt-3 border-t border-gray-50">
+                  <p className="text-xs text-gray-500 truncate">{project.address}</p>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
@@ -271,12 +240,12 @@ export default function AdminProjects() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {editingProject ? 'Project Bewerken' : 'Nieuw Project'}
+              {editingProject ? 'Edit Project' : 'New Project'}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="title">Titel *</Label>
+              <Label htmlFor="title">Title *</Label>
               <Input
                 id="title"
                 name="title"
@@ -287,19 +256,19 @@ export default function AdminProjects() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="client_id">Klant</Label>
+                <Label htmlFor="client_id">Client</Label>
                 <select
                   id="client_id"
                   name="client_id"
                   defaultValue={editingProject?.client_id || ''}
-                  className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A8B5A0]"
+                  className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
                 >
-                  <option value="">Selecteer klant</option>
+                  <option value="">Select client</option>
                   {clients.map(client => {
                     const user = users.find(u => u.id === client.user_id);
                     return (
                       <option key={client.id} value={client.id}>
-                        {user?.full_name || client.company_name || 'Onbekend'}
+                        {user?.full_name || client.company_name || 'Unknown'}
                       </option>
                     );
                   })}
@@ -310,17 +279,18 @@ export default function AdminProjects() {
                 <select
                   id="status"
                   name="status"
-                  defaultValue={editingProject?.status || 'lead'}
-                  className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A8B5A0]"
+                  defaultValue={editingProject?.status || 'geboekt'}
+                  className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
                 >
-                  <option value="lead">Lead</option>
-                  <option value="in_behandeling">In behandeling</option>
-                  <option value="afgerond">Afgerond</option>
+                  <option value="geboekt">Booked</option>
+                  <option value="shoot_uitgevoerd">Shot</option>
+                  <option value="wordt_bewerkt">Editing</option>
+                  <option value="klaar">Delivered</option>
                 </select>
               </div>
             </div>
             <div>
-              <Label htmlFor="address">Adres</Label>
+              <Label htmlFor="address">Address</Label>
               <Input
                 id="address"
                 name="address"
@@ -329,31 +299,21 @@ export default function AdminProjects() {
               />
             </div>
             <div>
-              <Label htmlFor="scheduled_date">Geplande Datum</Label>
-              <Input
-                id="scheduled_date"
-                name="scheduled_date"
-                type="date"
-                defaultValue={editingProject?.scheduled_date || ''}
-                className="mt-1.5"
-              />
-            </div>
-            <div>
-              <Label htmlFor="description">Omschrijving</Label>
+              <Label htmlFor="notes">Notes</Label>
               <Textarea
-                id="description"
-                name="description"
-                defaultValue={editingProject?.description || ''}
+                id="notes"
+                name="notes"
+                defaultValue={editingProject?.notes || ''}
                 className="mt-1.5"
                 rows={3}
               />
             </div>
             <div className="flex justify-end gap-3 pt-4">
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Annuleren
+                Cancel
               </Button>
-              <Button type="submit" className="bg-[#A8B5A0] hover:bg-[#97A690] text-white">
-                {editingProject ? 'Opslaan' : 'Aanmaken'}
+              <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
+                {editingProject ? 'Save' : 'Create'}
               </Button>
             </div>
           </form>
@@ -364,18 +324,18 @@ export default function AdminProjects() {
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Project Verwijderen</AlertDialogTitle>
+            <AlertDialogTitle>Delete Project</AlertDialogTitle>
             <AlertDialogDescription>
-              Weet je zeker dat je dit project wilt verwijderen? Dit kan niet ongedaan worden gemaakt.
+              Are you sure you want to delete this project? This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteMutation.mutate(deleteId)}
               className="bg-red-600 hover:bg-red-700"
             >
-              Verwijderen
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
