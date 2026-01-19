@@ -596,7 +596,7 @@ export default function Home() {
                   Mijn Account
                 </Link>
               )}
-              <Link to={createPageUrl('AdminLogin')} className="hover:text-white transition-colors">
+              <Link to={createPageUrl('AdminDashboard')} className="hover:text-white transition-colors">
                 Beheer
               </Link>
             </div>
