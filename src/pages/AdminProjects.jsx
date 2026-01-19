@@ -137,7 +137,7 @@ export default function AdminProjects() {
     <div className="max-w-7xl mx-auto">
       {/* Header - Pixieset style */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-light text-gray-900">Projects</h1>
+        <h1 className="text-2xl font-light text-gray-900">Projecten</h1>
         <Button 
           onClick={() => {
             setEditingProject(null);
@@ -146,7 +146,7 @@ export default function AdminProjects() {
           className="bg-green-600 hover:bg-green-700 text-white rounded px-4"
         >
           <Plus className="w-4 h-4 mr-2" />
-          New Project
+          Nieuw Project
         </Button>
       </div>
 
@@ -155,7 +155,7 @@ export default function AdminProjects() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
-            placeholder="Search project or contact name"
+            placeholder="Zoek project of contactnaam"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10 h-10 rounded border-gray-200"
@@ -163,11 +163,11 @@ export default function AdminProjects() {
         </div>
         <Tabs value={statusFilter} onValueChange={setStatusFilter} className="shrink-0">
           <TabsList className="bg-white border border-gray-200 h-10">
-            <TabsTrigger value="all" className="text-sm">All Projects</TabsTrigger>
-            <TabsTrigger value="geboekt" className="text-sm">Booked</TabsTrigger>
-            <TabsTrigger value="shoot_uitgevoerd" className="text-sm">Shot</TabsTrigger>
-            <TabsTrigger value="wordt_bewerkt" className="text-sm">Editing</TabsTrigger>
-            <TabsTrigger value="klaar" className="text-sm">Delivered</TabsTrigger>
+            <TabsTrigger value="all" className="text-sm">Alle Projecten</TabsTrigger>
+            <TabsTrigger value="geboekt" className="text-sm">Geboekt</TabsTrigger>
+            <TabsTrigger value="shoot_uitgevoerd" className="text-sm">Gefotografeerd</TabsTrigger>
+            <TabsTrigger value="wordt_bewerkt" className="text-sm">In Bewerking</TabsTrigger>
+            <TabsTrigger value="klaar" className="text-sm">Afgerond</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -176,8 +176,8 @@ export default function AdminProjects() {
       {filteredProjects.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-100 p-16 text-center">
           <FolderKanban className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-900 font-medium mb-1">No projects found</p>
-          <p className="text-sm text-gray-400">Try adjusting your filters</p>
+          <p className="text-gray-900 font-medium mb-1">Geen projecten gevonden</p>
+          <p className="text-sm text-gray-400">Probeer je filters aan te passen</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -203,14 +203,14 @@ export default function AdminProjects() {
                       setIsDialogOpen(true);
                     }}>
                       <Pencil className="w-4 h-4 mr-2" />
-                      Edit
+                      Bewerken
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => setDeleteId(project.id)}
                       className="text-red-600"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
+                      Verwijderen
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -240,12 +240,12 @@ export default function AdminProjects() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {editingProject ? 'Edit Project' : 'New Project'}
+              {editingProject ? 'Project Bewerken' : 'Nieuw Project'}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="title">Titel *</Label>
               <Input
                 id="title"
                 name="title"
@@ -256,19 +256,19 @@ export default function AdminProjects() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="client_id">Client</Label>
+                <Label htmlFor="client_id">Klant</Label>
                 <select
                   id="client_id"
                   name="client_id"
                   defaultValue={editingProject?.client_id || ''}
                   className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
                 >
-                  <option value="">Select client</option>
+                  <option value="">Selecteer klant</option>
                   {clients.map(client => {
                     const user = users.find(u => u.id === client.user_id);
                     return (
                       <option key={client.id} value={client.id}>
-                        {user?.full_name || client.company_name || 'Unknown'}
+                        {user?.full_name || client.company_name || 'Onbekend'}
                       </option>
                     );
                   })}
@@ -282,15 +282,15 @@ export default function AdminProjects() {
                   defaultValue={editingProject?.status || 'geboekt'}
                   className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
                 >
-                  <option value="geboekt">Booked</option>
-                  <option value="shoot_uitgevoerd">Shot</option>
-                  <option value="wordt_bewerkt">Editing</option>
-                  <option value="klaar">Delivered</option>
+                  <option value="geboekt">Geboekt</option>
+                  <option value="shoot_uitgevoerd">Gefotografeerd</option>
+                  <option value="wordt_bewerkt">In Bewerking</option>
+                  <option value="klaar">Afgerond</option>
                 </select>
               </div>
             </div>
             <div>
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="address">Adres</Label>
               <Input
                 id="address"
                 name="address"
@@ -299,7 +299,7 @@ export default function AdminProjects() {
               />
             </div>
             <div>
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="notes">Notities</Label>
               <Textarea
                 id="notes"
                 name="notes"
@@ -310,10 +310,10 @@ export default function AdminProjects() {
             </div>
             <div className="flex justify-end gap-3 pt-4">
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancel
+                Annuleren
               </Button>
               <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
-                {editingProject ? 'Save' : 'Create'}
+                {editingProject ? 'Opslaan' : 'Aanmaken'}
               </Button>
             </div>
           </form>
@@ -324,9 +324,9 @@ export default function AdminProjects() {
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogTitle>Project Verwijderen</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this project? This cannot be undone.
+              Weet je zeker dat je dit project wilt verwijderen? Dit kan niet ongedaan worden gemaakt.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

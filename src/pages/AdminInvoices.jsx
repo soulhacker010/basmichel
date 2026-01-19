@@ -171,7 +171,7 @@ export default function AdminInvoices() {
     <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-light text-gray-900">Invoices</h1>
+        <h1 className="text-2xl font-light text-gray-900">Facturen</h1>
         <Button 
           onClick={() => {
             setEditingInvoice(null);
@@ -180,22 +180,22 @@ export default function AdminInvoices() {
           className="bg-green-600 hover:bg-green-700 text-white rounded px-4"
         >
           <Plus className="w-4 h-4 mr-2" />
-          New Invoice
+          Nieuwe Factuur
         </Button>
       </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         <div className="bg-white rounded-lg border border-gray-100 p-5">
-          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Paid</p>
+          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Betaald</p>
           <p className="text-2xl font-light text-gray-900">€{totalPaid.toFixed(2)}</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-100 p-5">
-          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Unpaid</p>
+          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Onbetaald</p>
           <p className="text-2xl font-light text-gray-900">€{totalUnpaid.toFixed(2)}</p>
         </div>
         <div className="bg-white rounded-lg border border-gray-100 p-5">
-          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Draft</p>
+          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Concept</p>
           <p className="text-2xl font-light text-gray-900">€{totalDraft.toFixed(2)}</p>
         </div>
       </div>
@@ -205,7 +205,7 @@ export default function AdminInvoices() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
-            placeholder="Search email or contact name"
+            placeholder="Zoek e-mail of contactnaam"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10 h-10 rounded border-gray-200"
@@ -213,10 +213,10 @@ export default function AdminInvoices() {
         </div>
         <Tabs value={statusFilter} onValueChange={setStatusFilter} className="shrink-0">
           <TabsList className="bg-white border border-gray-200 h-10">
-            <TabsTrigger value="all" className="text-sm">All Invoices</TabsTrigger>
-            <TabsTrigger value="concept" className="text-sm">Draft</TabsTrigger>
-            <TabsTrigger value="verzonden" className="text-sm">Unpaid</TabsTrigger>
-            <TabsTrigger value="betaald" className="text-sm">Paid</TabsTrigger>
+            <TabsTrigger value="all" className="text-sm">Alle Facturen</TabsTrigger>
+            <TabsTrigger value="concept" className="text-sm">Concept</TabsTrigger>
+            <TabsTrigger value="verzonden" className="text-sm">Onbetaald</TabsTrigger>
+            <TabsTrigger value="betaald" className="text-sm">Betaald</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -225,19 +225,19 @@ export default function AdminInvoices() {
       {filteredInvoices.length === 0 ? (
         <div className="bg-white rounded-lg border border-gray-100 p-16 text-center">
           <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-900 font-medium mb-1">No invoices found</p>
-          <p className="text-sm text-gray-400">Try adjusting your filters</p>
+          <p className="text-gray-900 font-medium mb-1">Geen facturen gevonden</p>
+          <p className="text-sm text-gray-400">Probeer je filters aan te passen</p>
         </div>
       ) : (
         <div className="bg-white rounded-lg border border-gray-100">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Invoice #</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Client</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Factuur #</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Klant</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Project</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Amount</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Due Date</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Bedrag</th>
+                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Vervaldatum</th>
                 <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
                 <th className="w-8 px-6 py-3"></th>
               </tr>
@@ -245,7 +245,7 @@ export default function AdminInvoices() {
             <tbody className="divide-y divide-gray-50">
               {filteredInvoices.map(invoice => (
                 <tr key={invoice.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{invoice.invoice_number || 'Draft'}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{invoice.invoice_number || 'Concept'}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{getClientName(invoice.client_id)}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">{getProjectTitle(invoice.project_id)}</td>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">€{invoice.total_amount?.toFixed(2)}</td>
@@ -260,9 +260,9 @@ export default function AdminInvoices() {
                       invoice.status === 'verlopen' ? "bg-red-50 text-red-700" :
                       "bg-gray-100 text-gray-600"
                     )}>
-                      {invoice.status === 'betaald' ? 'Paid' :
-                       invoice.status === 'verzonden' ? 'Unpaid' :
-                       invoice.status === 'verlopen' ? 'Overdue' : 'Draft'}
+                      {invoice.status === 'betaald' ? 'Betaald' :
+                       invoice.status === 'verzonden' ? 'Onbetaald' :
+                       invoice.status === 'verlopen' ? 'Verlopen' : 'Concept'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -288,7 +288,7 @@ export default function AdminInvoices() {
                             });
                           }}>
                             <Send className="w-4 h-4 mr-2" />
-                            Send
+                            Versturen
                           </DropdownMenuItem>
                         )}
                         {invoice.status === 'verzonden' && (
@@ -299,7 +299,7 @@ export default function AdminInvoices() {
                             });
                           }}>
                             <CheckCircle2 className="w-4 h-4 mr-2" />
-                            Mark as paid
+                            Markeer als betaald
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuItem 
@@ -324,13 +324,13 @@ export default function AdminInvoices() {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {editingInvoice ? 'Edit Invoice' : 'New Invoice'}
+              {editingInvoice ? 'Factuur Bewerken' : 'Nieuwe Factuur'}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="invoice_number">Invoice Number</Label>
+                <Label htmlFor="invoice_number">Factuurnummer</Label>
                 <Input
                   id="invoice_number"
                   name="invoice_number"
@@ -346,15 +346,15 @@ export default function AdminInvoices() {
                   defaultValue={editingInvoice?.status || 'concept'}
                   className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
                 >
-                  <option value="concept">Draft</option>
-                  <option value="verzonden">Sent</option>
-                  <option value="betaald">Paid</option>
-                  <option value="verlopen">Overdue</option>
+                  <option value="concept">Concept</option>
+                  <option value="verzonden">Verzonden</option>
+                  <option value="betaald">Betaald</option>
+                  <option value="verlopen">Verlopen</option>
                 </select>
               </div>
             </div>
             <div>
-              <Label htmlFor="client_id">Client *</Label>
+              <Label htmlFor="client_id">Klant *</Label>
               <select
                 id="client_id"
                 name="client_id"
@@ -362,7 +362,7 @@ export default function AdminInvoices() {
                 className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
                 required
               >
-                <option value="">Select client</option>
+                <option value="">Selecteer klant</option>
                 {clients.map(client => {
                   const user = users.find(u => u.id === client.user_id);
                   return (
@@ -381,14 +381,14 @@ export default function AdminInvoices() {
                 defaultValue={editingInvoice?.project_id || ''}
                 className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
               >
-                <option value="">Select project</option>
+                <option value="">Selecteer project</option>
                 {projects.map(project => (
                   <option key={project.id} value={project.id}>{project.title}</option>
                 ))}
               </select>
             </div>
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Omschrijving</Label>
               <Input
                 id="description"
                 name="description"
@@ -398,7 +398,7 @@ export default function AdminInvoices() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="amount">Amount (excl. VAT) *</Label>
+                <Label htmlFor="amount">Bedrag (excl. BTW) *</Label>
                 <Input
                   id="amount"
                   name="amount"
@@ -411,7 +411,7 @@ export default function AdminInvoices() {
                 />
               </div>
               <div>
-                <Label htmlFor="invoice_date">Invoice Date</Label>
+                <Label htmlFor="invoice_date">Factuurdatum</Label>
                 <Input
                   id="invoice_date"
                   name="invoice_date"
@@ -423,7 +423,7 @@ export default function AdminInvoices() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="due_date">Due Date</Label>
+                <Label htmlFor="due_date">Vervaldatum</Label>
                 <Input
                   id="due_date"
                   name="due_date"
@@ -433,7 +433,7 @@ export default function AdminInvoices() {
                 />
               </div>
               <div>
-                <Label htmlFor="payment_link">Payment Link</Label>
+                <Label htmlFor="payment_link">Betaallink</Label>
                 <Input
                   id="payment_link"
                   name="payment_link"
@@ -459,9 +459,9 @@ export default function AdminInvoices() {
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
+            <AlertDialogTitle>Factuur Verwijderen</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this invoice?
+              Weet je zeker dat je deze factuur wilt verwijderen?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

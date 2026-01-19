@@ -77,9 +77,9 @@ export default function AdminDashboard() {
 
   const greeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return 'Goedemorgen';
+    if (hour < 18) return 'Goedemiddag';
+    return 'Goedenavond';
   };
 
   return (
@@ -97,9 +97,9 @@ export default function AdminDashboard() {
       {/* Revenue Chart */}
       <div className="bg-white rounded-lg border border-gray-100 p-8 mb-6">
         <div className="mb-6">
-          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Payments</p>
+          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Betalingen</p>
           <p className="text-3xl font-light text-gray-900">€{totalRevenue.toFixed(2)}</p>
-          <p className="text-xs text-gray-400 mt-1">Last 12 months</p>
+          <p className="text-xs text-gray-400 mt-1">Laatste 12 maanden</p>
         </div>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
@@ -128,7 +128,7 @@ export default function AdminDashboard() {
                   borderRadius: '8px',
                   fontSize: '14px'
                 }}
-                formatter={(value) => [`€${value.toFixed(2)}`, 'Revenue']}
+                formatter={(value) => [`€${value.toFixed(2)}`, 'Omzet']}
               />
               <Area 
                 type="monotone" 
@@ -144,7 +144,7 @@ export default function AdminDashboard() {
           to={createPageUrl('AdminInvoices')}
           className="text-sm text-gray-500 hover:text-gray-700 mt-4 inline-block"
         >
-          View invoices
+          Bekijk facturen
         </Link>
       </div>
 
@@ -152,7 +152,7 @@ export default function AdminDashboard() {
         {/* Recent Projects */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-medium text-gray-900">Recent Projects</h2>
+            <h2 className="text-base font-medium text-gray-900">Recente Projecten</h2>
             <Link 
               to={createPageUrl('AdminProjects')}
               className="text-sm text-gray-500 hover:text-gray-700"
@@ -163,7 +163,7 @@ export default function AdminDashboard() {
           {projects.length === 0 ? (
             <div className="bg-white rounded-lg border border-gray-100 p-12 text-center">
               <FolderKanban className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-400">No projects yet</p>
+              <p className="text-sm text-gray-400">Nog geen projecten</p>
             </div>
           ) : (
             <div className="bg-white rounded-lg border border-gray-100 divide-y divide-gray-50">
@@ -185,7 +185,7 @@ export default function AdminDashboard() {
         {/* Recent Galleries */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-medium text-gray-900">Recent Galleries</h2>
+            <h2 className="text-base font-medium text-gray-900">Recente Galerijen</h2>
             <Link 
               to={createPageUrl('AdminGalleries')}
               className="text-sm text-gray-500 hover:text-gray-700"
@@ -196,7 +196,7 @@ export default function AdminDashboard() {
           {galleries.length === 0 ? (
             <div className="bg-white rounded-lg border border-gray-100 p-12 text-center">
               <Images className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-400">No galleries yet</p>
+              <p className="text-sm text-gray-400">Nog geen galerijen</p>
             </div>
           ) : (
             <div className="bg-white rounded-lg border border-gray-100 divide-y divide-gray-50">
