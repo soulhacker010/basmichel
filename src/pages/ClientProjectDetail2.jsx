@@ -6,16 +6,21 @@ import { createPageUrl } from '@/utils';
 import { 
   ArrowLeft,
   MapPin,
-  Calendar,
   Download,
   CheckCircle2,
-  Eye,
-  Loader2
+  Loader2,
+  ChevronDown,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 const statusSteps = [
   { key: 'geboekt', label: 'Geboekt' },
@@ -24,17 +29,18 @@ const statusSteps = [
   { key: 'klaar', label: 'Klaar' },
 ];
 
-const fileCategories = [
-  { key: 'raw_fotos', label: 'Raw Foto\'s' },
-  { key: 'raw_videos', label: 'Raw Video\'s' },
-  { key: '360_fotos', label: '360° Foto\'s' },
-  { key: 'pointcloud', label: 'Pointcloud' },
+const deliveryCategories = [
+  { key: 'bewerkte_fotos', label: 'Bewerkte foto\'s' },
+  { key: 'bewerkte_videos', label: 'Bewerkte video\'s' },
+  { key: '360_matterport', label: '360° / Matterport' },
+  { key: 'meetrapport', label: 'Meetrapport' },
 ];
 
 export default function ClientProjectDetail2() {
   const [user, setUser] = useState(null);
   const [clientId, setClientId] = useState(null);
   const [selectedFiles, setSelectedFiles] = useState({});
+  const [deliveryOpen, setDeliveryOpen] = useState(true);
 
   const urlParams = new URLSearchParams(window.location.search);
   const projectId = urlParams.get('id');
@@ -78,15 +84,6 @@ export default function ClientProjectDetail2() {
     enabled: !!project?.client_id,
   });
 
-  const { data: clientUser } = useQuery({
-    queryKey: ['clientUser', client?.user_id],
-    queryFn: async () => {
-      const users = await base44.entities.User.filter({ id: client.user_id });
-      return users?.[0];
-    },
-    enabled: !!client?.user_id,
-  });
-
   const { data: booking } = useQuery({
     queryKey: ['booking', project?.booking_id],
     queryFn: async () => {
@@ -99,6 +96,15 @@ export default function ClientProjectDetail2() {
   const { data: projectFiles = [] } = useQuery({
     queryKey: ['projectFiles', projectId],
     queryFn: () => base44.entities.ProjectFile.filter({ project_id: projectId }),
+    enabled: !!projectId && project?.status === 'klaar',
+  });
+
+  const { data: projectInvoice } = useQuery({
+    queryKey: ['projectInvoice', projectId],
+    queryFn: async () => {
+      const invoices = await base44.entities.ProjectInvoice.filter({ project_id: projectId });
+      return invoices?.[0];
+    },
     enabled: !!projectId && project?.status === 'klaar',
   });
 
@@ -157,6 +163,10 @@ export default function ClientProjectDetail2() {
     }
   };
 
+  const deliveryFiles = projectFiles.filter(f => 
+    ['bewerkte_fotos', 'bewerkte_videos', '360_matterport', 'meetrapport'].includes(f.category)
+  );
+
   return (
     <div className="max-w-5xl mx-auto">
       <Link 
@@ -179,11 +189,11 @@ export default function ClientProjectDetail2() {
               </div>
             )}
           </div>
-          {project.delivery_datetime && project.status !== 'klaar' && (
+          {project.delivery_date && project.status !== 'klaar' && (
             <div className="text-left md:text-right bg-[#F8FAF7] rounded-xl px-5 py-3">
               <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Verwachte levering</p>
               <p className="font-medium text-[#5C6B52]">
-                {format(new Date(project.delivery_datetime), 'd MMMM yyyy', { locale: nl })}
+                {format(new Date(project.delivery_date), 'd MMMM yyyy', { locale: nl })}
               </p>
             </div>
           )}
@@ -233,6 +243,10 @@ export default function ClientProjectDetail2() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
+            <p className="text-sm text-gray-400 mb-1">Projectnummer</p>
+            <p className="font-medium text-gray-900">{project.project_number || '-'}</p>
+          </div>
+          <div>
             <p className="text-sm text-gray-400 mb-1">Projectnaam</p>
             <p className="font-medium text-gray-900">{project.title}</p>
           </div>
@@ -240,94 +254,158 @@ export default function ClientProjectDetail2() {
             <p className="text-sm text-gray-400 mb-1">Adres object</p>
             <p className="font-medium text-gray-900">{project.address || '-'}</p>
           </div>
-          {booking && (
-            <>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Boekingsdatum</p>
-                <p className="font-medium text-gray-900">
-                  {format(new Date(booking.start_datetime), 'd MMMM yyyy', { locale: nl })}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Starttijd</p>
-                <p className="font-medium text-gray-900">
-                  {format(new Date(booking.start_datetime), 'HH:mm')}
-                </p>
-              </div>
-            </>
+          <div>
+            <p className="text-sm text-gray-400 mb-1">Shootdatum</p>
+            <p className="font-medium text-gray-900">
+              {project.shoot_date ? format(new Date(project.shoot_date), 'd MMMM yyyy', { locale: nl }) : 
+               booking?.start_datetime ? format(new Date(booking.start_datetime), 'd MMMM yyyy', { locale: nl }) : '-'}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-400 mb-1">Starttijd</p>
+            <p className="font-medium text-gray-900">
+              {project.shoot_time || 
+               (booking?.start_datetime ? format(new Date(booking.start_datetime), 'HH:mm') : '-')}
+            </p>
+          </div>
+          {project.delivery_date && (
+            <div>
+              <p className="text-sm text-gray-400 mb-1">Verwachte opleverdatum</p>
+              <p className="font-medium text-gray-900">
+                {format(new Date(project.delivery_date), 'd MMMM yyyy', { locale: nl })}
+              </p>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Files Section - Only visible when status is "klaar" */}
-      {project.status === 'klaar' && projectFiles.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-6">Bestanden</h2>
-          
-          <div className="space-y-8">
-            {fileCategories.map(category => {
-              const categoryFiles = projectFiles.filter(f => f.category === category.key);
-              if (categoryFiles.length === 0) return null;
+      {/* Bewerkte Opleverbestanden - Only when status is "klaar" */}
+      {project.status === 'klaar' && deliveryFiles.length > 0 && (
+        <Collapsible open={deliveryOpen} onOpenChange={setDeliveryOpen} className="mb-8">
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <CollapsibleTrigger className="w-full px-8 py-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
+              <h2 className="text-lg font-medium text-gray-900">Bewerkte Opleverbestanden</h2>
+              <ChevronDown className={cn("w-5 h-5 text-gray-400 transition-transform", deliveryOpen && "rotate-180")} />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-8 pb-8 space-y-6">
+                {deliveryCategories.map(category => {
+                  const categoryFiles = projectFiles.filter(f => f.category === category.key);
+                  if (categoryFiles.length === 0) return null;
 
-              const selectedCount = categoryFiles.filter(f => selectedFiles[f.id]).length;
-              const allSelected = categoryFiles.every(f => selectedFiles[f.id]);
+                  const selectedCount = categoryFiles.filter(f => selectedFiles[f.id]).length;
+                  const allSelected = categoryFiles.every(f => selectedFiles[f.id]);
 
-              return (
-                <div key={category.key} className="border border-gray-100 rounded-xl p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base font-medium text-gray-900">{category.label}</h3>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => selectAllInCategory(category.key)}
-                      >
-                        {allSelected ? 'Deselecteer alles' : 'Alles selecteren'}
-                      </Button>
-                      {selectedCount > 0 && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleDownloadSelected(category.key)}
-                          className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Download ({selectedCount})
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-2">
-                    {categoryFiles.map(file => (
-                      <div 
-                        key={file.id}
-                        className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={!!selectedFiles[file.id]}
-                          onChange={() => toggleFileSelection(file.id)}
-                          className="w-4 h-4 rounded border-gray-300"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{file.filename}</p>
-                          <p className="text-xs text-gray-400">
-                            {(file.file_size / 1024 / 1024).toFixed(2)} MB
-                          </p>
+                  return (
+                    <div key={category.key} className="border border-gray-100 rounded-xl p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-base font-medium text-gray-900">{category.label}</h3>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => selectAllInCategory(category.key)}
+                          >
+                            {allSelected ? 'Deselecteer alles' : 'Alles selecteren'}
+                          </Button>
+                          {selectedCount > 0 && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleDownloadSelected(category.key)}
+                              className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Download ({selectedCount})
+                            </Button>
+                          )}
                         </div>
-                        <a 
-                          href={file.file_url}
-                          download={file.filename}
-                          className="text-[#5C6B52] hover:text-[#4A5641]"
-                        >
-                          <Download className="w-4 h-4" />
-                        </a>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+
+                      <div className="grid grid-cols-1 gap-2">
+                        {categoryFiles.map(file => (
+                          <div 
+                            key={file.id}
+                            className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={!!selectedFiles[file.id]}
+                              onChange={() => toggleFileSelection(file.id)}
+                              className="w-4 h-4 rounded border-gray-300"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{file.filename}</p>
+                              <p className="text-xs text-gray-400">
+                                {(file.file_size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                            <a 
+                              href={file.file_url}
+                              download={file.filename}
+                              className="text-[#5C6B52] hover:text-[#4A5641]"
+                            >
+                              <Download className="w-4 h-4" />
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CollapsibleContent>
+          </div>
+        </Collapsible>
+      )}
+
+      {/* Factuur - Only when status is "klaar" */}
+      {project.status === 'klaar' && projectInvoice && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-[#E8EDE5] flex items-center justify-center">
+              <FileText className="w-5 h-5 text-[#5C6B52]" />
+            </div>
+            <h2 className="text-lg font-medium text-gray-900">Factuur</h2>
+          </div>
+
+          <div className="border border-gray-100 rounded-xl p-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <p className="text-sm text-gray-400 mb-1">Factuurnummer</p>
+                <p className="font-medium text-gray-900">{projectInvoice.invoice_number}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-400 mb-1">Datum</p>
+                <p className="font-medium text-gray-900">
+                  {format(new Date(projectInvoice.invoice_date), 'd MMMM yyyy', { locale: nl })}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-400 mb-1">Bedrag (excl. BTW)</p>
+                <p className="font-medium text-gray-900">€ {projectInvoice.amount?.toFixed(2)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-400 mb-1">BTW</p>
+                <p className="font-medium text-gray-900">€ {projectInvoice.vat_amount?.toFixed(2)}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-sm text-gray-400 mb-1">Totaalbedrag</p>
+                <p className="font-medium text-gray-900 text-2xl">€ {projectInvoice.total_amount?.toFixed(2)}</p>
+              </div>
+            </div>
+            {projectInvoice.description && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <p className="text-sm text-gray-400 mb-1">Omschrijving</p>
+                <p className="text-sm text-gray-900">{projectInvoice.description}</p>
+              </div>
+            )}
+            {projectInvoice.status !== 'betaald' && (
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <Button className="w-full bg-[#5C6B52] hover:bg-[#4A5641] text-white">
+                  Factuur Betalen
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )}
