@@ -501,7 +501,7 @@ Basmichel
 
           <Button 
             onClick={handleSubmit}
-            disabled={isSubmitting || !formData.address || !formData.city}
+            disabled={isSubmitting || !selectedService || !selectedDate || !selectedTime || !formData.address || !formData.city}
             className="w-full bg-[#5C6B52] hover:bg-[#4A5A42] text-white h-14 rounded-full text-base"
           >
             {isSubmitting ? (
