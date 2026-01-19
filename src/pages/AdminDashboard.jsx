@@ -157,7 +157,7 @@ export default function AdminDashboard() {
               to={createPageUrl('AdminProjects')}
               className="text-sm text-gray-500 hover:text-gray-700"
             >
-              View all
+              Bekijk alle
             </Link>
           </div>
           {projects.length === 0 ? (
@@ -190,7 +190,7 @@ export default function AdminDashboard() {
               to={createPageUrl('AdminGalleries')}
               className="text-sm text-gray-500 hover:text-gray-700"
             >
-              View all
+              Bekijk alle
             </Link>
           </div>
           {galleries.length === 0 ? (
