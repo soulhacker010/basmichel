@@ -62,8 +62,8 @@ export default function ClientBooking() {
   }, [user, clients]);
 
   const { data: serviceTypes = [] } = useQuery({
-    queryKey: ['serviceTypes'],
-    queryFn: () => base44.entities.ServiceType.filter({ is_active: true }, 'order'),
+    queryKey: ['sessionTypes'],
+    queryFn: () => base44.entities.SessionType.filter({ is_active: true }),
   });
 
   const { data: existingBookings = [] } = useQuery({
@@ -146,24 +146,19 @@ export default function ClientBooking() {
         status: 'geboekt',
       });
 
-      // Create booking
-      const booking = await base44.entities.Booking.create({
-        project_id: project.id,
+      // Create session
+      const session = await base44.entities.Session.create({
+        session_type_id: selectedService.id,
         client_id: clientId,
-        service_type: selectedService.slug,
+        project_id: project.id,
         start_datetime: startDatetime.toISOString(),
         end_datetime: endDatetime.toISOString(),
-        duration_minutes: selectedService.duration_minutes || 60,
         status: 'bevestigd',
-        address: formData.address,
-        city: formData.city,
+        location: `${formData.address}${formData.city ? `, ${formData.city}` : ''}`,
         notes: formData.notes,
       });
 
-      // Update project with booking id
-      await base44.entities.Project.update(project.id, {
-        booking_id: booking.id
-      });
+
 
       // Create notification
       await base44.entities.Notification.create({
