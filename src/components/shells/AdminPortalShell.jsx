@@ -15,7 +15,8 @@ import {
   Menu,
   X,
   LogOut,
-  Tag
+  Tag,
+  Inbox
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -23,6 +24,7 @@ import NotificationCenter from '@/components/notifications/NotificationCenter';
 
 const adminPages = [
   { name: 'Overzicht', page: 'AdminDashboard', path: '/admin/overzicht', icon: LayoutDashboard },
+  { name: 'Inbox', page: 'AdminInbox', path: '/admin/inbox', icon: Inbox },
   { name: 'Projecten', page: 'AdminProjects', path: '/admin/projecten', icon: FolderKanban },
   { name: 'Klanten', page: 'AdminClients', path: '/admin/klanten', icon: Users },
   { name: 'Galerijen', page: 'AdminGalleries', path: '/admin/galerijen', icon: Images },

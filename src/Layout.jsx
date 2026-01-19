@@ -16,6 +16,7 @@ const clientPages = [
 
 const adminPages = [
   'AdminDashboard',
+  'AdminInbox',
   'AdminProjects',
   'AdminClients',
   'AdminGalleries',
