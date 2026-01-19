@@ -215,15 +215,14 @@ export default function Home() {
                   </Button>
                 </Link>
               ) : (
-                <Link to={createPageUrl('ClientDashboard')}>
-                  <Button 
-                    className={`rounded px-6 h-9 text-sm transition-colors ${
-                      scrolled ? 'bg-black hover:bg-gray-900 text-white' : 'bg-white hover:bg-gray-100 text-black'
-                    }`}
-                  >
-                    Inloggen voor Makelaars
-                  </Button>
-                </Link>
+                <Button 
+                  onClick={handleLogin} 
+                  className={`rounded px-6 h-9 text-sm transition-colors ${
+                    scrolled ? 'bg-black hover:bg-gray-900 text-white' : 'bg-white hover:bg-gray-100 text-black'
+                  }`}
+                >
+                  Inloggen voor Makelaars
+                </Button>
               )}
             </div>
 
@@ -596,9 +595,11 @@ export default function Home() {
                   Mijn Account
                 </Link>
               )}
-              <Link to={createPageUrl('AdminDashboard')} className="hover:text-white transition-colors">
-                Beheer
-              </Link>
+              {(!isAuthenticated || user?.role === 'admin') && (
+                <Link to={createPageUrl('AdminLogin')} className="hover:text-white transition-colors">
+                  Beheer
+                </Link>
+              )}
             </div>
           </div>
         </div>
