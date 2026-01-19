@@ -139,142 +139,144 @@ export default function AdminClients() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <PageHeader 
-        title="Klanten"
-        description="Beheer je klanten en hun gegevens"
-        actions={
-          <div className="flex gap-2">
-            <Button 
-              variant="outline"
-              onClick={() => setIsInviteDialogOpen(true)}
-              className="border-[#A8B5A0] text-[#5C6B52] hover:bg-[#E8EDE5]"
-            >
-              <UserPlus className="w-4 h-4 mr-2" />
-              Klant Uitnodigen
-            </Button>
-            <Button 
-              onClick={() => {
-                setEditingClient(null);
-                setIsDialogOpen(true);
-              }}
-              className="bg-[#A8B5A0] hover:bg-[#97A690] text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Nieuwe Klant
-            </Button>
-          </div>
-        }
-      />
-
-      {/* Search */}
-      <div className="mb-6">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            placeholder="Zoek op naam, e-mail of bedrijf..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      {/* Clients Grid */}
-      {filteredClients.length === 0 ? (
-        <EmptyState 
-          icon={Users}
-          title={search ? "Geen resultaten" : "Nog geen klanten"}
-          description={search ? "Probeer een andere zoekopdracht" : "Nodig je eerste klant uit om te beginnen"}
-          action={
-            !search && (
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-light text-gray-900 mb-2">Klanten</h1>
+              <p className="text-gray-500">Beheer je klanten en hun gegevens</p>
+            </div>
+            <div className="flex gap-3">
               <Button 
+                variant="outline"
                 onClick={() => setIsInviteDialogOpen(true)}
-                className="bg-[#A8B5A0] hover:bg-[#97A690] text-white"
+                className="border-gray-200 hover:border-[#A8B5A0] hover:bg-white/80"
               >
                 <UserPlus className="w-4 h-4 mr-2" />
                 Klant Uitnodigen
               </Button>
-            )
-          }
-        />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredClients.map(client => {
-            const user = getClientUser(client);
-            return (
-              <div 
-                key={client.id}
-                className="bg-white rounded-xl border border-gray-100 p-6 hover:shadow-sm transition-shadow"
+              <Button 
+                onClick={() => {
+                  setEditingClient(null);
+                  setIsDialogOpen(true);
+                }}
+                className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-[#E8EDE5] flex items-center justify-center">
-                      <span className="text-lg font-medium text-[#5C6B52]">
-                        {user?.full_name?.charAt(0) || '?'}
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">{user?.full_name || 'Onbekend'}</h3>
-                      {client.company_name && (
-                        <p className="text-sm text-gray-500">{client.company_name}</p>
-                      )}
-                    </div>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => {
-                        setEditingClient(client);
-                        setIsDialogOpen(true);
-                      }}>
-                        <Pencil className="w-4 h-4 mr-2" />
-                        Bewerken
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => setDeleteId(client.id)}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Verwijderen
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                <Plus className="w-4 h-4 mr-2" />
+                Nieuwe Klant
+              </Button>
+            </div>
+          </div>
 
-                <div className="space-y-2 text-sm">
-                  {user?.email && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Mail className="w-4 h-4 text-gray-400" />
-                      <span className="truncate">{user.email}</span>
-                    </div>
-                  )}
-                  {client.phone && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Phone className="w-4 h-4 text-gray-400" />
-                      <span>{client.phone}</span>
-                    </div>
-                  )}
-                  {client.company_name && (
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Building2 className="w-4 h-4 text-gray-400" />
-                      <span>{client.company_name}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-gray-50 text-xs text-gray-400">
-                  Toegevoegd op {client.created_date && format(new Date(client.created_date), 'd MMMM yyyy', { locale: nl })}
-                </div>
-              </div>
-            );
-          })}
+          {/* Search */}
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Zoek op naam, e-mail of bedrijf..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 bg-white/80 border-gray-200"
+            />
+          </div>
         </div>
-      )}
+
+        {/* Clients Grid */}
+        {filteredClients.length === 0 ? (
+          <EmptyState 
+            icon={Users}
+            title={search ? "Geen resultaten" : "Nog geen klanten"}
+            description={search ? "Probeer een andere zoekopdracht" : "Nodig je eerste klant uit om te beginnen"}
+            action={
+              !search && (
+                <Button 
+                  onClick={() => setIsInviteDialogOpen(true)}
+                  className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Klant Uitnodigen
+                </Button>
+              )
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredClients.map(client => {
+              const user = getClientUser(client);
+              return (
+                <div 
+                  key={client.id}
+                  className="group bg-white/80 backdrop-blur-sm rounded-lg border border-gray-100 p-6 hover:shadow-md transition-all duration-300 hover:border-[#A8B5A0]/30"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#E8EDE5] to-[#D5DDD0] flex items-center justify-center">
+                        <span className="text-lg font-light text-[#5C6B52]">
+                          {user?.full_name?.charAt(0) || '?'}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="font-light text-gray-900">{user?.full_name || 'Onbekend'}</h3>
+                        {client.company_name && (
+                          <p className="text-sm text-gray-500">{client.company_name}</p>
+                        )}
+                      </div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => {
+                          setEditingClient(client);
+                          setIsDialogOpen(true);
+                        }}>
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Bewerken
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => setDeleteId(client.id)}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Verwijderen
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  <div className="space-y-2 text-sm">
+                    {user?.email && (
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Mail className="w-4 h-4 text-gray-400" />
+                        <span className="truncate">{user.email}</span>
+                      </div>
+                    )}
+                    {client.phone && (
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Phone className="w-4 h-4 text-gray-400" />
+                        <span>{client.phone}</span>
+                      </div>
+                    )}
+                    {client.company_name && (
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Building2 className="w-4 h-4 text-gray-400" />
+                        <span>{client.company_name}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-gray-50 text-xs text-gray-400">
+                    Toegevoegd op {client.created_date && format(new Date(client.created_date), 'd MMMM yyyy', { locale: nl })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -333,7 +335,7 @@ export default function AdminClients() {
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Annuleren
               </Button>
-              <Button type="submit" className="bg-[#A8B5A0] hover:bg-[#97A690] text-white">
+              <Button type="submit" className="bg-[#5C6B52] hover:bg-[#4A5641] text-white">
                 {editingClient ? 'Opslaan' : 'Aanmaken'}
               </Button>
             </div>
@@ -369,7 +371,7 @@ export default function AdminClients() {
               </Button>
               <Button 
                 type="submit" 
-                className="bg-[#A8B5A0] hover:bg-[#97A690] text-white"
+                className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
                 disabled={inviteLoading}
               >
                 {inviteLoading ? 'Uitnodigen...' : 'Uitnodigen'}
