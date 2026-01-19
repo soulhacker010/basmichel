@@ -81,13 +81,161 @@ export default function Contact() {
         to: 'basmichelsite@gmail.com',
         subject: 'Nieuw contactformulier bericht',
         body: `
-Naam: ${data.name}
-Bedrijf: ${data.company || 'Niet opgegeven'}
-E-mail: ${data.email}
-Telefoon: ${data.phone || 'Niet opgegeven'}
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    background-color: #f4f6f8;
+    margin: 0;
+    padding: 0;
+  }
+  .email-container {
+    max-width: 600px;
+    margin: 40px auto;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+  .header {
+    background: linear-gradient(135deg, #5C6B52 0%, #4A5641 100%);
+    color: #ffffff;
+    padding: 32px 30px;
+    text-align: center;
+  }
+  .header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: -0.5px;
+  }
+  .content {
+    padding: 32px 40px;
+    line-height: 1.6;
+    color: #333333;
+  }
+  .intro {
+    color: #666666;
+    margin-bottom: 24px;
+    font-size: 15px;
+  }
+  .data-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .data-item {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e9ecef;
+  }
+  .data-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  .data-item strong {
+    color: #5C6B52;
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .data-item p {
+    margin: 0;
+    color: #212529;
+    font-size: 15px;
+  }
+  .message-box {
+    background-color: #ffffff;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+  .message-box strong {
+    color: #5C6B52;
+    display: block;
+    margin-bottom: 12px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .message-box p {
+    margin: 0;
+    color: #212529;
+    font-size: 15px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+  .footer {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    text-align: center;
+    padding: 20px;
+    font-size: 13px;
+    border-top: 1px solid #e9ecef;
+  }
+  .cta-link {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 12px 24px;
+    background-color: #5C6B52;
+    color: #ffffff !important;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="header">
+      <h2>📬 Nieuw Contactformulier Bericht</h2>
+    </div>
+    <div class="content">
+      <p class="intro">Er is een nieuw bericht ontvangen via het contactformulier op basmichel.nl:</p>
+      
+      <div class="data-section">
+        <div class="data-item">
+          <strong>Naam</strong>
+          <p>${data.name}</p>
+        </div>
+        
+        <div class="data-item">
+          <strong>Bedrijf</strong>
+          <p>${data.company || 'Niet opgegeven'}</p>
+        </div>
+        
+        <div class="data-item">
+          <strong>E-mail</strong>
+          <p><a href="mailto:${data.email}" style="color: #5C6B52; text-decoration: none;">${data.email}</a></p>
+        </div>
+        
+        <div class="data-item">
+          <strong>Telefoon</strong>
+          <p>${data.phone || 'Niet opgegeven'}</p>
+        </div>
+      </div>
 
-Bericht:
-${data.message}
+      <div class="message-box">
+        <strong>Bericht</strong>
+        <p>${data.message}</p>
+      </div>
+    </div>
+    <div class="footer">
+      Dit is een automatisch gegenereerd bericht van Bas Michel Photography
+    </div>
+  </div>
+</body>
+</html>
         `,
       });
 
