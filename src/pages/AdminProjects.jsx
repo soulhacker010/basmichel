@@ -44,6 +44,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 export default function AdminProjects() {
   const [search, setSearch] = useState('');
@@ -70,11 +71,37 @@ export default function AdminProjects() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Project.create(data),
+    mutationFn: async (data) => {
+      // Generate project number
+      const projectNumber = `PRJ-${Date.now()}`;
+      const projectData = {
+        ...data,
+        project_number: projectNumber,
+        title: data.address, // Title = Address
+      };
+      
+      const project = await base44.entities.Project.create(projectData);
+      
+      // Create booking/agenda item
+      if (data.shoot_date && data.shoot_time) {
+        const shootDateTime = new Date(`${data.shoot_date}T${data.shoot_time}`);
+        await base44.entities.Booking.create({
+          project_id: project.id,
+          client_id: data.client_id,
+          service_type: 'woningfotografie',
+          start_datetime: shootDateTime.toISOString(),
+          status: 'bevestigd',
+          address: data.address,
+        });
+      }
+      
+      return project;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setIsDialogOpen(false);
       setEditingProject(null);
+      toast.success('Project aangemaakt');
     },
   });
 
@@ -84,6 +111,7 @@ export default function AdminProjects() {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setIsDialogOpen(false);
       setEditingProject(null);
+      toast.success('Project bijgewerkt');
     },
   });
 
@@ -105,15 +133,31 @@ export default function AdminProjects() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    
+    const address = formData.get('address');
+    const shoot_date = formData.get('shoot_date');
+    const shoot_time = formData.get('shoot_time');
+    const client_id = formData.get('client_id');
+    
+    // Validation for create
+    if (!editingProject) {
+      if (!address || !shoot_date || !shoot_time || !client_id) {
+        toast.error('Vul alle verplichte velden in');
+        return;
+      }
+    }
+    
     const data = {
-      title: formData.get('title'),
-      client_id: formData.get('client_id'),
+      address,
+      shoot_date,
+      shoot_time,
+      client_id,
       status: formData.get('status'),
       notes: formData.get('notes'),
-      address: formData.get('address'),
     };
 
     if (editingProject) {
+      data.title = formData.get('title');
       updateMutation.mutate({ id: editingProject.id, data });
     } else {
       createMutation.mutate(data);
@@ -256,68 +300,122 @@ export default function AdminProjects() {
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="title">Titel *</Label>
-              <Input
-                id="title"
-                name="title"
-                defaultValue={editingProject?.title || ''}
-                className="mt-1.5"
-                required
-              />
-            </div>
+            {/* Address Field - First and Required (only for new projects) */}
+            {!editingProject && (
+              <div>
+                <Label htmlFor="address">Adres *</Label>
+                <Input
+                  id="address"
+                  name="address"
+                  placeholder="Straatnaam huisnummer, Plaatsnaam"
+                  className="mt-1.5"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">Dit wordt de projecttitel</p>
+              </div>
+            )}
+
+            {/* Title - Only for editing */}
+            {editingProject && (
+              <div>
+                <Label htmlFor="title">Titel *</Label>
+                <Input
+                  id="title"
+                  name="title"
+                  defaultValue={editingProject?.title || ''}
+                  className="mt-1.5"
+                  required
+                />
+              </div>
+            )}
+
+            {/* Shoot Date and Time */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="client_id">Klant</Label>
-                <select
-                  id="client_id"
-                  name="client_id"
-                  defaultValue={editingProject?.client_id || ''}
-                  className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
-                >
-                  <option value="">Selecteer klant</option>
-                  {clients.map(client => {
-                    const user = users.find(u => u.id === client.user_id);
-                    return (
-                      <option key={client.id} value={client.id}>
-                        {user?.full_name || client.company_name || 'Onbekend'}
-                      </option>
-                    );
-                  })}
-                </select>
+                <Label htmlFor="shoot_date">Shootdatum {!editingProject && '*'}</Label>
+                <Input
+                  id="shoot_date"
+                  name="shoot_date"
+                  type="date"
+                  defaultValue={editingProject?.shoot_date || ''}
+                  className="mt-1.5"
+                  required={!editingProject}
+                />
               </div>
               <div>
-                <Label htmlFor="status">Status</Label>
-                <select
-                  id="status"
-                  name="status"
-                  defaultValue={editingProject?.status || 'geboekt'}
-                  className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
-                >
-                  <option value="geboekt">Geboekt</option>
-                  <option value="shoot_uitgevoerd">Shoot uitgevoerd</option>
-                  <option value="wordt_bewerkt">Wordt bewerkt</option>
-                  <option value="klaar">Klaar</option>
-                </select>
+                <Label htmlFor="shoot_time">Starttijd {!editingProject && '*'}</Label>
+                <Input
+                  id="shoot_time"
+                  name="shoot_time"
+                  type="time"
+                  defaultValue={editingProject?.shoot_time || ''}
+                  className="mt-1.5"
+                  required={!editingProject}
+                />
               </div>
             </div>
+
+            {/* Client */}
             <div>
-              <Label htmlFor="address">Adres</Label>
-              <Input
-                id="address"
-                name="address"
-                defaultValue={editingProject?.address || ''}
-                className="mt-1.5"
-              />
+              <Label htmlFor="client_id">Klant *</Label>
+              <select
+                id="client_id"
+                name="client_id"
+                defaultValue={editingProject?.client_id || ''}
+                className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
+                required
+              >
+                <option value="">Selecteer klant</option>
+                {clients.map(client => {
+                  const user = users.find(u => u.id === client.user_id);
+                  return (
+                    <option key={client.id} value={client.id}>
+                      {user?.full_name || client.company_name || 'Onbekend'}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
+
+            {/* Status */}
             <div>
-              <Label htmlFor="notes">Notities</Label>
+              <Label htmlFor="status">Status</Label>
+              <select
+                id="status"
+                name="status"
+                defaultValue={editingProject?.status || 'geboekt'}
+                className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
+              >
+                <option value="geboekt">Geboekt</option>
+                <option value="shoot_uitgevoerd">Shoot uitgevoerd</option>
+                <option value="wordt_bewerkt">Wordt bewerkt</option>
+                <option value="klaar">Klaar</option>
+              </select>
+            </div>
+
+            {/* Address - For editing only */}
+            {editingProject && (
+              <div>
+                <Label htmlFor="address">Adres</Label>
+                <Input
+                  id="address"
+                  name="address"
+                  defaultValue={editingProject?.address || ''}
+                  className="mt-1.5"
+                />
+              </div>
+            )}
+
+            {/* Internal Notes */}
+            <div>
+              <Label htmlFor="notes">Interne notities</Label>
               <Textarea
                 id="notes"
                 name="notes"
                 defaultValue={editingProject?.notes || ''}
                 className="mt-1.5"
                 rows={3}
+                placeholder="Notities voor intern gebruik..."
               />
             </div>
             <div className="flex justify-end gap-3 pt-4">
