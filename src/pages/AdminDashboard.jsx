@@ -216,48 +216,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Upcoming Sessions */}
-      <div className="mt-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-medium text-gray-900">Upcoming Sessions</h2>
-          <Link 
-            to={createPageUrl('AdminBookings')}
-            className="text-sm text-gray-500 hover:text-gray-700"
-          >
-            View calendar
-          </Link>
-        </div>
-        {upcomingSessions.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-100 p-12 text-center">
-            <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-sm text-gray-400">No upcoming sessions</p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg border border-gray-100 divide-y divide-gray-50">
-            {upcomingSessions.map(session => (
-              <div key={session.id} className="p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
-                <div className="w-14 h-14 rounded bg-gray-50 flex flex-col items-center justify-center flex-shrink-0">
-                  <span className="text-xs text-gray-400 uppercase">
-                    {format(new Date(session.start_datetime), 'MMM', { locale: nl })}
-                  </span>
-                  <span className="text-xl font-light text-gray-900">
-                    {format(new Date(session.start_datetime), 'd')}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{session.location || 'Location TBD'}</p>
-                  <p className="text-xs text-gray-500">
-                    {format(new Date(session.start_datetime), 'EEEE', { locale: nl })}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {format(new Date(session.start_datetime), 'HH:mm')} - {format(new Date(session.end_datetime), 'HH:mm')}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+
     </div>
   );
 }
