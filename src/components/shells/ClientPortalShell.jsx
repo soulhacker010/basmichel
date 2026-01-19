@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
 
 const clientPages = [
   { name: 'Dashboard', page: 'ClientDashboard', path: '/client/dashboard', icon: LayoutDashboard },
@@ -46,6 +47,12 @@ export default function ClientPortalShell({ children, currentPageName }) {
         }
         
         setUser(userData);
+        
+        // Get client ID
+        const clients = await base44.entities.Client.filter({ user_id: userData.id });
+        if (clients.length > 0) {
+          setClientId(clients[0].id);
+        }
       } catch (e) {
         window.location.href = createPageUrl('Login');
       } finally {
@@ -82,7 +89,9 @@ export default function ClientPortalShell({ children, currentPageName }) {
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
         <span className="font-light text-gray-900 tracking-wide">Basmichel</span>
-        <div className="w-9" />
+        {user && clientId && (
+          <NotificationCenter userId={user.id} clientId={clientId} />
+        )}
       </div>
 
       {/* Sidebar Overlay */}
@@ -153,6 +162,9 @@ export default function ClientPortalShell({ children, currentPageName }) {
                   <p className="text-sm font-medium text-gray-900 truncate">{user.full_name || 'Gebruiker'}</p>
                   <p className="text-xs text-gray-400 truncate">{user.email}</p>
                 </div>
+                {user && clientId && (
+                  <NotificationCenter userId={user.id} clientId={clientId} />
+                )}
               </div>
               <button
                 onClick={handleLogout}

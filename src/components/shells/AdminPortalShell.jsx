@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
 
 const adminPages = [
   { name: 'Overzicht', page: 'AdminDashboard', path: '/admin/overzicht', icon: LayoutDashboard },
@@ -93,7 +94,9 @@ export default function AdminPortalShell({ children, currentPageName }) {
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
         <span className="font-light text-gray-900 tracking-wide">Basmichel</span>
-        <div className="w-9" />
+        {user && (
+          <NotificationCenter userId={user.id} isAdmin={true} />
+        )}
       </div>
 
       {/* Sidebar Overlay */}
@@ -163,6 +166,9 @@ export default function AdminPortalShell({ children, currentPageName }) {
                   <p className="text-sm font-medium text-gray-900 truncate">{user.full_name || 'Gebruiker'}</p>
                   <p className="text-xs text-gray-400 truncate">{user.email}</p>
                 </div>
+                {user && (
+                  <NotificationCenter userId={user.id} isAdmin={true} />
+                )}
               </div>
               <button
                 onClick={handleLogout}
