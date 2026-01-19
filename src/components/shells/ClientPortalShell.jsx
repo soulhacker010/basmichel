@@ -23,6 +23,7 @@ const clientPages = [
 
 export default function ClientPortalShell({ children, currentPageName }) {
   const [user, setUser] = useState(null);
+  const [clientId, setClientId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();

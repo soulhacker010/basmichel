@@ -66,9 +66,9 @@ export default function ClientBooking() {
     queryFn: () => base44.entities.SessionType.filter({ is_active: true }),
   });
 
-  const { data: existingBookings = [] } = useQuery({
-    queryKey: ['existingBookings'],
-    queryFn: () => base44.entities.Booking.filter({ status: 'bevestigd' }),
+  const { data: existingSessions = [] } = useQuery({
+    queryKey: ['existingSessions'],
+    queryFn: () => base44.entities.Session.filter({ status: 'bevestigd' }),
   });
 
   const { data: availability = [] } = useQuery({
@@ -101,16 +101,16 @@ export default function ClientBooking() {
     const endTime = setMinutes(setHours(date, endHour), 0);
     
     while (isBefore(addMinutes(currentTime, duration), endTime) || isSameDay(addMinutes(currentTime, duration), endTime)) {
-      // Check if slot conflicts with existing bookings
+      // Check if slot conflicts with existing sessions
       const slotEnd = addMinutes(currentTime, duration);
-      const hasConflict = existingBookings.some(booking => {
-        const bookingStart = new Date(booking.start_datetime);
-        const bookingEnd = new Date(booking.end_datetime);
+      const hasConflict = existingSessions.some(session => {
+        const sessionStart = new Date(session.start_datetime);
+        const sessionEnd = new Date(session.end_datetime);
         return (
-          (isAfter(currentTime, bookingStart) && isBefore(currentTime, bookingEnd)) ||
-          (isAfter(slotEnd, bookingStart) && isBefore(slotEnd, bookingEnd)) ||
-          (isBefore(currentTime, bookingStart) && isAfter(slotEnd, bookingEnd)) ||
-          isSameDay(currentTime, bookingStart) && format(currentTime, 'HH:mm') === format(bookingStart, 'HH:mm')
+          (isAfter(currentTime, sessionStart) && isBefore(currentTime, sessionEnd)) ||
+          (isAfter(slotEnd, sessionStart) && isBefore(slotEnd, sessionEnd)) ||
+          (isBefore(currentTime, sessionStart) && isAfter(slotEnd, sessionEnd)) ||
+          isSameDay(currentTime, sessionStart) && format(currentTime, 'HH:mm') === format(sessionStart, 'HH:mm')
         );
       });
       
@@ -160,13 +160,21 @@ export default function ClientBooking() {
 
 
 
-      // Create notification
+      // Create client notification
       await base44.entities.Notification.create({
         client_id: clientId,
         user_id: user.id,
         type: 'boeking_bevestigd',
         title: 'Boeking bevestigd',
         message: `Uw shoot is bevestigd voor ${format(startDatetime, 'd MMMM yyyy', { locale: nl })} om ${format(startDatetime, 'HH:mm')}`,
+        project_id: project.id,
+      });
+
+      // Create admin notification
+      await base44.entities.Notification.create({
+        type: 'nieuwe_sessie',
+        title: 'Nieuwe sessie geboekt',
+        message: `${user.full_name || user.email} heeft een ${selectedService.name} geboekt voor ${format(startDatetime, 'd MMMM yyyy', { locale: nl })} om ${format(startDatetime, 'HH:mm')}`,
         project_id: project.id,
       });
 
