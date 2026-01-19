@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import {
   Collapsible,
   CollapsibleContent,
@@ -182,7 +183,7 @@ export default function AdminProjectDetail() {
         }
       }
       
-      alert('Project opgeslagen!');
+      toast.success('Project opgeslagen');
     },
   });
 
@@ -206,7 +207,7 @@ export default function AdminProjectDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projectFiles', projectId] });
       setUploadingCategory(null);
-      alert('Bestanden geüpload!');
+      toast.success('Bestanden geüpload');
     },
   });
 
@@ -237,7 +238,7 @@ export default function AdminProjectDetail() {
       queryClient.invalidateQueries({ queryKey: ['projectInvoice', projectId] });
       setInvoiceDialogOpen(false);
       setInvoiceData({ description: '', amount: '', vat_amount: '' });
-      alert('Factuur aangemaakt!');
+      toast.success('Factuur aangemaakt');
     },
   });
 
