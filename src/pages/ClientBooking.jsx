@@ -125,7 +125,7 @@ export default function ClientBooking() {
   };
 
   const handleSubmit = async () => {
-    if (!clientId || !selectedService || !selectedDate || !selectedTime) {
+    if (!clientId || !selectedService || !selectedDate || !selectedTime || !formData.address) {
       toast.error('Vul alle velden in');
       return;
     }
@@ -147,7 +147,7 @@ export default function ClientBooking() {
       });
 
       // Create session
-      const session = await base44.entities.Session.create({
+      await base44.entities.Session.create({
         session_type_id: selectedService.id,
         client_id: clientId,
         project_id: project.id,
@@ -155,10 +155,8 @@ export default function ClientBooking() {
         end_datetime: endDatetime.toISOString(),
         status: 'bevestigd',
         location: `${formData.address}${formData.city ? `, ${formData.city}` : ''}`,
-        notes: formData.notes,
+        notes: formData.notes || '',
       });
-
-
 
       // Create client notification
       await base44.entities.Notification.create({
@@ -179,32 +177,38 @@ export default function ClientBooking() {
       });
 
       // Send confirmation email
-      await base44.integrations.Core.SendEmail({
-        to: user.email,
-        subject: 'Boeking bevestigd - Basmichel',
-        body: `
-          Beste ${user.full_name || 'klant'},
+      try {
+        await base44.integrations.Core.SendEmail({
+          to: user.email,
+          subject: 'Boeking bevestigd - Basmichel',
+          body: `
+Beste ${user.full_name || 'klant'},
 
-          Uw fotoshoot is bevestigd!
+Uw fotoshoot is bevestigd!
 
-          Details:
-          - Dienst: ${selectedService.name}
-          - Datum: ${format(startDatetime, 'd MMMM yyyy', { locale: nl })}
-          - Tijd: ${format(startDatetime, 'HH:mm')} - ${format(endDatetime, 'HH:mm')}
-          - Adres: ${formData.address}${formData.city ? `, ${formData.city}` : ''}
+Details:
+- Dienst: ${selectedService.name}
+- Datum: ${format(startDatetime, 'd MMMM yyyy', { locale: nl })}
+- Tijd: ${format(startDatetime, 'HH:mm')} - ${format(endDatetime, 'HH:mm')}
+- Adres: ${formData.address}${formData.city ? `, ${formData.city}` : ''}
 
-          Met vriendelijke groet,
-          Basmichel
-        `
-      });
+Met vriendelijke groet,
+Basmichel
+          `
+        });
+      } catch (emailError) {
+        console.warn('Email verzenden mislukt:', emailError);
+      }
 
       queryClient.invalidateQueries({ queryKey: ['clientProjects'] });
       queryClient.invalidateQueries({ queryKey: ['clientBookings'] });
+      queryClient.invalidateQueries({ queryKey: ['existingSessions'] });
 
+      toast.success('Boeking succesvol bevestigd!');
       setStep(4); // Success step
     } catch (error) {
       console.error('Booking error:', error);
-      toast.error('Er ging iets mis bij het boeken');
+      toast.error(error.message || 'Er ging iets mis bij het boeken');
     } finally {
       setIsSubmitting(false);
     }
