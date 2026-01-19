@@ -5,13 +5,12 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { 
   FolderKanban, 
-  Users, 
-  Images, 
-  Calendar
+  Images
 } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from 'date-fns';
 import { nl } from 'date-fns/locale';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -39,27 +38,42 @@ export default function AdminDashboard() {
     queryFn: () => base44.entities.Gallery.list('-created_date', 4),
   });
 
-  const { data: sessions = [] } = useQuery({
-    queryKey: ['sessions'],
-    queryFn: () => base44.entities.Session.list('-start_datetime'),
+  const { data: invoices = [] } = useQuery({
+    queryKey: ['invoices'],
+    queryFn: () => base44.entities.Invoice.list(),
   });
 
-  const { data: allProjects = [] } = useQuery({
-    queryKey: ['allProjects'],
-    queryFn: () => base44.entities.Project.list(),
-  });
+  // Calculate revenue data for the last 12 months
+  const getRevenueData = () => {
+    const now = new Date();
+    const months = eachMonthOfInterval({
+      start: subMonths(now, 11),
+      end: now
+    });
 
-  const { data: allGalleries = [] } = useQuery({
-    queryKey: ['allGalleries'],
-    queryFn: () => base44.entities.Gallery.list(),
-  });
+    return months.map(month => {
+      const monthStart = startOfMonth(month);
+      const monthEnd = endOfMonth(month);
 
-  const activeProjects = allProjects.filter(p => ['geboekt', 'shoot_uitgevoerd', 'wordt_bewerkt'].includes(p.status)).length;
-  const publishedGalleries = allGalleries.filter(g => g.status === 'gepubliceerd').length;
-  
-  const upcomingSessions = sessions
-    .filter(s => s.status === 'bevestigd' && new Date(s.start_datetime) > new Date())
-    .slice(0, 4);
+      const monthRevenue = invoices
+        .filter(inv => {
+          if (inv.status !== 'betaald' || !inv.paid_date) return false;
+          const paidDate = new Date(inv.paid_date);
+          return paidDate >= monthStart && paidDate <= monthEnd;
+        })
+        .reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
+
+      return {
+        month: format(month, 'MMM', { locale: nl }),
+        revenue: monthRevenue
+      };
+    });
+  };
+
+  const revenueData = getRevenueData();
+  const totalRevenue = invoices
+    .filter(inv => inv.status === 'betaald')
+    .reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -80,36 +94,58 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      {/* Stats Cards - Pixieset style */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        <div className="bg-white rounded-lg border border-gray-100 p-6 text-center hover:shadow-sm transition-shadow">
-          <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3">
-            <Users className="w-6 h-6 text-gray-400" />
-          </div>
-          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Clients</p>
-          <p className="text-3xl font-light text-gray-900">{clients.length}</p>
+      {/* Revenue Chart */}
+      <div className="bg-white rounded-lg border border-gray-100 p-8 mb-6">
+        <div className="mb-6">
+          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Payments</p>
+          <p className="text-3xl font-light text-gray-900">€{totalRevenue.toFixed(2)}</p>
+          <p className="text-xs text-gray-400 mt-1">Last 12 months</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-100 p-6 text-center hover:shadow-sm transition-shadow">
-          <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3">
-            <FolderKanban className="w-6 h-6 text-gray-400" />
-          </div>
-          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Active</p>
-          <p className="text-3xl font-light text-gray-900">{activeProjects}</p>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={revenueData}>
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#A8B5A0" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="#A8B5A0" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis 
+                dataKey="month" 
+                tick={{ fill: '#9ca3af', fontSize: 12 }}
+                axisLine={{ stroke: '#e5e7eb' }}
+              />
+              <YAxis 
+                tick={{ fill: '#9ca3af', fontSize: 12 }}
+                axisLine={{ stroke: '#e5e7eb' }}
+                tickFormatter={(value) => `€${value}`}
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'white', 
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '14px'
+                }}
+                formatter={(value) => [`€${value.toFixed(2)}`, 'Revenue']}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="revenue" 
+                stroke="#A8B5A0" 
+                strokeWidth={2}
+                fill="url(#colorRevenue)" 
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
-        <div className="bg-white rounded-lg border border-gray-100 p-6 text-center hover:shadow-sm transition-shadow">
-          <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3">
-            <Images className="w-6 h-6 text-gray-400" />
-          </div>
-          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Galleries</p>
-          <p className="text-3xl font-light text-gray-900">{publishedGalleries}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-100 p-6 text-center hover:shadow-sm transition-shadow">
-          <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3">
-            <Calendar className="w-6 h-6 text-gray-400" />
-          </div>
-          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Upcoming</p>
-          <p className="text-3xl font-light text-gray-900">{upcomingSessions.length}</p>
-        </div>
+        <Link 
+          to={createPageUrl('AdminInvoices')}
+          className="text-sm text-gray-500 hover:text-gray-700 mt-4 inline-block"
+        >
+          View invoices
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
