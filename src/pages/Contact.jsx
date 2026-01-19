@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react';
+import { Mail, Send, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,9 +33,18 @@ export default function Contact() {
         is_read: false,
       });
 
+      // Create inbox message
+      await base44.entities.InboxMessage.create({
+        subject: `Contact van ${data.name}`,
+        message: data.message,
+        sender_name: data.name,
+        sender_email: data.email,
+        is_read: false,
+      });
+
       // Send email notification
       await base44.integrations.Core.SendEmail({
-        to: 'info@basmichel.nl',
+        to: 'basmichelsite@gmail.com',
         subject: 'Nieuw contactformulier bericht',
         body: `
 Naam: ${data.name}
@@ -63,8 +72,12 @@ ${data.message}
       {/* Header */}
       <header className="border-b border-gray-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <a href="/" className="text-2xl font-light text-gray-900" style={{ fontFamily: 'serif' }}>
-            Bas Michel
+          <a href="/">
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/41d5ec5ec_BasMichel_K152.png" 
+              alt="Bas Michel" 
+              className="h-20"
+            />
           </a>
           <nav className="flex items-center gap-8">
             <a href="/" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
@@ -107,10 +120,14 @@ ${data.message}
           {/* Contact Form */}
           <div>
             {submitted ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-8 text-center">
-                <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                <h2 className="text-2xl font-light text-gray-900 mb-2">Bedankt!</h2>
-                <p className="text-gray-600">
+              <div className="bg-white border border-green-200 rounded-lg p-12 text-center shadow-lg">
+                <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="w-12 h-12 text-green-600" />
+                </div>
+                <h2 className="text-3xl font-light text-gray-900 mb-3" style={{ fontFamily: 'serif' }}>
+                  Bericht verzonden!
+                </h2>
+                <p className="text-gray-600 text-lg">
                   We hebben je bericht ontvangen en nemen zo snel mogelijk contact met je op.
                 </p>
               </div>
@@ -196,48 +213,10 @@ ${data.message}
                   <Mail className="w-5 h-5 text-[#5C6B52] mt-0.5" />
                   <div>
                     <p className="text-sm text-gray-500 mb-1">E-mail</p>
-                    <a href="mailto:info@basmichel.nl" className="text-gray-900 hover:text-[#5C6B52] transition-colors">
-                      info@basmichel.nl
+                    <a href="mailto:basmichelsite@gmail.com" className="text-gray-900 hover:text-[#5C6B52] transition-colors">
+                      basmichelsite@gmail.com
                     </a>
                   </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Phone className="w-5 h-5 text-[#5C6B52] mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Telefoon</p>
-                    <a href="tel:+31612345678" className="text-gray-900 hover:text-[#5C6B52] transition-colors">
-                      +31 6 12 34 56 78
-                    </a>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-[#5C6B52] mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Locatie</p>
-                    <p className="text-gray-900">
-                      Amsterdam, Nederland
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-100 p-8">
-              <h3 className="text-xl font-light text-gray-900 mb-4" style={{ fontFamily: 'serif' }}>
-                Openingstijden
-              </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Maandag - Vrijdag</span>
-                  <span className="text-gray-900">9:00 - 18:00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Zaterdag</span>
-                  <span className="text-gray-900">10:00 - 16:00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Zondag</span>
-                  <span className="text-gray-900">Gesloten</span>
                 </div>
               </div>
             </div>
