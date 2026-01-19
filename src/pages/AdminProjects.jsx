@@ -128,9 +128,9 @@ export default function AdminProjects() {
   const statusCounts = {
     all: projects.length,
     geboekt: projects.filter(p => p.status === 'geboekt').length,
-    shoot_uitgevoerd: projects.filter(p => p.status === 'shoot_uitgevoerd').length,
-    wordt_bewerkt: projects.filter(p => p.status === 'wordt_bewerkt').length,
-    klaar: projects.filter(p => p.status === 'klaar').length,
+    in_bewerking: projects.filter(p => p.status === 'in_bewerking').length,
+    afgerond: projects.filter(p => p.status === 'afgerond').length,
+    openstaande_factuur: projects.filter(p => p.status === 'openstaande_factuur').length,
   };
 
   return (
@@ -165,9 +165,9 @@ export default function AdminProjects() {
           <TabsList className="bg-white border border-gray-200 h-10">
             <TabsTrigger value="all" className="text-sm">Alle Projecten</TabsTrigger>
             <TabsTrigger value="geboekt" className="text-sm">Geboekt</TabsTrigger>
-            <TabsTrigger value="shoot_uitgevoerd" className="text-sm">Gefotografeerd</TabsTrigger>
-            <TabsTrigger value="wordt_bewerkt" className="text-sm">In Bewerking</TabsTrigger>
-            <TabsTrigger value="klaar" className="text-sm">Afgerond</TabsTrigger>
+            <TabsTrigger value="in_bewerking" className="text-sm">In Bewerking</TabsTrigger>
+            <TabsTrigger value="afgerond" className="text-sm">Afgerond</TabsTrigger>
+            <TabsTrigger value="openstaande_factuur" className="text-sm">Openstaande Factuur</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -283,9 +283,9 @@ export default function AdminProjects() {
                   className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
                 >
                   <option value="geboekt">Geboekt</option>
-                  <option value="shoot_uitgevoerd">Gefotografeerd</option>
-                  <option value="wordt_bewerkt">In Bewerking</option>
-                  <option value="klaar">Afgerond</option>
+                  <option value="in_bewerking">In Bewerking</option>
+                  <option value="afgerond">Afgerond</option>
+                  <option value="openstaande_factuur">Openstaande Factuur</option>
                 </select>
               </div>
             </div>
