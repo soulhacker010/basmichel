@@ -72,11 +72,20 @@ export default function AdminProjects() {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      // Generate project number
-      const projectNumber = `PRJ-${Date.now()}`;
+      // Generate project number - start at 202700 and increment
+      const allProjects = await base44.entities.Project.list('-created_date', 1);
+      let nextNumber = 202700;
+      
+      if (allProjects.length > 0 && allProjects[0].project_number) {
+        const lastNumber = parseInt(allProjects[0].project_number);
+        if (!isNaN(lastNumber)) {
+          nextNumber = lastNumber + 1;
+        }
+      }
+      
       const projectData = {
         ...data,
-        project_number: projectNumber,
+        project_number: nextNumber.toString(),
         title: data.address, // Title = Address
       };
       

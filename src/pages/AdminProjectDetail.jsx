@@ -67,14 +67,14 @@ export default function AdminProjectDetail() {
   const [rawOpen, setRawOpen] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
   const [invoiceData, setInvoiceData] = useState({
-    invoice_date: format(new Date(), 'yyyy-MM-dd'),
-    due_date: format(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
     items: [{ title: '', description: '', quantity: 1, unit_price: '' }],
     vat_percentage: 21,
+    discount_amount: 0,
     use_custom_recipient: false,
     recipient_name: '',
     recipient_email: '',
     recipient_address: '',
+    template_id: '',
   });
   
   const queryClient = useQueryClient();
@@ -133,6 +133,14 @@ export default function AdminProjectDetail() {
     enabled: !!projectId,
   });
 
+  const { data: invoiceTemplates = [] } = useQuery({
+    queryKey: ['invoiceTemplates'],
+    queryFn: async () => {
+      const templates = await base44.entities.Template.filter({ type: 'factuur' });
+      return templates || [];
+    },
+  });
+
   useEffect(() => {
     if (project) {
       setSelectedStatus(project.status);
@@ -146,8 +154,22 @@ export default function AdminProjectDetail() {
     onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       
-      // Email bij status "Klaar"
+      // Bij status "Klaar": update factuur met datums
       if (variables.data.status === 'klaar' && project.status !== 'klaar') {
+        if (projectInvoice && !projectInvoice.invoice_date) {
+          const invoiceDate = format(new Date(), 'yyyy-MM-dd');
+          const dueDate = format(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
+          
+          await base44.entities.ProjectInvoice.update(projectInvoice.id, {
+            invoice_date: invoiceDate,
+            due_date: dueDate,
+            status: 'verzonden',
+          });
+          
+          queryClient.invalidateQueries({ queryKey: ['projectInvoice', projectId] });
+          queryClient.invalidateQueries({ queryKey: ['invoices'] });
+        }
+        
         if (user?.email) {
           await base44.integrations.Core.SendEmail({
             to: user.email,
@@ -231,42 +253,51 @@ export default function AdminProjectDetail() {
         return sum + itemTotal;
       }, 0);
       
-      const vatAmount = subtotal * (data.vat_percentage / 100);
-      const totalAmount = subtotal + vatAmount;
-      
-      // Build description from items
-      const description = data.items
-        .filter(item => item.title)
-        .map(item => `${item.title}${item.description ? ': ' + item.description : ''}`)
-        .join('\n');
+      const discountAmount = parseFloat(data.discount_amount) || 0;
+      const afterDiscount = subtotal - discountAmount;
+      const vatAmount = afterDiscount * (data.vat_percentage / 100);
+      const totalAmount = afterDiscount + vatAmount;
       
       return await base44.entities.ProjectInvoice.create({
         project_id: projectId,
         invoice_number: project.project_number,
         client_name: data.use_custom_recipient ? data.recipient_name : (user?.full_name || client?.company_name || ''),
+        client_email: data.use_custom_recipient ? data.recipient_email : (user?.email || ''),
         client_address: data.use_custom_recipient ? data.recipient_address : (project.address || ''),
-        invoice_date: data.invoice_date,
-        description: description,
-        amount: subtotal,
+        items: data.items.filter(item => item.title && item.unit_price),
+        subtotal: subtotal,
+        discount_amount: discountAmount,
+        vat_percentage: data.vat_percentage,
         vat_amount: vatAmount,
         total_amount: totalAmount,
         status: 'concept',
+        template_id: data.template_id || null,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projectInvoice', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
       setInvoiceDialogOpen(false);
       setInvoiceData({
-        invoice_date: format(new Date(), 'yyyy-MM-dd'),
-        due_date: format(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
         items: [{ title: '', description: '', quantity: 1, unit_price: '' }],
         vat_percentage: 21,
+        discount_amount: 0,
         use_custom_recipient: false,
         recipient_name: '',
         recipient_email: '',
         recipient_address: '',
+        template_id: '',
       });
       toast.success('Factuur aangemaakt');
+    },
+  });
+
+  const deleteInvoiceMutation = useMutation({
+    mutationFn: (id) => base44.entities.ProjectInvoice.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectInvoice', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      toast.success('Factuur verwijderd');
     },
   });
 
@@ -724,48 +755,105 @@ export default function AdminProjectDetail() {
 
         {projectInvoice ? (
           <div className="border border-gray-100 rounded-xl p-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Factuurnummer</p>
-                <p className="font-medium text-gray-900">{projectInvoice.invoice_number}</p>
+            <div className="flex justify-between items-start mb-6">
+              <div className="grid grid-cols-2 gap-6 flex-1">
+                <div>
+                  <p className="text-sm text-gray-400 mb-1">Factuurnummer</p>
+                  <p className="font-medium text-gray-900">{projectInvoice.invoice_number}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400 mb-1">Factuurdatum</p>
+                  <p className="font-medium text-gray-900">
+                    {projectInvoice.invoice_date ? 
+                      format(new Date(projectInvoice.invoice_date), 'd MMMM yyyy', { locale: nl }) : 
+                      'Wordt gezet bij status Klaar'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400 mb-1">Vervaldatum</p>
+                  <p className="font-medium text-gray-900">
+                    {projectInvoice.due_date ? 
+                      format(new Date(projectInvoice.due_date), 'd MMMM yyyy', { locale: nl }) : 
+                      '-'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400 mb-1">Status</p>
+                  <span className={cn(
+                    "inline-flex px-3 py-1 rounded-full text-xs font-medium",
+                    projectInvoice.status === 'betaald' ? "bg-green-50 text-green-700" :
+                    projectInvoice.status === 'verzonden' ? "bg-blue-50 text-blue-700" :
+                    "bg-gray-100 text-gray-500"
+                  )}>
+                    {projectInvoice.status === 'betaald' ? 'Betaald' : 
+                     projectInvoice.status === 'verzonden' ? 'Verzonden' : 'Concept'}
+                  </span>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Datum</p>
-                <p className="font-medium text-gray-900">
-                  {format(new Date(projectInvoice.invoice_date), 'd MMMM yyyy', { locale: nl })}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Bedrag (excl. BTW)</p>
-                <p className="font-medium text-gray-900">€ {projectInvoice.amount?.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">BTW</p>
-                <p className="font-medium text-gray-900">€ {projectInvoice.vat_amount?.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Totaalbedrag</p>
-                <p className="font-medium text-gray-900 text-lg">€ {projectInvoice.total_amount?.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Status</p>
-                <span className={cn(
-                  "inline-flex px-3 py-1 rounded-full text-xs font-medium",
-                  projectInvoice.status === 'betaald' ? "bg-green-50 text-green-700" :
-                  projectInvoice.status === 'verzonden' ? "bg-blue-50 text-blue-700" :
-                  "bg-gray-100 text-gray-500"
-                )}>
-                  {projectInvoice.status === 'betaald' ? 'Betaald' : 
-                   projectInvoice.status === 'verzonden' ? 'Verzonden' : 'Concept'}
-                </span>
-              </div>
+              {projectInvoice.status !== 'betaald' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (confirm('Weet je zeker dat je deze factuur wilt verwijderen?')) {
+                      deleteInvoiceMutation.mutate(projectInvoice.id);
+                    }
+                  }}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
             </div>
-            {projectInvoice.description && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <p className="text-sm text-gray-400 mb-1">Omschrijving</p>
-                <p className="text-sm text-gray-900">{projectInvoice.description}</p>
+
+            {projectInvoice.items && projectInvoice.items.length > 0 && (
+              <div className="mb-6">
+                <p className="text-sm text-gray-400 mb-3">Items</p>
+                <div className="space-y-2">
+                  {projectInvoice.items.map((item, idx) => (
+                    <div key={idx} className="bg-gray-50 rounded-lg p-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium text-gray-900">{item.title}</p>
+                          {item.description && (
+                            <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-gray-600">
+                            {item.quantity}x € {item.unit_price?.toFixed(2)}
+                          </p>
+                          <p className="font-medium text-gray-900">
+                            € {((item.quantity || 0) * (item.unit_price || 0)).toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
+
+            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Subtotaal</span>
+                <span className="font-medium text-gray-900">€ {projectInvoice.subtotal?.toFixed(2)}</span>
+              </div>
+              {projectInvoice.discount_amount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Korting</span>
+                  <span className="font-medium text-red-600">- € {projectInvoice.discount_amount?.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">BTW ({projectInvoice.vat_percentage}%)</span>
+                <span className="font-medium text-gray-900">€ {projectInvoice.vat_amount?.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-base pt-2 border-t border-gray-200">
+                <span className="font-medium text-gray-900">Totaalbedrag</span>
+                <span className="font-semibold text-gray-900 text-lg">€ {projectInvoice.total_amount?.toFixed(2)}</span>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="text-center py-12 text-gray-400">
@@ -794,28 +882,58 @@ export default function AdminProjectDetail() {
                   <Label>Project</Label>
                   <Input value={project.title || ''} disabled className="mt-1.5 bg-gray-50" />
                 </div>
-                <div>
-                  <Label htmlFor="invoice_date">Factuurdatum</Label>
-                  <Input
-                    id="invoice_date"
-                    type="date"
-                    value={invoiceData.invoice_date}
-                    onChange={(e) => setInvoiceData({...invoiceData, invoice_date: e.target.value})}
-                    className="mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="due_date">Vervaldatum</Label>
-                  <Input
-                    id="due_date"
-                    type="date"
-                    value={invoiceData.due_date}
-                    onChange={(e) => setInvoiceData({...invoiceData, due_date: e.target.value})}
-                    className="mt-1.5"
-                  />
-                </div>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-xs text-blue-900">
+                  <strong>Let op:</strong> Factuurdatum en vervaldatum worden automatisch ingesteld wanneer het project op status "Klaar" wordt gezet.
+                </p>
               </div>
             </div>
+
+            {/* Factuursjablonen */}
+            {invoiceTemplates.length > 0 && (
+              <div className="space-y-3">
+                <Label htmlFor="template">Gebruik factuursjabloon (optioneel)</Label>
+                <select
+                  id="template"
+                  value={invoiceData.template_id}
+                  onChange={(e) => {
+                    const templateId = e.target.value;
+                    setInvoiceData({...invoiceData, template_id: templateId});
+                    
+                    if (templateId) {
+                      const template = invoiceTemplates.find(t => t.id === templateId);
+                      if (template && template.content) {
+                        try {
+                          const content = typeof template.content === 'string' ? 
+                            JSON.parse(template.content) : template.content;
+                          
+                          if (content.items) {
+                            setInvoiceData({
+                              ...invoiceData,
+                              template_id: templateId,
+                              items: content.items,
+                              vat_percentage: content.vat_percentage || 21,
+                              discount_amount: content.discount_amount || 0,
+                            });
+                          }
+                        } catch (e) {
+                          console.error('Error parsing template', e);
+                        }
+                      }
+                    }
+                  }}
+                  className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
+                >
+                  <option value="">Geen sjabloon</option>
+                  {invoiceTemplates.map(template => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* B. FACTUURONTVANGER */}
             <div className="space-y-4 pt-4 border-t">
@@ -1003,6 +1121,18 @@ export default function AdminProjectDetail() {
                   </span>
                 </div>
                 <div className="flex justify-between text-sm items-center">
+                  <Label htmlFor="discount" className="text-gray-600">Korting (€)</Label>
+                  <Input
+                    id="discount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={invoiceData.discount_amount}
+                    onChange={(e) => setInvoiceData({...invoiceData, discount_amount: parseFloat(e.target.value) || 0})}
+                    className="w-24 h-8 text-sm text-right"
+                  />
+                </div>
+                <div className="flex justify-between text-sm items-center">
                   <div className="flex items-center gap-2">
                     <span className="text-gray-600">BTW</span>
                     <Input
@@ -1021,7 +1151,8 @@ export default function AdminProjectDetail() {
                       const subtotal = invoiceData.items.reduce((sum, item) => {
                         return sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0));
                       }, 0);
-                      return (subtotal * (invoiceData.vat_percentage / 100)).toFixed(2);
+                      const afterDiscount = subtotal - (parseFloat(invoiceData.discount_amount) || 0);
+                      return (afterDiscount * (invoiceData.vat_percentage / 100)).toFixed(2);
                     })()}
                   </span>
                 </div>
@@ -1032,8 +1163,10 @@ export default function AdminProjectDetail() {
                       const subtotal = invoiceData.items.reduce((sum, item) => {
                         return sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0));
                       }, 0);
-                      const vat = subtotal * (invoiceData.vat_percentage / 100);
-                      return (subtotal + vat).toFixed(2);
+                      const discount = parseFloat(invoiceData.discount_amount) || 0;
+                      const afterDiscount = subtotal - discount;
+                      const vat = afterDiscount * (invoiceData.vat_percentage / 100);
+                      return (afterDiscount + vat).toFixed(2);
                     })()}
                   </span>
                 </div>
