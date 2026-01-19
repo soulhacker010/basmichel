@@ -23,6 +23,7 @@ import Contact from './pages/Contact';
 import GalleryView from './pages/GalleryView';
 import Home from './pages/Home';
 import AdminProjectDetail from './pages/AdminProjectDetail';
+import ClientProjectDetail2 from './pages/ClientProjectDetail2';
 import __Layout from './Layout.jsx';
 
 
@@ -52,6 +53,7 @@ export const PAGES = {
     "GalleryView": GalleryView,
     "Home": Home,
     "AdminProjectDetail": AdminProjectDetail,
+    "ClientProjectDetail2": ClientProjectDetail2,
 }
 
 export const pagesConfig = {

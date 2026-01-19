@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import { 
   Plus, 
   FolderKanban, 
@@ -128,9 +130,9 @@ export default function AdminProjects() {
   const statusCounts = {
     all: projects.length,
     geboekt: projects.filter(p => p.status === 'geboekt').length,
-    in_bewerking: projects.filter(p => p.status === 'in_bewerking').length,
-    afgerond: projects.filter(p => p.status === 'afgerond').length,
-    openstaande_factuur: projects.filter(p => p.status === 'openstaande_factuur').length,
+    shoot_uitgevoerd: projects.filter(p => p.status === 'shoot_uitgevoerd').length,
+    wordt_bewerkt: projects.filter(p => p.status === 'wordt_bewerkt').length,
+    klaar: projects.filter(p => p.status === 'klaar').length,
   };
 
   return (
@@ -165,9 +167,9 @@ export default function AdminProjects() {
           <TabsList className="bg-white border border-gray-200 h-10">
             <TabsTrigger value="all" className="text-sm">Alle Projecten</TabsTrigger>
             <TabsTrigger value="geboekt" className="text-sm">Geboekt</TabsTrigger>
-            <TabsTrigger value="in_bewerking" className="text-sm">In Bewerking</TabsTrigger>
-            <TabsTrigger value="afgerond" className="text-sm">Afgerond</TabsTrigger>
-            <TabsTrigger value="openstaande_factuur" className="text-sm">Openstaande Factuur</TabsTrigger>
+            <TabsTrigger value="shoot_uitgevoerd" className="text-sm">Shoot uitgevoerd</TabsTrigger>
+            <TabsTrigger value="wordt_bewerkt" className="text-sm">Wordt bewerkt</TabsTrigger>
+            <TabsTrigger value="klaar" className="text-sm">Klaar</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -182,9 +184,10 @@ export default function AdminProjects() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredProjects.map(project => (
-            <div 
+            <Link
               key={project.id}
-              className="bg-white rounded-lg border border-gray-100 p-5 hover:shadow-sm transition-all group"
+              to={`${createPageUrl('AdminProjectDetail')}?id=${project.id}`}
+              className="bg-white rounded-lg border border-gray-100 p-5 hover:shadow-sm transition-all group block"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1 min-w-0">
@@ -193,12 +196,18 @@ export default function AdminProjects() {
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => e.preventDefault()}
+                    >
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => {
+                    <DropdownMenuItem onClick={(e) => {
+                      e.preventDefault();
                       setEditingProject(project);
                       setIsDialogOpen(true);
                     }}>
@@ -206,7 +215,10 @@ export default function AdminProjects() {
                       Bewerken
                     </DropdownMenuItem>
                     <DropdownMenuItem 
-                      onClick={() => setDeleteId(project.id)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setDeleteId(project.id);
+                      }}
                       className="text-red-600"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
@@ -230,7 +242,7 @@ export default function AdminProjects() {
                   <p className="text-xs text-gray-500 truncate">{project.address}</p>
                 </div>
               )}
-            </div>
+            </Link>
           ))}
         </div>
       )}
@@ -283,9 +295,9 @@ export default function AdminProjects() {
                   className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
                 >
                   <option value="geboekt">Geboekt</option>
-                  <option value="in_bewerking">In Bewerking</option>
-                  <option value="afgerond">Afgerond</option>
-                  <option value="openstaande_factuur">Openstaande Factuur</option>
+                  <option value="shoot_uitgevoerd">Shoot uitgevoerd</option>
+                  <option value="wordt_bewerkt">Wordt bewerkt</option>
+                  <option value="klaar">Klaar</option>
                 </select>
               </div>
             </div>

@@ -9,6 +9,7 @@ const clientPages = [
   'ClientDashboard', 
   'ClientProjects', 
   'ClientProjectDetail',
+  'ClientProjectDetail2',
   'ClientBooking', 
   'ClientInvoices',
   'ClientProfile'
@@ -18,6 +19,7 @@ const adminPages = [
   'AdminDashboard',
   'AdminInbox',
   'AdminProjects',
+  'AdminProjectDetail',
   'AdminClients',
   'AdminGalleries',
   'AdminBookings',
