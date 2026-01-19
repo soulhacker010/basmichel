@@ -89,7 +89,7 @@ export default function ClientPortalShell({ children, currentPageName }) {
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
         <span className="font-light text-gray-900 tracking-wide">Basmichel</span>
-        {user && clientId && (
+        {user && (
           <NotificationCenter userId={user.id} clientId={clientId} />
         )}
       </div>
@@ -162,7 +162,7 @@ export default function ClientPortalShell({ children, currentPageName }) {
                   <p className="text-sm font-medium text-gray-900 truncate">{user.full_name || 'Gebruiker'}</p>
                   <p className="text-xs text-gray-400 truncate">{user.email}</p>
                 </div>
-                {user && clientId && (
+                {user && (
                   <NotificationCenter userId={user.id} clientId={clientId} />
                 )}
               </div>

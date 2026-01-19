@@ -23,11 +23,15 @@ export default function NotificationCenter({ userId, clientId, isAdmin = false }
         // Admin sees all notifications or system notifications
         return base44.entities.Notification.list('-created_date', 50);
       } else {
-        // Client sees their own notifications
-        return base44.entities.Notification.filter({ client_id: clientId }, '-created_date', 50);
+        // Client sees their own notifications by user_id or client_id
+        if (clientId) {
+          return base44.entities.Notification.filter({ client_id: clientId }, '-created_date', 50);
+        } else {
+          return base44.entities.Notification.filter({ user_id: userId }, '-created_date', 50);
+        }
       }
     },
-    enabled: !!(userId || clientId),
+    enabled: !!userId,
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
