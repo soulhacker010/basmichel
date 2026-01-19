@@ -43,6 +43,9 @@ import {
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 export default function AdminInvoices() {
   const [search, setSearch] = useState('');
@@ -55,7 +58,7 @@ export default function AdminInvoices() {
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['invoices'],
-    queryFn: () => base44.entities.Invoice.list('-created_date'),
+    queryFn: () => base44.entities.ProjectInvoice.list('-created_date'),
   });
 
   const { data: clients = [] } = useQuery({
@@ -73,37 +76,29 @@ export default function AdminInvoices() {
     queryFn: () => base44.entities.Project.list(),
   });
 
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Invoice.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      setIsDialogOpen(false);
-      setEditingInvoice(null);
-    },
-  });
-
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Invoice.update(id, data),
+    mutationFn: ({ id, data }) => base44.entities.ProjectInvoice.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['projectInvoice'] });
       setIsDialogOpen(false);
       setEditingInvoice(null);
+      toast.success('Factuur bijgewerkt');
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Invoice.delete(id),
+    mutationFn: (id) => base44.entities.ProjectInvoice.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['projectInvoice'] });
       setDeleteId(null);
+      toast.success('Factuur verwijderd');
     },
   });
 
-  const getClientName = (clientId) => {
-    const client = clients.find(c => c.id === clientId);
-    if (!client) return '-';
-    const user = users.find(u => u.id === client.user_id);
-    return client.company_name || user?.full_name || '-';
+  const getClientName = (invoice) => {
+    return invoice.client_name || '-';
   };
 
   const getProjectTitle = (projectId) => {
@@ -114,7 +109,8 @@ export default function AdminInvoices() {
   const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = 
       invoice.invoice_number?.toLowerCase().includes(search.toLowerCase()) ||
-      getClientName(invoice.client_id).toLowerCase().includes(search.toLowerCase());
+      getClientName(invoice).toLowerCase().includes(search.toLowerCase()) ||
+      getProjectTitle(invoice.project_id).toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -131,57 +127,14 @@ export default function AdminInvoices() {
     .filter(i => i.status === 'verzonden')
     .reduce((sum, i) => sum + (i.total_amount || 0), 0);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    
-    const amount = parseFloat(formData.get('amount')) || 0;
-    const vatRate = 0.21;
-    const vatAmount = amount * vatRate;
-    const totalAmount = amount + vatAmount;
 
-    const data = {
-      invoice_number: formData.get('invoice_number'),
-      client_id: formData.get('client_id'),
-      project_id: formData.get('project_id'),
-      description: formData.get('description'),
-      amount,
-      vat_amount: vatAmount,
-      total_amount: totalAmount,
-      status: formData.get('status'),
-      invoice_date: formData.get('invoice_date'),
-      due_date: formData.get('due_date'),
-      payment_link: formData.get('payment_link'),
-    };
-
-    if (editingInvoice) {
-      updateMutation.mutate({ id: editingInvoice.id, data });
-    } else {
-      createMutation.mutate(data);
-    }
-  };
-
-  const generateInvoiceNumber = () => {
-    const year = new Date().getFullYear();
-    const count = invoices.filter(i => i.invoice_number?.startsWith(`${year}`)).length + 1;
-    return `${year}${String(count).padStart(4, '0')}`;
-  };
 
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-light text-gray-900">Facturen</h1>
-        <Button 
-          onClick={() => {
-            setEditingInvoice(null);
-            setIsDialogOpen(true);
-          }}
-          className="bg-green-600 hover:bg-green-700 text-white rounded px-4"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Nieuwe Factuur
-        </Button>
+        <p className="text-sm text-gray-500">Alle facturen uit projecten</p>
       </div>
 
       {/* Summary Stats */}
@@ -244,13 +197,23 @@ export default function AdminInvoices() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filteredInvoices.map(invoice => (
-                <tr key={invoice.id} className="hover:bg-gray-50">
+                <tr key={invoice.id} className="hover:bg-gray-50 cursor-pointer">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">{invoice.invoice_number || 'Concept'}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{getClientName(invoice.client_id)}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{getProjectTitle(invoice.project_id)}</td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">€{invoice.total_amount?.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{getClientName(invoice)}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    {invoice.due_date ? format(new Date(invoice.due_date), 'd MMM yyyy', { locale: nl }) : '-'}
+                    {invoice.project_id && (
+                      <Link 
+                        to={`${createPageUrl('AdminProjectDetail')}?id=${invoice.project_id}`}
+                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        {getProjectTitle(invoice.project_id)}
+                      </Link>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">€ {invoice.total_amount?.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {invoice.due_date ? format(new Date(invoice.due_date), 'd MMM yyyy', { locale: nl }) : 
+                     invoice.invoice_date ? '-' : 'Bij status Klaar'}
                   </td>
                   <td className="px-6 py-4">
                     <span className={cn(
@@ -261,7 +224,7 @@ export default function AdminInvoices() {
                       "bg-gray-100 text-gray-600"
                     )}>
                       {invoice.status === 'betaald' ? 'Betaald' :
-                       invoice.status === 'verzonden' ? 'Onbetaald' :
+                       invoice.status === 'verzonden' ? 'Verzonden' :
                        invoice.status === 'verlopen' ? 'Verlopen' : 'Concept'}
                     </span>
                   </td>
@@ -273,42 +236,36 @@ export default function AdminInvoices() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => {
-                          setEditingInvoice(invoice);
-                          setIsDialogOpen(true);
-                        }}>
-                          <Pencil className="w-4 h-4 mr-2" />
-                          Edit
+                        <DropdownMenuItem asChild>
+                          <Link to={`${createPageUrl('AdminProjectDetail')}?id=${invoice.project_id}`}>
+                            <FileText className="w-4 h-4 mr-2" />
+                            Ga naar project
+                          </Link>
                         </DropdownMenuItem>
-                        {invoice.status === 'concept' && (
-                          <DropdownMenuItem onClick={() => {
-                            updateMutation.mutate({ 
-                              id: invoice.id, 
-                              data: { ...invoice, status: 'verzonden' } 
-                            });
-                          }}>
-                            <Send className="w-4 h-4 mr-2" />
-                            Versturen
-                          </DropdownMenuItem>
-                        )}
                         {invoice.status === 'verzonden' && (
                           <DropdownMenuItem onClick={() => {
                             updateMutation.mutate({ 
                               id: invoice.id, 
-                              data: { ...invoice, status: 'betaald', paid_date: new Date().toISOString().split('T')[0] } 
+                              data: { status: 'betaald', paid_date: format(new Date(), 'yyyy-MM-dd') } 
                             });
                           }}>
                             <CheckCircle2 className="w-4 h-4 mr-2" />
                             Markeer als betaald
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem 
-                          onClick={() => setDeleteId(invoice.id)}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
+                        {invoice.status !== 'betaald' && (
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              if (confirm('Weet je zeker dat je deze factuur wilt verwijderen?')) {
+                                deleteMutation.mutate(invoice.id);
+                              }
+                            }}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Verwijderen
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>
@@ -319,141 +276,7 @@ export default function AdminInvoices() {
         </div>
       )}
 
-      {/* Create/Edit Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              {editingInvoice ? 'Factuur Bewerken' : 'Nieuwe Factuur'}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="invoice_number">Factuurnummer</Label>
-                <Input
-                  id="invoice_number"
-                  name="invoice_number"
-                  defaultValue={editingInvoice?.invoice_number || generateInvoiceNumber()}
-                  className="mt-1.5"
-                />
-              </div>
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <select
-                  id="status"
-                  name="status"
-                  defaultValue={editingInvoice?.status || 'concept'}
-                  className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
-                >
-                  <option value="concept">Concept</option>
-                  <option value="verzonden">Verzonden</option>
-                  <option value="betaald">Betaald</option>
-                  <option value="verlopen">Verlopen</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="client_id">Klant *</Label>
-              <select
-                id="client_id"
-                name="client_id"
-                defaultValue={editingInvoice?.client_id || ''}
-                className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
-                required
-              >
-                <option value="">Selecteer klant</option>
-                {clients.map(client => {
-                  const user = users.find(u => u.id === client.user_id);
-                  return (
-                    <option key={client.id} value={client.id}>
-                      {client.company_name || user?.full_name || client.id}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="project_id">Project</Label>
-              <select
-                id="project_id"
-                name="project_id"
-                defaultValue={editingInvoice?.project_id || ''}
-                className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
-              >
-                <option value="">Selecteer project</option>
-                {projects.map(project => (
-                  <option key={project.id} value={project.id}>{project.title}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="description">Omschrijving</Label>
-              <Input
-                id="description"
-                name="description"
-                defaultValue={editingInvoice?.description || ''}
-                className="mt-1.5"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="amount">Bedrag (excl. BTW) *</Label>
-                <Input
-                  id="amount"
-                  name="amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  defaultValue={editingInvoice?.amount || ''}
-                  className="mt-1.5"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="invoice_date">Factuurdatum</Label>
-                <Input
-                  id="invoice_date"
-                  name="invoice_date"
-                  type="date"
-                  defaultValue={editingInvoice?.invoice_date || new Date().toISOString().split('T')[0]}
-                  className="mt-1.5"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="due_date">Vervaldatum</Label>
-                <Input
-                  id="due_date"
-                  name="due_date"
-                  type="date"
-                  defaultValue={editingInvoice?.due_date || ''}
-                  className="mt-1.5"
-                />
-              </div>
-              <div>
-                <Label htmlFor="payment_link">Betaallink</Label>
-                <Input
-                  id="payment_link"
-                  name="payment_link"
-                  defaultValue={editingInvoice?.payment_link || ''}
-                  className="mt-1.5"
-                  placeholder="https://..."
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
-                {editingInvoice ? 'Save' : 'Create'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
