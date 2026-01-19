@@ -25,10 +25,10 @@ import NotificationCenter from '@/components/notifications/NotificationCenter';
 const adminPages = [
   { name: 'Overzicht', page: 'AdminDashboard', path: '/admin/overzicht', icon: LayoutDashboard },
   { separator: true },
-  { name: 'Inbox', page: 'AdminInbox', path: '/admin/inbox', icon: Inbox },
   { name: 'Projecten', page: 'AdminProjects', path: '/admin/projecten', icon: FolderKanban },
   { name: 'Galerijen', page: 'AdminGalleries', path: '/admin/galerijen', icon: Images },
   { name: 'Boekingen', page: 'AdminBookings', path: '/admin/boekingen', icon: Calendar },
+  { name: 'Inbox', page: 'AdminInbox', path: '/admin/inbox', icon: Inbox },
   { separator: true },
   { name: 'Klanten', page: 'AdminClients', path: '/admin/klanten', icon: Users },
   { name: 'Facturen', page: 'AdminInvoices', path: '/admin/facturen', icon: CreditCard },
