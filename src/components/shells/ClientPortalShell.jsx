@@ -121,14 +121,10 @@ export default function ClientPortalShell({ children, currentPageName }) {
               const Icon = item.icon;
 
               return (
-                <a
+                <Link
                   key={item.page}
-                  href={item.path}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setSidebarOpen(false);
-                    navigate(item.path);
-                  }}
+                  to={createPageUrl(item.page)}
+                  onClick={() => setSidebarOpen(false)}
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
                     isActive 
@@ -138,7 +134,7 @@ export default function ClientPortalShell({ children, currentPageName }) {
                 >
                   <Icon className={cn("w-5 h-5", isActive && "text-[#5C6B52]")} />
                   <span className="text-sm font-medium">{item.name}</span>
-                </a>
+                </Link>
               );
             })}
           </nav>
