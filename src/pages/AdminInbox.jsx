@@ -9,7 +9,9 @@ import {
   MailOpen,
   Circle,
   ChevronRight,
-  X
+  X,
+  Reply,
+  Send
 } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
@@ -35,6 +37,9 @@ export default function AdminInbox() {
   const [filter, setFilter] = useState('inbox');
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [showReply, setShowReply] = useState(false);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [sending, setSending] = useState(false);
   
   const queryClient = useQueryClient();
 
@@ -87,6 +92,104 @@ export default function AdminInbox() {
     });
     if (selectedMessage?.id === msg.id) {
       setSelectedMessage(null);
+    }
+  };
+
+  const handleSendReply = async () => {
+    if (!replyMessage.trim() || !selectedMessage.sender_email) return;
+    
+    setSending(true);
+    try {
+      await base44.integrations.Core.SendEmail({
+        to: selectedMessage.sender_email,
+        subject: `Re: ${selectedMessage.subject}`,
+        body: `
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    background-color: #f4f6f8;
+    margin: 0;
+    padding: 0;
+  }
+  .email-container {
+    max-width: 600px;
+    margin: 40px auto;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+  .header {
+    background: linear-gradient(135deg, #5C6B52 0%, #4A5641 100%);
+    color: #ffffff;
+    padding: 32px 30px;
+    text-align: center;
+  }
+  .header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: -0.5px;
+  }
+  .content {
+    padding: 32px 40px;
+    line-height: 1.6;
+    color: #333333;
+  }
+  .message-box {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+  }
+  .message-box p {
+    margin: 0;
+    color: #212529;
+    font-size: 15px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+  .footer {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    text-align: center;
+    padding: 20px;
+    font-size: 13px;
+    border-top: 1px solid #e9ecef;
+  }
+</style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="header">
+      <h2>Bericht van Bas Michel Photography</h2>
+    </div>
+    <div class="content">
+      <div class="message-box">
+        <p>${replyMessage.replace(/\n/g, '<br>')}</p>
+      </div>
+    </div>
+    <div class="footer">
+      Bas Michel Photography<br>
+      basmichelsite@gmail.com
+    </div>
+  </div>
+</body>
+</html>
+        `,
+      });
+
+      setReplyMessage('');
+      setShowReply(false);
+      alert('Bericht verzonden!');
+    } catch (error) {
+      console.error('Error sending reply:', error);
+      alert('Er ging iets mis bij het verzenden');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -202,6 +305,17 @@ export default function AdminInbox() {
                     <ChevronRight className="w-4 h-4 rotate-180" />
                   </Button>
                   <div className="flex items-center gap-2">
+                    {selectedMessage.sender_email && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowReply(!showReply)}
+                        className="text-[#5C6B52] hover:text-[#4A5641] hover:bg-[#F8FAF7]"
+                      >
+                        <Reply className="w-4 h-4 mr-2" />
+                        Reageren
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -249,6 +363,39 @@ export default function AdminInbox() {
                     <div className="prose prose-sm max-w-none text-gray-700">
                       <p className="whitespace-pre-wrap">{selectedMessage.message}</p>
                     </div>
+
+                    {/* Reply Section */}
+                    {showReply && selectedMessage.sender_email && (
+                      <div className="mt-8 pt-6 border-t border-gray-100">
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">Reageren naar {selectedMessage.sender_email}</h3>
+                        <textarea
+                          value={replyMessage}
+                          onChange={(e) => setReplyMessage(e.target.value)}
+                          placeholder="Typ je bericht..."
+                          rows={6}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#A8B5A0] focus:border-transparent resize-none"
+                        />
+                        <div className="flex items-center gap-2 mt-3">
+                          <Button
+                            onClick={handleSendReply}
+                            disabled={!replyMessage.trim() || sending}
+                            className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
+                          >
+                            <Send className="w-4 h-4 mr-2" />
+                            {sending ? 'Verzenden...' : 'Verstuur Bericht'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            onClick={() => {
+                              setShowReply(false);
+                              setReplyMessage('');
+                            }}
+                          >
+                            Annuleren
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </>
