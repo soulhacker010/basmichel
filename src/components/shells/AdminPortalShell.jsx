@@ -24,16 +24,18 @@ import NotificationCenter from '@/components/notifications/NotificationCenter';
 
 const adminPages = [
   { name: 'Overzicht', page: 'AdminDashboard', path: '/admin/overzicht', icon: LayoutDashboard },
+  { separator: true },
   { name: 'Inbox', page: 'AdminInbox', path: '/admin/inbox', icon: Inbox },
   { name: 'Projecten', page: 'AdminProjects', path: '/admin/projecten', icon: FolderKanban },
-  { name: 'Klanten', page: 'AdminClients', path: '/admin/klanten', icon: Users },
   { name: 'Galerijen', page: 'AdminGalleries', path: '/admin/galerijen', icon: Images },
   { name: 'Boekingen', page: 'AdminBookings', path: '/admin/boekingen', icon: Calendar },
+  { separator: true },
+  { name: 'Klanten', page: 'AdminClients', path: '/admin/klanten', icon: Users },
   { name: 'Facturen', page: 'AdminInvoices', path: '/admin/facturen', icon: CreditCard },
+  { separator: true },
   { name: 'Documenten', page: 'AdminDocuments', path: '/admin/documenten', icon: FileText },
   { name: 'Sjablonen', page: 'AdminTemplates', path: '/admin/sjablonen', icon: FileCode },
   { name: 'Kortingen', page: 'AdminDiscounts', path: '/admin/kortingen', icon: Tag },
-  { name: 'Instellingen', page: 'AdminSettings', path: '/admin/instellingen', icon: Settings },
 ];
 
 export default function AdminPortalShell({ children, currentPageName }) {
@@ -132,7 +134,11 @@ export default function AdminPortalShell({ children, currentPageName }) {
 
           {/* Navigation */}
           <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-            {adminPages.map((item) => {
+            {adminPages.map((item, index) => {
+              if (item.separator) {
+                return <div key={`separator-${index}`} className="h-px bg-gray-200 my-3 mx-2" />;
+              }
+
               const isActive = currentPageName === item.page;
               const Icon = item.icon;
 
@@ -172,13 +178,21 @@ export default function AdminPortalShell({ children, currentPageName }) {
                   <NotificationCenter userId={user.id} isAdmin={true} />
                 )}
               </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-500 hover:text-gray-700 rounded-lg transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Uitloggen</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <Link
+                  to={createPageUrl('AdminSettings')}
+                  className="flex items-center gap-2 flex-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 rounded-lg transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Instellingen</span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 rounded-lg transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
