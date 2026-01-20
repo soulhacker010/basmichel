@@ -194,6 +194,12 @@ export default function ClientProjectDetail2() {
 
   const handleCancelProject = async () => {
     try {
+      // Delete associated sessions to free calendar slot
+      const sessions = await base44.entities.Session.filter({ project_id: projectId });
+      for (const session of sessions) {
+        await base44.entities.Session.delete(session.id);
+      }
+
       // Delete associated booking if exists
       if (project.booking_id) {
         await base44.entities.Booking.delete(project.booking_id);
@@ -215,7 +221,7 @@ export default function ClientProjectDetail2() {
       await base44.entities.Notification.create({
         type: 'project_geannuleerd',
         title: 'Project geannuleerd door klant',
-        message: `${user?.full_name || 'Klant'} heeft project "${project.title}" geannuleerd`,
+        message: `${user?.full_name || user?.email || 'Klant'} heeft project "${project.title}" geannuleerd`,
         project_id: projectId,
       });
 
@@ -226,6 +232,7 @@ export default function ClientProjectDetail2() {
       await Promise.all([
         queryClient.invalidateQueries(['clientProjects']),
         queryClient.invalidateQueries(['projects']),
+        queryClient.invalidateQueries(['existingSessions']),
       ]);
 
       toast.success('Project geannuleerd');
@@ -284,15 +291,38 @@ export default function ClientProjectDetail2() {
 
     setIsRescheduling(true);
     try {
-      // Update project
+      const endDatetime = addMinutes(selectedTime, 60);
+
+      // Delete old sessions to free the old calendar slot
+      const oldSessions = await base44.entities.Session.filter({ project_id: projectId });
+      for (const session of oldSessions) {
+        await base44.entities.Session.delete(session.id);
+      }
+
+      // Update project with new date and time
       await base44.entities.Project.update(projectId, {
         shoot_date: format(selectedDate, 'yyyy-MM-dd'),
         shoot_time: format(selectedTime, 'HH:mm'),
       });
 
+      // Create new session to block the new time slot
+      const sessionTypes = await base44.entities.SessionType.filter({ is_active: true });
+      const defaultSessionType = sessionTypes[0];
+      
+      if (defaultSessionType) {
+        await base44.entities.Session.create({
+          session_type_id: defaultSessionType.id,
+          client_id: clientId,
+          project_id: projectId,
+          start_datetime: selectedTime.toISOString(),
+          end_datetime: endDatetime.toISOString(),
+          status: 'bevestigd',
+          location: `${project.address}${project.city ? `, ${project.city}` : ''}`,
+        });
+      }
+
       // Update booking if exists
       if (project.booking_id) {
-        const endDatetime = addMinutes(selectedTime, 60);
         await base44.entities.Booking.update(project.booking_id, {
           start_datetime: selectedTime.toISOString(),
           end_datetime: endDatetime.toISOString(),
@@ -303,7 +333,7 @@ export default function ClientProjectDetail2() {
       await base44.entities.Notification.create({
         type: 'project_verzet',
         title: 'Project verzet',
-        message: `${user?.full_name || 'Klant'} heeft project "${project.title}" verzet naar ${format(selectedDate, 'd MMMM yyyy', { locale: nl })} om ${format(selectedTime, 'HH:mm')}`,
+        message: `${user?.full_name || user?.email || 'Klant'} heeft project "${project.title}" verzet naar ${format(selectedDate, 'd MMMM yyyy', { locale: nl })} om ${format(selectedTime, 'HH:mm')}`,
         project_id: projectId,
       });
 

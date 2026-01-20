@@ -194,7 +194,7 @@ export default function ClientBooking() {
       await base44.entities.Notification.create({
         type: 'nieuwe_sessie',
         title: 'Nieuwe sessie geboekt',
-        message: `${user.full_name || user.email} heeft een ${selectedService.name} geboekt voor ${format(startDatetime, 'd MMMM yyyy', { locale: nl })} om ${format(startDatetime, 'HH:mm')}`,
+        message: `${user.full_name || user.email.split('@')[0]} heeft een ${selectedService.name} geboekt voor ${format(startDatetime, 'd MMMM yyyy', { locale: nl })} om ${format(startDatetime, 'HH:mm')}`,
         project_id: project.id,
       });
 
@@ -204,7 +204,7 @@ export default function ClientBooking() {
           to: user.email,
           subject: 'Boeking bevestigd - Basmichel',
           body: `
-Beste ${user.full_name || 'klant'},
+Beste ${user.full_name || user.email.split('@')[0]},
 
 Uw fotoshoot is bevestigd!
 

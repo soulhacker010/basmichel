@@ -71,13 +71,15 @@ export default function ClientProfile() {
     setIsSavingProfile(true);
     
     try {
-      // Update User entity with full_name
-      await base44.auth.updateMe({ full_name: formData.full_name.trim() });
+      const newName = formData.full_name.trim();
+      
+      // Update User entity - this is the single source of truth
+      await base44.auth.updateMe({ full_name: newName });
       
       // Also update client contact_name if client exists
       if (clients.length > 0) {
         await base44.entities.Client.update(clients[0].id, { 
-          contact_name: formData.full_name.trim()
+          contact_name: newName
         });
       }
       
