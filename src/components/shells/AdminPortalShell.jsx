@@ -97,7 +97,11 @@ export default function AdminPortalShell({ children, currentPageName }) {
         >
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
-        <span className="font-light text-gray-900 tracking-wide">Basmichel</span>
+        <img 
+          src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/9370b8342_BasMichel_K152.png" 
+          alt="Basmichel Logo" 
+          className="h-6"
+        />
         {user && (
           <NotificationCenter userId={user.id} isAdmin={true} />
         )}
@@ -122,7 +126,7 @@ export default function AdminPortalShell({ children, currentPageName }) {
           <div className="h-20 flex items-center px-6">
             <Link to={createPageUrl('Home')} className="hover:opacity-80 transition-opacity">
               <img 
-                src="https://storage.googleapis.com/msgsndr/zfaQe7G8BqH6kyygY9Bj/media/67f85bbad9be0c08e76e0a32.png" 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/9370b8342_BasMichel_K152.png" 
                 alt="Basmichel Logo" 
                 className="h-8"
               />
