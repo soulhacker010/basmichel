@@ -31,6 +31,8 @@ export default function ClientPortalShell({ children, currentPageName }) {
   const { data: user, isLoading, isError } = useQuery({
     queryKey: ['currentUser'],
     queryFn: base44.auth.me,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   useEffect(() => {

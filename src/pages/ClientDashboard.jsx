@@ -33,6 +33,8 @@ export default function ClientDashboard() {
   const { data: userData, refetch: refetchUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   useEffect(() => {
@@ -99,7 +101,7 @@ export default function ClientDashboard() {
       {/* Header */}
       <div className="mb-10">
         <h1 className="text-3xl font-light text-gray-900">
-          Welkom{user?.full_name ? `, ${user.full_name.split(' ')[0]}` : user?.email ? `, ${user.email.split('@')[0]}` : ''}
+          Welkom{user?.first_name ? `, ${user.first_name}` : user?.full_name ? `, ${user.full_name.split(' ')[0]}` : user?.email ? `, ${user.email.split('@')[0]}` : ''}
         </h1>
         <p className="text-gray-400 mt-2">Uw projecten en boekingen op één plek</p>
       </div>
