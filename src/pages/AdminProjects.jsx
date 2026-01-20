@@ -215,7 +215,10 @@ export default function AdminProjects() {
     const client = clients.find(c => c.id === clientId);
     if (!client) return '-';
     const user = users.find(u => u.id === client.user_id);
-    return user?.full_name || client.company_name || '-';
+    const fullName = user?.first_name && user?.last_name 
+      ? `${user.first_name} ${user.last_name}` 
+      : user?.full_name;
+    return fullName || client.company_name || '-';
   };
 
   const statusCounts = {
@@ -415,9 +418,12 @@ export default function AdminProjects() {
                 <option value="">Selecteer klant</option>
                 {clients.map(client => {
                   const user = users.find(u => u.id === client.user_id);
+                  const fullName = user?.first_name && user?.last_name 
+                    ? `${user.first_name} ${user.last_name}` 
+                    : user?.full_name;
                   return (
                     <option key={client.id} value={client.id}>
-                      {user?.full_name || client.company_name || 'Onbekend'}
+                      {fullName || client.company_name || 'Onbekend'}
                     </option>
                   );
                 })}

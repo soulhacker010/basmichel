@@ -94,8 +94,9 @@ export default function AdminClients() {
   const filteredClients = clients.filter(client => {
     const user = users.find(u => u.id === client.user_id);
     const searchLower = search.toLowerCase();
+    const fullName = user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : user?.full_name;
     return (
-      user?.full_name?.toLowerCase().includes(searchLower) ||
+      fullName?.toLowerCase().includes(searchLower) ||
       user?.email?.toLowerCase().includes(searchLower) ||
       client.company_name?.toLowerCase().includes(searchLower) ||
       client.phone?.toLowerCase().includes(searchLower)
@@ -212,11 +213,15 @@ export default function AdminClients() {
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#E8EDE5] to-[#D5DDD0] flex items-center justify-center">
                         <span className="text-lg font-light text-[#5C6B52]">
-                          {user?.full_name?.charAt(0) || '?'}
+                          {user?.first_name?.charAt(0) || user?.full_name?.charAt(0) || '?'}
                         </span>
                       </div>
                       <div>
-                        <h3 className="font-light text-gray-900">{user?.full_name || 'Onbekend'}</h3>
+                        <h3 className="font-light text-gray-900">
+                          {user?.first_name && user?.last_name 
+                            ? `${user.first_name} ${user.last_name}` 
+                            : user?.full_name || 'Onbekend'}
+                        </h3>
                         {client.company_name && (
                           <p className="text-sm text-gray-500">{client.company_name}</p>
                         )}
@@ -298,7 +303,9 @@ export default function AdminClients() {
                 <option value="">Selecteer een gebruiker</option>
                 {users.filter(u => u.role !== 'admin').map(user => (
                   <option key={user.id} value={user.id}>
-                    {user.full_name} ({user.email})
+                    {user.first_name && user.last_name 
+                      ? `${user.first_name} ${user.last_name}` 
+                      : user.full_name} ({user.email})
                   </option>
                 ))}
               </select>
