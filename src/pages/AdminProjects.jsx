@@ -137,7 +137,25 @@ export default function AdminProjects() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      // Hard delete - also clean up related data
+      // Delete related bookings first
+      const relatedBookings = await base44.entities.Booking.filter({ project_id: id });
+      for (const booking of relatedBookings) {
+        await base44.entities.Booking.delete(booking.id);
+      }
+      
+      // Delete related invoices
+      const relatedInvoices = await base44.entities.ProjectInvoice.filter({ project_id: id });
+      for (const invoice of relatedInvoices) {
+        await base44.entities.ProjectInvoice.delete(invoice.id);
+      }
+      
+      // Delete related files
+      const relatedFiles = await base44.entities.ProjectFile.filter({ project_id: id });
+      for (const file of relatedFiles) {
+        await base44.entities.ProjectFile.delete(file.id);
+      }
+      
+      // Finally delete the project itself
       await base44.entities.Project.delete(id);
     },
     onSuccess: () => {
@@ -145,6 +163,8 @@ export default function AdminProjects() {
       queryClient.invalidateQueries({ queryKey: ['clientProjects'] });
       queryClient.invalidateQueries({ queryKey: ['clientBookings'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['clientInvoices'] });
       setDeleteId(null);
       toast.success('Project verwijderd');
     },

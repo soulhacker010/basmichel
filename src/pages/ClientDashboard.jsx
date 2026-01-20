@@ -58,22 +58,30 @@ export default function ClientDashboard() {
     queryKey: ['clientProjects', clientId],
     queryFn: () => base44.entities.Project.filter({ client_id: clientId }, '-created_date'),
     enabled: !!clientId,
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: bookings = [] } = useQuery({
     queryKey: ['clientBookings', clientId],
     queryFn: async () => {
       const allBookings = await base44.entities.Booking.filter({ client_id: clientId }, '-start_datetime');
-      // Filter only upcoming confirmed bookings
+      const allProjects = await base44.entities.Project.filter({ client_id: clientId });
+      const validProjectIds = new Set(allProjects.map(p => p.id));
+      
+      // Filter only upcoming confirmed bookings with existing projects
       const now = new Date();
       return allBookings.filter(b => 
         b.status === 'bevestigd' && 
-        new Date(b.start_datetime) > now
+        new Date(b.start_datetime) > now &&
+        b.project_id && validProjectIds.has(b.project_id)
       );
     },
     enabled: !!clientId,
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: invoices = [] } = useQuery({
