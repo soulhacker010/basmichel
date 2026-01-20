@@ -93,7 +93,7 @@ export default function AdminProjects() {
       const projectData = {
         ...data,
         project_number: nextNumber.toString(),
-        title: data.address, // Title = Address
+        title: `${data.address}${data.city ? ', ' + data.city : ''}`, // Title = Full Address (street + city)
       };
       
       const project = await base44.entities.Project.create(projectData);
@@ -182,13 +182,14 @@ export default function AdminProjects() {
     const formData = new FormData(e.target);
     
     const address = formData.get('address');
+    const city = formData.get('city');
     const shoot_date = formData.get('shoot_date');
     const shoot_time = formData.get('shoot_time');
     const client_id = formData.get('client_id');
     
     // Validation for create
     if (!editingProject) {
-      if (!address || !shoot_date || !shoot_time || !client_id) {
+      if (!address || !city || !shoot_date || !shoot_time || !client_id) {
         toast.error('Vul alle verplichte velden in');
         return;
       }
@@ -196,6 +197,7 @@ export default function AdminProjects() {
     
     const data = {
       address,
+      city,
       shoot_date,
       shoot_time,
       client_id,
@@ -353,19 +355,31 @@ export default function AdminProjects() {
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Address Field - First and Required (only for new projects) */}
+            {/* Address and City Fields - Required for new projects */}
             {!editingProject && (
-              <div>
-                <Label htmlFor="address">Adres *</Label>
-                <Input
-                  id="address"
-                  name="address"
-                  placeholder="Straatnaam huisnummer, Plaatsnaam"
-                  className="mt-1.5"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">Dit wordt de projecttitel</p>
-              </div>
+              <>
+                <div>
+                  <Label htmlFor="address">Straat + Huisnummer *</Label>
+                  <Input
+                    id="address"
+                    name="address"
+                    placeholder="Straatnaam huisnummer"
+                    className="mt-1.5"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="city">Plaats *</Label>
+                  <Input
+                    id="city"
+                    name="city"
+                    placeholder="Plaatsnaam"
+                    className="mt-1.5"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Dit wordt samen de projecttitel</p>
+                </div>
+              </>
             )}
 
             {/* Title - Only for editing */}
@@ -449,17 +463,28 @@ export default function AdminProjects() {
               </select>
             </div>
 
-            {/* Address - For editing only */}
+            {/* Address and City - For editing only */}
             {editingProject && (
-              <div>
-                <Label htmlFor="address">Adres</Label>
-                <Input
-                  id="address"
-                  name="address"
-                  defaultValue={editingProject?.address || ''}
-                  className="mt-1.5"
-                />
-              </div>
+              <>
+                <div>
+                  <Label htmlFor="address">Straat + Huisnummer</Label>
+                  <Input
+                    id="address"
+                    name="address"
+                    defaultValue={editingProject?.address || ''}
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="city">Plaats</Label>
+                  <Input
+                    id="city"
+                    name="city"
+                    defaultValue={editingProject?.city || ''}
+                    className="mt-1.5"
+                  />
+                </div>
+              </>
             )}
 
             {/* Internal Notes */}

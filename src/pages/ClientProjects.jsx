@@ -164,12 +164,6 @@ export default function ClientProjects() {
                       <h3 className="font-medium text-gray-900 group-hover:text-[#5C6B52] transition-colors">
                         {project.title}
                       </h3>
-                      {project.address && (
-                        <div className="flex items-center gap-1.5 text-sm text-gray-500 mt-1">
-                          <MapPin className="w-3.5 h-3.5" />
-                          <span>{project.address}</span>
-                        </div>
-                      )}
                       {(() => {
                         const clientData = clients.find(c => c.id === project.client_id);
                         return clientData?.company_name && (
