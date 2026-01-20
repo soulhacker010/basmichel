@@ -217,9 +217,6 @@ export default function ClientDashboard() {
                     <div className={cn("w-2.5 h-2.5 rounded-full", status?.color)} />
                     <div>
                       <p className="font-medium text-gray-900">{project.title}</p>
-                      {project.address && (
-                        <p className="text-sm text-gray-400 mt-0.5">{project.address}</p>
-                      )}
                     </div>
                   </div>
                   <div className="text-right">
@@ -272,13 +269,6 @@ export default function ClientDashboard() {
                     <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
                       <Clock className="w-4 h-4" />
                       <span>{project.shoot_time || '-'}</span>
-                      {project.address && (
-                        <>
-                          <span>•</span>
-                          <MapPin className="w-4 h-4" />
-                          <span>{project.address}</span>
-                        </>
-                      )}
                     </div>
                   </div>
                 </div>

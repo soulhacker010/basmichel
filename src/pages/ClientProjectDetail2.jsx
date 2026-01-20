@@ -603,7 +603,7 @@ export default function ClientProjectDetail2() {
           </div>
           <div>
             <p className="text-sm text-gray-400 mb-1">Adres object</p>
-            <p className="font-medium text-gray-900">{project.address || '-'}</p>
+            <p className="font-medium text-gray-900">{project.title || '-'}</p>
           </div>
           <div>
             <p className="text-sm text-gray-400 mb-1">Shootdatum</p>
