@@ -449,7 +449,15 @@ export default function AdminProjectDetail() {
           </div>
           <div>
             <p className="text-sm text-gray-400 mb-1">Klantnaam</p>
-            <p className="font-medium text-gray-900">{user?.full_name || client?.company_name || '-'}</p>
+            <p className="font-medium text-gray-900">
+              {user?.first_name && user?.last_name 
+                ? `${user.first_name} ${user.last_name}` 
+                : user?.full_name || '-'}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-400 mb-1">Bedrijf</p>
+            <p className="font-medium text-gray-900">{client?.company_name || '-'}</p>
           </div>
           <div>
             <p className="text-sm text-gray-400 mb-1">E-mailadres klant</p>
@@ -954,7 +962,9 @@ export default function AdminProjectDetail() {
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-sm text-gray-600">
                     Factuur wordt verstuurd naar: <span className="font-medium text-gray-900">
-                      {user?.full_name || client?.company_name || 'Projectklant'}
+                      {user?.first_name && user?.last_name 
+                        ? `${user.first_name} ${user.last_name}` 
+                        : user?.full_name || client?.company_name || 'Projectklant'}
                     </span>
                   </p>
                   <p className="text-xs text-gray-500 mt-1">{user?.email || ''}</p>

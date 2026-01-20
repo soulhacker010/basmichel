@@ -287,6 +287,12 @@ export default function AdminProjects() {
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-gray-900 truncate">{project.title}</h3>
                   <p className="text-sm text-gray-500 truncate">{getClientName(project.client_id)}</p>
+                  {(() => {
+                    const client = clients.find(c => c.id === project.client_id);
+                    return client?.company_name && (
+                      <p className="text-xs text-gray-400 truncate">{client.company_name}</p>
+                    );
+                  })()}
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
