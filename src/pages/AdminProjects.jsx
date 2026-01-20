@@ -330,9 +330,10 @@ export default function AdminProjects() {
 
               <div className="flex items-center justify-between">
                 <StatusBadge status={project.status} />
-                {project.created_date && (
+                {project.shoot_date && (
                   <span className="text-xs text-gray-400">
-                    {format(new Date(project.created_date), 'd MMM yyyy', { locale: nl })}
+                    {format(new Date(project.shoot_date), 'd MMM yyyy', { locale: nl })}
+                    {project.shoot_time && ` • ${project.shoot_time}`}
                   </span>
                 )}
               </div>
