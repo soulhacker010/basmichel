@@ -60,6 +60,7 @@ export default function ClientProfile() {
     mutationFn: (data) => base44.auth.updateMe(data),
     onSuccess: () => {
       queryClient.invalidateQueries(['user']);
+      queryClient.invalidateQueries(['users']);
       toast.success('Profiel bijgewerkt');
     }
   });
@@ -68,6 +69,7 @@ export default function ClientProfile() {
     mutationFn: ({ id, data }) => base44.entities.Client.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['clients']);
+      queryClient.invalidateQueries(['users']);
       toast.success('Bedrijfsgegevens bijgewerkt');
     }
   });
