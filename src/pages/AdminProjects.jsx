@@ -337,11 +337,7 @@ export default function AdminProjects() {
                 )}
               </div>
 
-              {project.address && (
-                <div className="mt-3 pt-3 border-t border-gray-50">
-                  <p className="text-xs text-gray-500 truncate">{project.address}</p>
-                </div>
-              )}
+
             </Link>
           ))}
         </div>
