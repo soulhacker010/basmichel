@@ -112,7 +112,7 @@ export default function ClientPortalShell({ children, currentPageName }) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="h-20 flex items-center px-6">
-            <Link to={createPageUrl('Home')} className="hover:opacity-80 transition-opacity block py-4">
+            <Link to={createPageUrl('Home')} className="hover:opacity-80 transition-opacity block py-8">
               <img 
                 src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/9370b8342_BasMichel_K152.png" 
                 alt="Basmichel Logo" 
