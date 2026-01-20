@@ -83,9 +83,21 @@ export default function ClientProfile() {
         });
       }
       
+      // Refetch to get updated data
+      const updatedUser = await queryClient.fetchQuery({
+        queryKey: ['currentUser'],
+        queryFn: () => base44.auth.me(),
+      });
+      
+      // Update local state with fresh data
+      setUser(updatedUser);
+      setFormData({
+        full_name: updatedUser.full_name || '',
+        email: updatedUser.email || ''
+      });
+      
       // Invalidate all relevant queries to refresh everywhere
       await Promise.all([
-        queryClient.invalidateQueries(['currentUser']),
         queryClient.invalidateQueries(['clients']),
         queryClient.invalidateQueries(['users']),
         queryClient.invalidateQueries(['clientProjects'])
