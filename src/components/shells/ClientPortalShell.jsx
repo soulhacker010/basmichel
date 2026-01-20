@@ -150,11 +150,15 @@ export default function ClientPortalShell({ children, currentPageName }) {
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-[#E8EDE5] flex items-center justify-center">
                   <span className="text-sm font-medium text-[#5C6B52]">
-                    {user.full_name?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
+                    {user.first_name?.charAt(0) || user.full_name?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{user.full_name || 'Gebruiker'}</p>
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user.first_name && user.last_name 
+                      ? `${user.first_name} ${user.last_name}` 
+                      : user.full_name || 'Gebruiker'}
+                  </p>
                   <p className="text-xs text-gray-400 truncate">{user.email}</p>
                 </div>
                 {user && (

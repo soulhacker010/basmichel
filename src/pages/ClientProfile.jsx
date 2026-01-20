@@ -10,7 +10,8 @@ import { toast } from 'sonner';
 
 export default function ClientProfile() {
   const [formData, setFormData] = useState({
-    full_name: '',
+    first_name: '',
+    last_name: '',
     email: ''
   });
   const [clientData, setClientData] = useState({
@@ -31,7 +32,8 @@ export default function ClientProfile() {
   useEffect(() => {
     if (userData) {
       setFormData({
-        full_name: userData.full_name || '',
+        first_name: userData.first_name || '',
+        last_name: userData.last_name || '',
         email: userData.email || ''
       });
     }
@@ -61,29 +63,37 @@ export default function ClientProfile() {
   const [isSavingClient, setIsSavingClient] = useState(false);
 
   const handleSaveProfile = async () => {
-    if (!formData.full_name || formData.full_name.trim() === '') {
-      toast.error('Naam is verplicht');
+    if (!formData.first_name || formData.first_name.trim() === '' || !formData.last_name || formData.last_name.trim() === '') {
+      toast.error('Voor- en achternaam zijn verplicht');
       return;
     }
 
     setIsSavingProfile(true);
     
     try {
-      const newName = formData.full_name.trim();
+      const firstName = formData.first_name.trim();
+      const lastName = formData.last_name.trim();
+      const fullName = `${firstName} ${lastName}`;
       
-      // Update User entity - this is the single source of truth
-      await base44.auth.updateMe({ full_name: newName });
+      // Update User entity with both first_name, last_name, and full_name
+      await base44.auth.updateMe({ 
+        first_name: firstName,
+        last_name: lastName,
+        full_name: fullName
+      });
       
       // Also update client contact_name if client exists
       if (clients.length > 0) {
         await base44.entities.Client.update(clients[0].id, { 
-          contact_name: newName
+          contact_name: fullName
         });
       }
       
+      // Force refetch to ensure we get the latest data
+      await queryClient.refetchQueries({ queryKey: ['currentUser'] });
+      
       // Invalidate all relevant queries to refresh everywhere
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['currentUser'] }),
         queryClient.invalidateQueries(['clients']),
         queryClient.invalidateQueries(['users']),
         queryClient.invalidateQueries(['clientProjects'])
@@ -142,16 +152,29 @@ export default function ClientProfile() {
 
         <div className="space-y-5">
           <div>
-            <Label htmlFor="full_name">Naam *</Label>
+            <Label htmlFor="first_name">Voornaam *</Label>
             <Input
-              id="full_name"
-              value={formData.full_name}
-              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+              id="first_name"
+              value={formData.first_name}
+              onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
               className="mt-2 h-12 rounded-xl"
               required
             />
-            {formData.full_name === '' && (
-              <p className="text-xs text-red-600 mt-1">Naam is verplicht</p>
+            {formData.first_name === '' && (
+              <p className="text-xs text-red-600 mt-1">Voornaam is verplicht</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="last_name">Achternaam *</Label>
+            <Input
+              id="last_name"
+              value={formData.last_name}
+              onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+              className="mt-2 h-12 rounded-xl"
+              required
+            />
+            {formData.last_name === '' && (
+              <p className="text-xs text-red-600 mt-1">Achternaam is verplicht</p>
             )}
           </div>
           <div>
@@ -171,7 +194,7 @@ export default function ClientProfile() {
           <Button 
             onClick={handleSaveProfile}
             className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full px-6"
-            disabled={isSavingProfile || !formData.full_name}
+            disabled={isSavingProfile || !formData.first_name || !formData.last_name}
           >
             <Save className="w-4 h-4 mr-2" />
             {isSavingProfile ? 'Bezig met opslaan...' : 'Opslaan'}
