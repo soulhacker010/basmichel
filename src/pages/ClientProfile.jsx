@@ -9,7 +9,6 @@ import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 
 export default function ClientProfile() {
-  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     full_name: '',
     email: ''
@@ -31,7 +30,6 @@ export default function ClientProfile() {
 
   useEffect(() => {
     if (userData) {
-      setUser(userData);
       setFormData({
         full_name: userData.full_name || '',
         email: userData.email || ''
@@ -40,9 +38,9 @@ export default function ClientProfile() {
   }, [userData]);
 
   const { data: clients = [] } = useQuery({
-    queryKey: ['clients', user?.email],
-    queryFn: () => base44.entities.Client.filter({ user_id: user?.id }),
-    enabled: !!user,
+    queryKey: ['clients', userData?.email],
+    queryFn: () => base44.entities.Client.filter({ user_id: userData?.id }),
+    enabled: !!userData,
     initialData: []
   });
 
@@ -82,19 +80,6 @@ export default function ClientProfile() {
           contact_name: newName
         });
       }
-      
-      // Refetch to get updated data
-      const updatedUser = await queryClient.fetchQuery({
-        queryKey: ['currentUser'],
-        queryFn: () => base44.auth.me(),
-      });
-      
-      // Update local state with fresh data
-      setUser(updatedUser);
-      setFormData({
-        full_name: updatedUser.full_name || '',
-        email: updatedUser.email || ''
-      });
       
       // Invalidate all relevant queries to refresh everywhere
       await Promise.all([
