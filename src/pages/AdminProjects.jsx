@@ -72,14 +72,18 @@ export default function AdminProjects() {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      // Generate project number - start at 202700 and increment
-      const allProjects = await base44.entities.Project.list('-created_date', 1);
+      // Generate project number - find highest existing number and increment
+      const allProjects = await base44.entities.Project.list();
       let nextNumber = 202700;
       
-      if (allProjects.length > 0 && allProjects[0].project_number) {
-        const lastNumber = parseInt(allProjects[0].project_number);
-        if (!isNaN(lastNumber)) {
-          nextNumber = lastNumber + 1;
+      if (allProjects.length > 0) {
+        const numbers = allProjects
+          .map(p => parseInt(p.project_number))
+          .filter(n => !isNaN(n));
+        
+        if (numbers.length > 0) {
+          const highestNumber = Math.max(...numbers);
+          nextNumber = highestNumber + 1;
         }
       }
       
