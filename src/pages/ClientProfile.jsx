@@ -59,32 +59,8 @@ export default function ClientProfile() {
     }
   }, [clients]);
 
-  const updateUserMutation = useMutation({
-    mutationFn: (data) => base44.auth.updateMe(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['currentUser']);
-      queryClient.invalidateQueries(['users']);
-      queryClient.invalidateQueries(['clients']);
-      toast.success('Opgeslagen', { 
-        description: 'Uw gegevens zijn bijgewerkt',
-        icon: '✓',
-        duration: 2000
-      });
-    }
-  });
-
-  const updateClientMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Client.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['clients']);
-      queryClient.invalidateQueries(['currentUser']);
-      toast.success('Opgeslagen', {
-        description: 'Uw bedrijfsgegevens zijn bijgewerkt',
-        icon: '✓',
-        duration: 2000
-      });
-    }
-  });
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isSavingClient, setIsSavingClient] = useState(false);
 
   const handleSaveProfile = async () => {
     if (!formData.full_name || formData.full_name.trim() === '') {
@@ -92,6 +68,8 @@ export default function ClientProfile() {
       return;
     }
 
+    setIsSavingProfile(true);
+    
     try {
       // Update User entity with full_name
       await base44.auth.updateMe({ full_name: formData.full_name.trim() });
@@ -113,18 +91,21 @@ export default function ClientProfile() {
       
       // Show success feedback
       toast.success('Opgeslagen', { 
-        description: 'Uw naam is bijgewerkt',
         icon: '✓',
         duration: 2000
       });
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Er is iets misgegaan bij het opslaan');
+    } finally {
+      setIsSavingProfile(false);
     }
   };
 
   const handleSaveClient = async () => {
     if (clients.length === 0) return;
+    
+    setIsSavingClient(true);
     
     try {
       await base44.entities.Client.update(clients[0].id, clientData);
@@ -132,13 +113,14 @@ export default function ClientProfile() {
       await queryClient.invalidateQueries(['clients']);
       
       toast.success('Opgeslagen', {
-        description: 'Uw bedrijfsgegevens zijn bijgewerkt',
         icon: '✓',
         duration: 2000
       });
     } catch (error) {
       console.error('Error updating client:', error);
       toast.error('Er is iets misgegaan bij het opslaan');
+    } finally {
+      setIsSavingClient(false);
     }
   };
 
@@ -189,10 +171,10 @@ export default function ClientProfile() {
           <Button 
             onClick={handleSaveProfile}
             className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full px-6"
-            disabled={updateUserMutation.isPending || !formData.full_name}
+            disabled={isSavingProfile || !formData.full_name}
           >
             <Save className="w-4 h-4 mr-2" />
-            {updateUserMutation.isPending ? 'Bezig met opslaan...' : 'Opslaan'}
+            {isSavingProfile ? 'Bezig met opslaan...' : 'Opslaan'}
           </Button>
         </div>
       </div>
@@ -265,10 +247,10 @@ export default function ClientProfile() {
           <Button 
             onClick={handleSaveClient}
             className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full px-6"
-            disabled={updateClientMutation.isPending || clients.length === 0}
+            disabled={isSavingClient || clients.length === 0}
           >
             <Save className="w-4 h-4 mr-2" />
-            {updateClientMutation.isPending ? 'Bezig met opslaan...' : 'Opslaan'}
+            {isSavingClient ? 'Bezig met opslaan...' : 'Opslaan'}
           </Button>
         </div>
       </div>

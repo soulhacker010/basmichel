@@ -136,14 +136,36 @@ export default function ClientBooking() {
       const startDatetime = selectedTime;
       const endDatetime = addMinutes(startDatetime, selectedService.duration_minutes || 60);
 
-      // Create project
+      // Get or create counter for project number
+      const counters = await base44.entities.ProjectCounter.list();
+      let nextNumber = 202700;
+      let counterId = null;
+      
+      if (counters.length > 0) {
+        nextNumber = counters[0].last_number + 1;
+        counterId = counters[0].id;
+      }
+      
+      // Update or create counter
+      if (counterId) {
+        await base44.entities.ProjectCounter.update(counterId, { last_number: nextNumber });
+      } else {
+        await base44.entities.ProjectCounter.create({ last_number: nextNumber });
+      }
+
+      // Create project with all booking data
+      const projectTitle = `${formData.address}${formData.city ? `, ${formData.city}` : ''}`;
       const project = await base44.entities.Project.create({
-        title: formData.address || 'Nieuw Project',
+        project_number: nextNumber.toString(),
+        title: projectTitle,
         client_id: clientId,
         address: formData.address,
         city: formData.city,
         postal_code: formData.postal_code,
+        shoot_date: format(selectedDate, 'yyyy-MM-dd'),
+        shoot_time: format(selectedTime, 'HH:mm'),
         status: 'geboekt',
+        notes: formData.notes || '',
       });
 
       // Create session
