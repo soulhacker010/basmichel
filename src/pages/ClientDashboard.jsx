@@ -30,13 +30,16 @@ export default function ClientDashboard() {
   const [user, setUser] = useState(null);
   const [clientId, setClientId] = useState(null);
 
+  const { data: userData, refetch: refetchUser } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+  });
+
   useEffect(() => {
-    const loadUser = async () => {
-      const userData = await base44.auth.me();
+    if (userData) {
       setUser(userData);
-    };
-    loadUser();
-  }, []);
+    }
+  }, [userData]);
 
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],

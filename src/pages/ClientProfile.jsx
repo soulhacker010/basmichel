@@ -24,17 +24,20 @@ export default function ClientProfile() {
 
   const queryClient = useQueryClient();
 
+  const { data: userData } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+  });
+
   useEffect(() => {
-    const loadUser = async () => {
-      const userData = await base44.auth.me();
+    if (userData) {
       setUser(userData);
       setFormData({
         full_name: userData.full_name || '',
         email: userData.email || ''
       });
-    };
-    loadUser();
-  }, []);
+    }
+  }, [userData]);
 
   const { data: clients = [] } = useQuery({
     queryKey: ['clients', user?.email],
@@ -84,16 +87,12 @@ export default function ClientProfile() {
         await base44.entities.Client.update(clients[0].id, { 
           contact_name: formData.full_name 
         });
-        queryClient.invalidateQueries(['clients']);
       }
       
-      // Reload user data
-      const updatedUser = await base44.auth.me();
-      setUser(updatedUser);
-      setFormData({
-        full_name: updatedUser.full_name || '',
-        email: updatedUser.email || ''
-      });
+      // Invalidate all relevant queries
+      queryClient.invalidateQueries(['currentUser']);
+      queryClient.invalidateQueries(['clients']);
+      queryClient.invalidateQueries(['users']);
     } catch (error) {
       console.error('Error updating profile:', error);
     }
