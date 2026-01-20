@@ -98,6 +98,7 @@ export default function ClientProfile() {
       
       // Invalidate all relevant queries to refresh everywhere
       await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['currentUser'] }),
         queryClient.invalidateQueries(['clients']),
         queryClient.invalidateQueries(['users']),
         queryClient.invalidateQueries(['clientProjects'])
