@@ -30,13 +30,16 @@ export default function ClientProjects() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
+  const { data: userData } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+  });
+
   useEffect(() => {
-    const loadUser = async () => {
-      const userData = await base44.auth.me();
+    if (userData) {
       setUser(userData);
-    };
-    loadUser();
-  }, []);
+    }
+  }, [userData]);
 
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
@@ -55,6 +58,8 @@ export default function ClientProjects() {
     queryKey: ['clientProjects', clientId],
     queryFn: () => base44.entities.Project.filter({ client_id: clientId }, '-created_date'),
     enabled: !!clientId,
+    refetchInterval: false,
+    staleTime: 0, // Always fetch fresh data
   });
 
   const filteredProjects = projects.filter(project => {

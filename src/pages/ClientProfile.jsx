@@ -62,9 +62,14 @@ export default function ClientProfile() {
   const updateUserMutation = useMutation({
     mutationFn: (data) => base44.auth.updateMe(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['user']);
+      queryClient.invalidateQueries(['currentUser']);
       queryClient.invalidateQueries(['users']);
-      toast.success('Profiel bijgewerkt');
+      queryClient.invalidateQueries(['clients']);
+      toast.success('Opgeslagen', { 
+        description: 'Uw gegevens zijn bijgewerkt',
+        icon: '✓',
+        duration: 2000
+      });
     }
   });
 
@@ -72,8 +77,12 @@ export default function ClientProfile() {
     mutationFn: ({ id, data }) => base44.entities.Client.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['clients']);
-      queryClient.invalidateQueries(['users']);
-      toast.success('Bedrijfsgegevens bijgewerkt');
+      queryClient.invalidateQueries(['currentUser']);
+      toast.success('Opgeslagen', {
+        description: 'Uw bedrijfsgegevens zijn bijgewerkt',
+        icon: '✓',
+        duration: 2000
+      });
     }
   });
 

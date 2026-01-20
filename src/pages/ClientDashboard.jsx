@@ -58,12 +58,22 @@ export default function ClientDashboard() {
     queryKey: ['clientProjects', clientId],
     queryFn: () => base44.entities.Project.filter({ client_id: clientId }, '-created_date'),
     enabled: !!clientId,
+    staleTime: 0, // Always fetch fresh data
   });
 
   const { data: bookings = [] } = useQuery({
     queryKey: ['clientBookings', clientId],
-    queryFn: () => base44.entities.Booking.filter({ client_id: clientId }, '-start_datetime'),
+    queryFn: async () => {
+      const allBookings = await base44.entities.Booking.filter({ client_id: clientId }, '-start_datetime');
+      // Filter only upcoming confirmed bookings
+      const now = new Date();
+      return allBookings.filter(b => 
+        b.status === 'bevestigd' && 
+        new Date(b.start_datetime) > now
+      );
+    },
     enabled: !!clientId,
+    staleTime: 0, // Always fetch fresh data
   });
 
   const { data: invoices = [] } = useQuery({
@@ -79,7 +89,7 @@ export default function ClientDashboard() {
   });
 
   const activeProjects = projects.filter(p => p.status !== 'klaar');
-  const upcomingBookings = bookings.filter(b => b.status === 'bevestigd' && new Date(b.start_datetime) > new Date());
+  const upcomingBookings = bookings; // Already filtered in query
   const openInvoices = invoices.filter(i => i.status === 'verzonden');
 
   return (

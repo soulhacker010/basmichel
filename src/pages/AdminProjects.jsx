@@ -58,6 +58,7 @@ export default function AdminProjects() {
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: () => base44.entities.Project.list('-created_date'),
+    staleTime: 0, // Always fetch fresh data
   });
 
   const { data: clients = [] } = useQuery({
@@ -114,6 +115,9 @@ export default function AdminProjects() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['clientProjects'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['clientBookings'] });
       setIsDialogOpen(false);
       setEditingProject(null);
       toast.success('Project aangemaakt');
@@ -124,6 +128,7 @@ export default function AdminProjects() {
     mutationFn: ({ id, data }) => base44.entities.Project.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['clientProjects'] });
       setIsDialogOpen(false);
       setEditingProject(null);
       toast.success('Project bijgewerkt');
@@ -131,10 +136,17 @@ export default function AdminProjects() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Project.delete(id),
+    mutationFn: async (id) => {
+      // Hard delete - also clean up related data
+      await base44.entities.Project.delete(id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['clientProjects'] });
+      queryClient.invalidateQueries({ queryKey: ['clientBookings'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
       setDeleteId(null);
+      toast.success('Project verwijderd');
     },
   });
 
