@@ -120,8 +120,12 @@ export default function AdminPortalShell({ children, currentPageName }) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="h-20 flex items-center px-6">
-            <Link to={createPageUrl('Home')} className="text-lg font-light text-gray-900 tracking-wide hover:text-[#5C6B52] transition-colors">
-              Basmichel
+            <Link to={createPageUrl('Home')} className="hover:opacity-80 transition-opacity">
+              <img 
+                src="https://storage.googleapis.com/msgsndr/zfaQe7G8BqH6kyygY9Bj/media/67f85bbad9be0c08e76e0a32.png" 
+                alt="Basmichel Logo" 
+                className="h-8"
+              />
             </Link>
           </div>
 
