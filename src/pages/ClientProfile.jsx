@@ -73,7 +73,16 @@ export default function ClientProfile() {
   });
 
   const handleSaveProfile = async () => {
+    // Update both User and Client entities
     await updateUserMutation.mutateAsync(formData);
+    
+    // Also update client name if exists
+    if (clients.length > 0) {
+      await updateClientMutation.mutateAsync({
+        id: clients[0].id,
+        data: { contact_name: formData.full_name }
+      });
+    }
   };
 
   const handleSaveClient = async () => {
