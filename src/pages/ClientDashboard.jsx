@@ -63,25 +63,20 @@ export default function ClientDashboard() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: bookings = [] } = useQuery({
-    queryKey: ['clientBookings', clientId],
-    queryFn: async () => {
-      const allBookings = await base44.entities.Booking.filter({ client_id: clientId }, '-start_datetime');
-      const allProjects = await base44.entities.Project.filter({ client_id: clientId });
-      const validProjectIds = new Set(allProjects.map(p => p.id));
-      
-      // Filter only upcoming confirmed bookings with existing projects
-      const now = new Date();
-      return allBookings.filter(b => 
-        b.status === 'bevestigd' && 
-        new Date(b.start_datetime) > now &&
-        b.project_id && validProjectIds.has(b.project_id)
-      );
-    },
-    enabled: !!clientId,
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
+  // Calculate upcoming shoots from projects directly
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const upcomingProjects = projects.filter(p => {
+    if (!p.shoot_date) return false;
+    const shootDate = new Date(p.shoot_date);
+    shootDate.setHours(0, 0, 0, 0);
+    return shootDate >= today && (p.status === 'geboekt' || p.status === 'shoot_uitgevoerd');
+  }).sort((a, b) => {
+    const dateA = new Date(a.shoot_date);
+    const dateB = new Date(b.shoot_date);
+    if (dateA.getTime() !== dateB.getTime()) return dateA - dateB;
+    return (a.shoot_time || '').localeCompare(b.shoot_time || '');
   });
 
   const { data: invoices = [] } = useQuery({
@@ -97,7 +92,6 @@ export default function ClientDashboard() {
   });
 
   const activeProjects = projects.filter(p => p.status !== 'klaar');
-  const upcomingBookings = bookings; // Already filtered in query
   const openInvoices = invoices.filter(i => i.status === 'verzonden');
 
   return (
@@ -152,7 +146,7 @@ export default function ClientDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-400 mb-1">Komende shoots</p>
-              <p className="text-3xl font-light text-gray-900">{upcomingBookings.length}</p>
+              <p className="text-3xl font-light text-gray-900">{upcomingProjects.length}</p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-[#E8EDE5] flex items-center justify-center">
               <Calendar className="w-6 h-6 text-[#5C6B52]" />
@@ -249,39 +243,47 @@ export default function ClientDashboard() {
         )}
       </div>
 
-      {/* Upcoming Bookings */}
-      {upcomingBookings.length > 0 && (
+      {/* Upcoming Shoots */}
+      {upcomingProjects.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="px-6 py-5 border-b border-gray-50">
-            <h2 className="text-lg font-medium text-gray-900">Komende shoots</h2>
+            <h2 className="text-lg font-medium text-gray-900">Eerstvolgende shoots</h2>
           </div>
           <div className="divide-y divide-gray-50">
-            {upcomingBookings.slice(0, 3).map(booking => (
-              <div
-                key={booking.id}
-                className="flex items-center justify-between px-6 py-5"
+            {upcomingProjects.slice(0, 3).map(project => (
+              <Link
+                key={project.id}
+                to={createPageUrl(`ClientProjectDetail2?id=${project.id}`)}
+                className="flex items-center justify-between px-6 py-5 hover:bg-gray-50/50 transition-colors"
               >
                 <div className="flex items-center gap-5">
                   <div className="w-16 h-16 rounded-xl bg-[#F8FAF7] flex flex-col items-center justify-center">
                     <span className="text-xs text-[#5C6B52] uppercase font-medium">
-                      {format(new Date(booking.start_datetime), 'MMM', { locale: nl })}
+                      {format(new Date(project.shoot_date), 'MMM', { locale: nl })}
                     </span>
                     <span className="text-2xl font-light text-[#5C6B52]">
-                      {format(new Date(booking.start_datetime), 'd')}
+                      {format(new Date(project.shoot_date), 'd')}
                     </span>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{booking.address || 'Locatie nog niet bekend'}</p>
+                    <p className="font-medium text-gray-900">{project.title}</p>
                     <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
                       <Clock className="w-4 h-4" />
-                      <span>{format(new Date(booking.start_datetime), 'HH:mm')} - {booking.end_datetime && format(new Date(booking.end_datetime), 'HH:mm')}</span>
+                      <span>{project.shoot_time || '-'}</span>
+                      {project.address && (
+                        <>
+                          <span>•</span>
+                          <MapPin className="w-4 h-4" />
+                          <span>{project.address}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
-                <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">
-                  Bevestigd
+                <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                  {statusConfig[project.status]?.label || 'Geboekt'}
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { 
   ArrowLeft,
@@ -10,10 +10,13 @@ import {
   CheckCircle2,
   Loader2,
   ChevronDown,
-  FileText
+  FileText,
+  Trash2,
+  Calendar as CalendarIcon,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
+import { format, addDays, startOfWeek, addWeeks, isSameDay, setHours, setMinutes, addMinutes, isAfter, isBefore } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import {
@@ -21,6 +24,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { toast } from 'sonner';
+import ProjectTimeline from '@/components/project/ProjectTimeline';
 
 const statusSteps = [
   { key: 'geboekt', label: 'Geboekt' },
@@ -41,7 +46,15 @@ export default function ClientProjectDetail2() {
   const [clientId, setClientId] = useState(null);
   const [selectedFiles, setSelectedFiles] = useState({});
   const [deliveryOpen, setDeliveryOpen] = useState(true);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedTime, setSelectedTime] = useState(null);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [isRescheduling, setIsRescheduling] = useState(false);
 
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const projectId = urlParams.get('id');
 
@@ -108,6 +121,18 @@ export default function ClientProjectDetail2() {
     enabled: !!projectId && project?.status === 'klaar',
   });
 
+  const { data: availability = [] } = useQuery({
+    queryKey: ['availability'],
+    queryFn: () => base44.entities.Availability.filter({ is_active: true }),
+    enabled: showReschedule,
+  });
+
+  const { data: existingSessions = [] } = useQuery({
+    queryKey: ['existingSessions'],
+    queryFn: () => base44.entities.Session.filter({ status: 'bevestigd' }),
+    enabled: showReschedule,
+  });
+
   // Security check
   if (project && clientId && project.client_id !== clientId) {
     return (
@@ -166,6 +191,146 @@ export default function ClientProjectDetail2() {
   const deliveryFiles = projectFiles.filter(f => 
     ['bewerkte_fotos', 'bewerkte_videos', '360_matterport', 'meetrapport'].includes(f.category)
   );
+
+  const handleCancelProject = async () => {
+    try {
+      // Delete associated booking if exists
+      if (project.booking_id) {
+        await base44.entities.Booking.delete(project.booking_id);
+      }
+
+      // Delete project files
+      const files = await base44.entities.ProjectFile.filter({ project_id: projectId });
+      for (const file of files) {
+        await base44.entities.ProjectFile.delete(file.id);
+      }
+
+      // Delete project invoices
+      const invoices = await base44.entities.ProjectInvoice.filter({ project_id: projectId });
+      for (const invoice of invoices) {
+        await base44.entities.ProjectInvoice.delete(invoice.id);
+      }
+
+      // Create admin notification
+      await base44.entities.Notification.create({
+        type: 'project_geannuleerd',
+        title: 'Project geannuleerd door klant',
+        message: `${user?.full_name || 'Klant'} heeft project "${project.title}" geannuleerd`,
+        project_id: projectId,
+      });
+
+      // Delete the project
+      await base44.entities.Project.delete(projectId);
+
+      // Invalidate queries
+      await Promise.all([
+        queryClient.invalidateQueries(['clientProjects']),
+        queryClient.invalidateQueries(['projects']),
+      ]);
+
+      toast.success('Project geannuleerd');
+      navigate(createPageUrl('ClientProjects'));
+    } catch (error) {
+      console.error('Error canceling project:', error);
+      toast.error('Er ging iets mis bij het annuleren');
+    }
+  };
+
+  const getWeekDays = () => {
+    const start = addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), weekOffset);
+    return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  };
+
+  const getTimeSlots = (date) => {
+    if (!date) return [];
+    
+    const dayOfWeek = date.getDay();
+    const workdayConfig = availability.find(a => a.type === 'werkdag' && a.day_of_week === dayOfWeek);
+    
+    const startHour = workdayConfig?.start_time ? parseInt(workdayConfig.start_time.split(':')[0]) : 9;
+    const endHour = workdayConfig?.end_time ? parseInt(workdayConfig.end_time.split(':')[0]) : 17;
+    
+    const slots = [];
+    const duration = 60;
+    
+    let currentTime = setMinutes(setHours(date, startHour), 0);
+    const endTime = setMinutes(setHours(date, endHour), 0);
+    
+    while (isBefore(addMinutes(currentTime, duration), endTime) || isSameDay(addMinutes(currentTime, duration), endTime)) {
+      const slotEnd = addMinutes(currentTime, duration);
+      const hasConflict = existingSessions.some(session => {
+        const sessionStart = new Date(session.start_datetime);
+        const sessionEnd = new Date(session.end_datetime);
+        return (
+          (isAfter(currentTime, sessionStart) && isBefore(currentTime, sessionEnd)) ||
+          (isAfter(slotEnd, sessionStart) && isBefore(slotEnd, sessionEnd)) ||
+          (isBefore(currentTime, sessionStart) && isAfter(slotEnd, sessionEnd)) ||
+          isSameDay(currentTime, sessionStart) && format(currentTime, 'HH:mm') === format(sessionStart, 'HH:mm')
+        );
+      });
+      
+      if (!hasConflict && isAfter(currentTime, new Date())) {
+        slots.push(new Date(currentTime));
+      }
+      
+      currentTime = addMinutes(currentTime, 30);
+    }
+    
+    return slots;
+  };
+
+  const handleReschedule = async () => {
+    if (!selectedDate || !selectedTime) return;
+
+    setIsRescheduling(true);
+    try {
+      // Update project
+      await base44.entities.Project.update(projectId, {
+        shoot_date: format(selectedDate, 'yyyy-MM-dd'),
+        shoot_time: format(selectedTime, 'HH:mm'),
+      });
+
+      // Update booking if exists
+      if (project.booking_id) {
+        const endDatetime = addMinutes(selectedTime, 60);
+        await base44.entities.Booking.update(project.booking_id, {
+          start_datetime: selectedTime.toISOString(),
+          end_datetime: endDatetime.toISOString(),
+        });
+      }
+
+      // Create admin notification
+      await base44.entities.Notification.create({
+        type: 'project_verzet',
+        title: 'Project verzet',
+        message: `${user?.full_name || 'Klant'} heeft project "${project.title}" verzet naar ${format(selectedDate, 'd MMMM yyyy', { locale: nl })} om ${format(selectedTime, 'HH:mm')}`,
+        project_id: projectId,
+      });
+
+      // Invalidate queries
+      await Promise.all([
+        queryClient.invalidateQueries(['project', projectId]),
+        queryClient.invalidateQueries(['clientProjects']),
+        queryClient.invalidateQueries(['existingSessions']),
+      ]);
+
+      toast.success('Opgeslagen', { 
+        icon: '✓',
+        duration: 2000
+      });
+      setShowReschedule(false);
+      setSelectedDate(null);
+      setSelectedTime(null);
+    } catch (error) {
+      console.error('Error rescheduling:', error);
+      toast.error('Er ging iets mis bij het verzetten');
+    } finally {
+      setIsRescheduling(false);
+    }
+  };
+
+  const weekDays = showReschedule ? getWeekDays() : [];
+  const timeSlots = selectedDate ? getTimeSlots(selectedDate) : [];
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -236,6 +401,162 @@ export default function ClientProjectDetail2() {
           </div>
         </div>
       </div>
+
+      {/* Action Buttons - Only for "geboekt" status */}
+      {project.status === 'geboekt' && (
+        <div className="flex gap-3 mb-8">
+          <Button
+            variant="outline"
+            onClick={() => setShowReschedule(true)}
+            className="flex-1"
+          >
+            <CalendarIcon className="w-4 h-4 mr-2" />
+            Verzetten
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowCancelConfirm(true)}
+            className="flex-1 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Annuleren
+          </Button>
+        </div>
+      )}
+
+      {/* Cancel Confirmation */}
+      {showCancelConfirm && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-8">
+          <p className="font-medium text-red-900 mb-2">Project annuleren?</p>
+          <p className="text-sm text-red-700 mb-4">
+            Deze actie kan niet ongedaan gemaakt worden. Het project wordt definitief verwijderd.
+          </p>
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelConfirm(false)}
+              className="flex-1"
+            >
+              Terug
+            </Button>
+            <Button
+              onClick={handleCancelProject}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+            >
+              Ja, annuleren
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Reschedule Interface */}
+      {showReschedule && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-medium text-gray-900">Shoot verzetten</h2>
+            <button onClick={() => { setShowReschedule(false); setSelectedDate(null); setSelectedTime(null); }}>
+              <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+            </button>
+          </div>
+
+          {/* Week Navigation */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setWeekOffset(prev => prev - 1)}
+                disabled={weekOffset === 0}
+              >
+                ←
+              </Button>
+              <span className="text-sm font-medium text-gray-900">
+                {weekDays.length > 0 && `${format(weekDays[0], 'd MMM', { locale: nl })} – ${format(weekDays[6], 'd MMM yyyy', { locale: nl })}`}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setWeekOffset(prev => prev + 1)}
+              >
+                →
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-7 gap-2">
+              {weekDays.map(day => {
+                const isToday = isSameDay(day, new Date());
+                const isPast = isBefore(day, new Date()) && !isToday;
+                const isSelected = selectedDate && isSameDay(day, selectedDate);
+
+                return (
+                  <button
+                    key={day.toISOString()}
+                    onClick={() => {
+                      setSelectedDate(day);
+                      setSelectedTime(null);
+                    }}
+                    disabled={isPast}
+                    className={cn(
+                      "py-3 px-2 rounded-lg text-center transition-all text-sm",
+                      isPast ? "opacity-30 cursor-not-allowed" :
+                      isSelected ? "bg-[#5C6B52] text-white" :
+                      isToday ? "bg-[#F8FAF7] text-[#5C6B52] ring-1 ring-[#A8B5A0]" :
+                      "hover:bg-gray-50"
+                    )}
+                  >
+                    <p className="text-xs uppercase opacity-70 mb-1">{format(day, 'EEE', { locale: nl })}</p>
+                    <p className="text-lg">{format(day, 'd')}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Time Slots */}
+          {selectedDate && (
+            <div className="mb-6">
+              <h3 className="text-sm font-medium text-gray-900 mb-3">
+                Beschikbare tijden op {format(selectedDate, 'd MMMM', { locale: nl })}
+              </h3>
+              {timeSlots.length === 0 ? (
+                <p className="text-sm text-gray-400 py-4 text-center">Geen beschikbare tijden</p>
+              ) : (
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  {timeSlots.map(slot => (
+                    <button
+                      key={slot.toISOString()}
+                      onClick={() => setSelectedTime(slot)}
+                      className={cn(
+                        "py-2 px-3 rounded-lg text-sm font-medium transition-all",
+                        selectedTime && isSameDay(slot, selectedTime) && format(slot, 'HH:mm') === format(selectedTime, 'HH:mm')
+                          ? "bg-[#5C6B52] text-white"
+                          : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                      )}
+                    >
+                      {format(slot, 'HH:mm')}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <Button
+            onClick={handleReschedule}
+            disabled={!selectedDate || !selectedTime || isRescheduling}
+            className="w-full bg-[#5C6B52] hover:bg-[#4A5A42] text-white"
+          >
+            {isRescheduling ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Bezig met opslaan...
+              </>
+            ) : (
+              'Bevestig nieuwe datum'
+            )}
+          </Button>
+        </div>
+      )}
 
       {/* Project Info */}
       <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-8">
@@ -358,9 +679,12 @@ export default function ClientProjectDetail2() {
         </Collapsible>
       )}
 
+      {/* Timeline */}
+      <ProjectTimeline project={project} />
+
       {/* Factuur - Only when status is "klaar" */}
       {project.status === 'klaar' && projectInvoice && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-8">
+        <div className="bg-white rounded-2xl border border-gray-100 p-8 mt-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-[#E8EDE5] flex items-center justify-center">
               <FileText className="w-5 h-5 text-[#5C6B52]" />
