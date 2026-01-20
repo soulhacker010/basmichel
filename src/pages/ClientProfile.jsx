@@ -75,15 +75,27 @@ export default function ClientProfile() {
   });
 
   const handleSaveProfile = async () => {
-    // Update both User and Client entities
-    await updateUserMutation.mutateAsync(formData);
-    
-    // Also update client name if exists
-    if (clients.length > 0) {
-      await updateClientMutation.mutateAsync({
-        id: clients[0].id,
-        data: { contact_name: formData.full_name }
+    try {
+      // Update User entity
+      await updateUserMutation.mutateAsync(formData);
+      
+      // Also update client contact_name if client exists
+      if (clients.length > 0) {
+        await base44.entities.Client.update(clients[0].id, { 
+          contact_name: formData.full_name 
+        });
+        queryClient.invalidateQueries(['clients']);
+      }
+      
+      // Reload user data
+      const updatedUser = await base44.auth.me();
+      setUser(updatedUser);
+      setFormData({
+        full_name: updatedUser.full_name || '',
+        email: updatedUser.email || ''
       });
+    } catch (error) {
+      console.error('Error updating profile:', error);
     }
   };
 
