@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '../../utils';
+import { useQuery } from '@tanstack/react-query';
 import { 
   LayoutDashboard, 
   FolderKanban, 
@@ -23,50 +24,44 @@ const clientPages = [
 ];
 
 export default function ClientPortalShell({ children, currentPageName }) {
-  const [user, setUser] = useState(null);
   const [clientId, setClientId] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
+  const { data: user, isLoading, isError } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: base44.auth.me,
+  });
+
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const isAuth = await base44.auth.isAuthenticated();
-        if (!isAuth) {
-          window.location.href = createPageUrl('Login');
-          return;
-        }
-        
-        const userData = await base44.auth.me();
-        
+    const checkAuthAndClient = async () => {
+      if (isError) {
+        window.location.href = createPageUrl('Login');
+        return;
+      }
+
+      if (user) {
         // Block admin users from client portal
-        if (userData.role === 'admin') {
+        if (user.role === 'admin') {
           window.location.href = createPageUrl('AdminDashboard');
           return;
         }
-        
-        setUser(userData);
-        
+
         // Get client ID
-        const clients = await base44.entities.Client.filter({ user_id: userData.id });
+        const clients = await base44.entities.Client.filter({ user_id: user.id });
         if (clients.length > 0) {
           setClientId(clients[0].id);
         }
-      } catch (e) {
-        window.location.href = createPageUrl('Login');
-      } finally {
-        setLoading(false);
       }
     };
-    loadUser();
-  }, []);
+    checkAuthAndClient();
+  }, [user, isError]);
 
   const handleLogout = () => {
     base44.auth.logout(createPageUrl('Home'));
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[#FCFCFB] flex items-center justify-center">
         <div className="animate-pulse text-[#A8B5A0]">Laden...</div>
