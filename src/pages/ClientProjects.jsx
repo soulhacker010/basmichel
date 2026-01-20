@@ -170,6 +170,14 @@ export default function ClientProjects() {
                           <span>{project.address}</span>
                         </div>
                       )}
+                      {(() => {
+                        const clientData = clients.find(c => c.id === project.client_id);
+                        return clientData?.company_name && (
+                          <div className="text-xs text-gray-400 mt-1">
+                            {clientData.company_name}
+                          </div>
+                        );
+                      })()}
                     </div>
                     <span className={cn(
                       "px-2.5 py-1 rounded-full text-xs font-medium",
