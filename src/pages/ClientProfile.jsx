@@ -87,32 +87,58 @@ export default function ClientProfile() {
   });
 
   const handleSaveProfile = async () => {
+    if (!formData.full_name || formData.full_name.trim() === '') {
+      toast.error('Naam is verplicht');
+      return;
+    }
+
     try {
-      // Update User entity
-      await updateUserMutation.mutateAsync(formData);
+      // Update User entity with full_name
+      await base44.auth.updateMe({ full_name: formData.full_name.trim() });
       
       // Also update client contact_name if client exists
       if (clients.length > 0) {
         await base44.entities.Client.update(clients[0].id, { 
-          contact_name: formData.full_name 
+          contact_name: formData.full_name.trim()
         });
       }
       
-      // Invalidate all relevant queries
-      queryClient.invalidateQueries(['currentUser']);
-      queryClient.invalidateQueries(['clients']);
-      queryClient.invalidateQueries(['users']);
+      // Invalidate all relevant queries to refresh everywhere
+      await Promise.all([
+        queryClient.invalidateQueries(['currentUser']),
+        queryClient.invalidateQueries(['clients']),
+        queryClient.invalidateQueries(['users']),
+        queryClient.invalidateQueries(['clientProjects'])
+      ]);
+      
+      // Show success feedback
+      toast.success('Opgeslagen', { 
+        description: 'Uw naam is bijgewerkt',
+        icon: '✓',
+        duration: 2000
+      });
     } catch (error) {
       console.error('Error updating profile:', error);
+      toast.error('Er is iets misgegaan bij het opslaan');
     }
   };
 
   const handleSaveClient = async () => {
-    if (clients.length > 0) {
-      await updateClientMutation.mutateAsync({
-        id: clients[0].id,
-        data: clientData
+    if (clients.length === 0) return;
+    
+    try {
+      await base44.entities.Client.update(clients[0].id, clientData);
+      
+      await queryClient.invalidateQueries(['clients']);
+      
+      toast.success('Opgeslagen', {
+        description: 'Uw bedrijfsgegevens zijn bijgewerkt',
+        icon: '✓',
+        duration: 2000
       });
+    } catch (error) {
+      console.error('Error updating client:', error);
+      toast.error('Er is iets misgegaan bij het opslaan');
     }
   };
 
@@ -134,13 +160,17 @@ export default function ClientProfile() {
 
         <div className="space-y-5">
           <div>
-            <Label htmlFor="full_name">Naam</Label>
+            <Label htmlFor="full_name">Naam *</Label>
             <Input
               id="full_name"
               value={formData.full_name}
               onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
               className="mt-2 h-12 rounded-xl"
+              required
             />
+            {formData.full_name === '' && (
+              <p className="text-xs text-red-600 mt-1">Naam is verplicht</p>
+            )}
           </div>
           <div>
             <Label htmlFor="email">E-mailadres</Label>
@@ -159,10 +189,10 @@ export default function ClientProfile() {
           <Button 
             onClick={handleSaveProfile}
             className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full px-6"
-            disabled={updateUserMutation.isPending}
+            disabled={updateUserMutation.isPending || !formData.full_name}
           >
             <Save className="w-4 h-4 mr-2" />
-            Opslaan
+            {updateUserMutation.isPending ? 'Bezig met opslaan...' : 'Opslaan'}
           </Button>
         </div>
       </div>
@@ -238,7 +268,7 @@ export default function ClientProfile() {
             disabled={updateClientMutation.isPending || clients.length === 0}
           >
             <Save className="w-4 h-4 mr-2" />
-            Opslaan
+            {updateClientMutation.isPending ? 'Bezig met opslaan...' : 'Opslaan'}
           </Button>
         </div>
       </div>
