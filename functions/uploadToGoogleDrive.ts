@@ -61,6 +61,7 @@ Deno.serve(async (req) => {
     const metadata = {
       name: file.name,
       parents: [folderId],
+      mimeType: file.type || 'application/octet-stream',
     };
 
     const metadataStr = JSON.stringify(metadata);
@@ -102,13 +103,15 @@ Deno.serve(async (req) => {
     );
 
     if (!uploadResponse.ok) {
-      throw new Error(`Upload failed: ${await uploadResponse.text()}`);
+      const errorText = await uploadResponse.text();
+      console.error('Upload failed:', errorText);
+      throw new Error(`Upload failed: ${errorText}`);
     }
 
     const uploadedFile = await uploadResponse.json();
 
     // Make file accessible via link
-    await fetch(`https://www.googleapis.com/drive/v3/files/${uploadedFile.id}/permissions`, {
+    const permResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${uploadedFile.id}/permissions`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -119,6 +122,10 @@ Deno.serve(async (req) => {
         type: 'anyone',
       }),
     });
+
+    if (!permResponse.ok) {
+      console.error('Permission setting failed:', await permResponse.text());
+    }
 
     const fileUrl = `https://drive.google.com/file/d/${uploadedFile.id}/view`;
     const downloadUrl = `https://drive.google.com/uc?export=download&id=${uploadedFile.id}`;
