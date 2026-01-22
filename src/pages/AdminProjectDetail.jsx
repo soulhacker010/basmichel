@@ -757,17 +757,17 @@ export default function AdminProjectDetail() {
                   </div>
                 );
               })}
+
+              {/* Editor Notes */}
+              <div className="border border-gray-100 rounded-xl p-6 mt-6">
+                <h3 className="text-base font-medium text-gray-900 mb-4">Editor Notities</h3>
+                <EditorNotesSection projectId={projectId} />
+                <AddEditorNote projectId={projectId} />
+              </div>
             </div>
           </CollapsibleContent>
         </div>
       </Collapsible>
-
-      {/* Editor Notes */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-8">
-        <h2 className="text-lg font-medium text-gray-900 mb-6">Editor Notities</h2>
-        <EditorNotesSection projectId={projectId} />
-        <AddEditorNote projectId={projectId} />
-      </div>
 
       {/* Extra Sessies */}
       <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-8">
