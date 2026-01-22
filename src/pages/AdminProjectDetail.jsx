@@ -522,117 +522,41 @@ export default function AdminProjectDetail() {
         </div>
       </div>
 
-      {/* Bewerkte Opleverbestanden */}
-      <Collapsible open={deliveryOpen} onOpenChange={setDeliveryOpen} className="mb-8">
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <CollapsibleTrigger className="w-full px-8 py-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
-            <h2 className="text-lg font-medium text-gray-900">Bewerkte Opleverbestanden</h2>
-            <ChevronDown className={cn("w-5 h-5 text-gray-400 transition-transform", deliveryOpen && "rotate-180")} />
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="px-8 pb-8 space-y-6">
-              {deliveryCategories.map(category => {
-                const categoryFiles = projectFiles.filter(f => f.category === category.key);
-                const selectedCount = categoryFiles.filter(f => selectedFiles[f.id]).length;
-                const allSelected = categoryFiles.length > 0 && categoryFiles.every(f => selectedFiles[f.id]);
-
-                return (
-                  <div key={category.key} className="border border-gray-100 rounded-xl p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-base font-medium text-gray-900">{category.label}</h3>
-                      <div className="flex items-center gap-2">
-                        {categoryFiles.length > 0 && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => selectAllInCategory(category.key)}
-                            >
-                              {allSelected ? 'Deselecteer alles' : 'Alles selecteren'}
-                            </Button>
-                            {selectedCount > 0 && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleDownloadSelected(category.key)}
-                                className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
-                              >
-                                <Download className="w-4 h-4 mr-2" />
-                                Download ({selectedCount})
-                              </Button>
-                            )}
-                          </>
-                        )}
-                        <div className="relative">
-                          <input
-                            type="file"
-                            multiple
-                            onChange={(e) => handleFileUpload(category.key, e)}
-                            className="absolute inset-0 opacity-0 cursor-pointer"
-                            disabled={uploadingCategory === category.key}
-                          />
-                          <Button
-                            size="sm"
-                            disabled={uploadingCategory === category.key}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            {uploadingCategory === category.key ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Uploaden...
-                              </>
-                            ) : (
-                              <>
-                                <Upload className="w-4 h-4 mr-2" />
-                                Uploaden
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {categoryFiles.length === 0 ? (
-                      <div className="text-center py-8 text-gray-400 text-sm">
-                        Nog geen bestanden geüpload
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-2">
-                        {categoryFiles.map(file => (
-                          <div 
-                            key={file.id}
-                            className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={!!selectedFiles[file.id]}
-                              onChange={() => toggleFileSelection(file.id)}
-                              className="w-4 h-4 rounded border-gray-300"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">{file.filename}</p>
-                              <p className="text-xs text-gray-400">
-                                {(file.file_size / 1024 / 1024).toFixed(2)} MB
-                              </p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteMutation.mutate(file.id)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+      {/* Gallery Preview */}
+      <Link 
+        to={createPageUrl('AdminGalleries')}
+        className="block bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow mb-8"
+      >
+        <div className="p-8">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Galerij</h2>
+          <div className="flex items-center gap-6">
+            <div className="w-32 h-32 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+              {projectFiles.filter(f => f.category === 'bewerkte_fotos' && f.mime_type?.startsWith('image/')).length > 0 ? (
+                <img 
+                  src={projectFiles.filter(f => f.category === 'bewerkte_fotos' && f.mime_type?.startsWith('image/'))[0].file_url} 
+                  alt="Gallery preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <FileText className="w-12 h-12 text-gray-300" />
+              )}
             </div>
-          </CollapsibleContent>
+            <div className="flex-1">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">
+                    {projectFiles.filter(f => f.category === 'bewerkte_fotos').length} bestanden
+                  </p>
+                  <p className="font-medium text-gray-900 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-gray-400" />
+                    {project.title}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </Collapsible>
+      </Link>
 
       {/* Raw Bestanden (Admin Only) */}
       <Collapsible open={rawOpen} onOpenChange={setRawOpen} className="mb-8">

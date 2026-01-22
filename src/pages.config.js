@@ -23,15 +23,15 @@ import ClientProjectDetail2 from './pages/ClientProjectDetail2';
 import ClientProjects from './pages/ClientProjects';
 import Contact from './pages/Contact';
 import EditorDashboard from './pages/EditorDashboard';
+import EditorFinished from './pages/EditorFinished';
+import EditorInProgress from './pages/EditorInProgress';
+import EditorNotifications from './pages/EditorNotifications';
 import EditorProjects from './pages/EditorProjects';
+import EditorRevisions from './pages/EditorRevisions';
 import EditorSettings from './pages/EditorSettings';
+import EditorUpcoming from './pages/EditorUpcoming';
 import GalleryView from './pages/GalleryView';
 import Home from './pages/Home';
-import EditorUpcoming from './pages/EditorUpcoming';
-import EditorInProgress from './pages/EditorInProgress';
-import EditorFinished from './pages/EditorFinished';
-import EditorRevisions from './pages/EditorRevisions';
-import EditorNotifications from './pages/EditorNotifications';
 import __Layout from './Layout.jsx';
 
 
@@ -61,15 +61,15 @@ export const PAGES = {
     "ClientProjects": ClientProjects,
     "Contact": Contact,
     "EditorDashboard": EditorDashboard,
+    "EditorFinished": EditorFinished,
+    "EditorInProgress": EditorInProgress,
+    "EditorNotifications": EditorNotifications,
     "EditorProjects": EditorProjects,
+    "EditorRevisions": EditorRevisions,
     "EditorSettings": EditorSettings,
+    "EditorUpcoming": EditorUpcoming,
     "GalleryView": GalleryView,
     "Home": Home,
-    "EditorUpcoming": EditorUpcoming,
-    "EditorInProgress": EditorInProgress,
-    "EditorFinished": EditorFinished,
-    "EditorRevisions": EditorRevisions,
-    "EditorNotifications": EditorNotifications,
 }
 
 export const pagesConfig = {
