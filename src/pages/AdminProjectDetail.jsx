@@ -221,7 +221,13 @@ export default function AdminProjectDetail() {
     mutationFn: async ({ category, files }) => {
       const uploadedFiles = [];
       for (const file of files) {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', `${project.project_number || projectId} - ${project.title}`);
+        
+        const response = await base44.functions.invoke('uploadToGoogleDrive', formData);
+        const { file_url, drive_id } = response.data;
+        
         await base44.entities.ProjectFile.create({
           project_id: projectId,
           category,
@@ -237,7 +243,7 @@ export default function AdminProjectDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projectFiles', projectId] });
       setUploadingCategory(null);
-      toast.success('Bestanden geüpload');
+      toast.success('Bestanden geüpload naar Google Drive');
     },
   });
 

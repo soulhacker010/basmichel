@@ -91,7 +91,13 @@ export default function EditorProjects() {
 
   const uploadFileMutation = useMutation({
     mutationFn: async (file) => {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', `${selectedProject.project_number || selectedProject.id} - ${selectedProject.title}`);
+      
+      const response = await base44.functions.invoke('uploadToGoogleDrive', formData);
+      const { file_url, drive_id } = response.data;
+      
       return base44.entities.ProjectFile.create({
         project_id: selectedProject.id,
         category: 'bewerkte_fotos',
@@ -103,7 +109,7 @@ export default function EditorProjects() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projectFiles'] });
-      toast.success('File uploaded');
+      toast.success('File uploaded to Google Drive');
     },
   });
 
