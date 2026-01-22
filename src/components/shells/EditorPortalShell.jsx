@@ -126,21 +126,22 @@ export default function EditorPortalShell({ children, currentPageName }) {
             </Link>
           </div>
 
-          {/* Badge & Portal Switcher */}
-          <div className="px-6 pb-6 space-y-3">
-            <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
-              Editor Portal
-            </span>
-            {user?.role === 'admin' && (
-              <Link 
-                to={createPageUrl('AdminDashboard')}
-                className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors group"
-              >
-                <span className="text-xs font-medium text-gray-700">Studio Manager</span>
-                <span className="text-xs text-gray-400 group-hover:text-gray-600">→</span>
-              </Link>
-            )}
-          </div>
+          {/* Portal Switcher */}
+          {user?.role === 'admin' && (
+            <div className="px-6 pb-6">
+              <div className="flex items-center bg-gray-100 rounded-full p-1">
+                <Link 
+                  to={createPageUrl('AdminDashboard')}
+                  className="flex-1 px-4 py-2 rounded-full text-center hover:bg-white/50 transition-colors"
+                >
+                  <span className="text-xs font-medium text-gray-700">Studio Manager</span>
+                </Link>
+                <div className="flex-1 px-4 py-2 rounded-full bg-gray-900 text-white text-center">
+                  <span className="text-xs font-medium">Editor Portal</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Navigation */}
           <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
