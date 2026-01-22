@@ -7,7 +7,9 @@ import {
   FolderKanban, 
   Menu,
   X,
-  LogOut
+  LogOut,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -22,7 +24,19 @@ export default function EditorPortalShell({ children, currentPageName }) {
   const [editor, setEditor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('editorDarkMode') === 'true';
+  });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    localStorage.setItem('editorDarkMode', darkMode);
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -84,9 +98,10 @@ export default function EditorPortalShell({ children, currentPageName }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#FCFCFB]">
+    <div className={cn("min-h-screen", darkMode ? "bg-gray-900" : "bg-[#FCFCFB]")}>
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 z-50 px-4 flex items-center justify-between">
+      <div className={cn("lg:hidden fixed top-0 left-0 right-0 h-16 z-50 px-4 flex items-center justify-between", 
+        darkMode ? "bg-gray-800 border-b border-gray-700" : "bg-white border-b border-gray-100")}>
         <button 
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
@@ -110,7 +125,8 @@ export default function EditorPortalShell({ children, currentPageName }) {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed top-0 left-0 h-full w-64 bg-white z-50 transition-transform duration-300 ease-out",
+        "fixed top-0 left-0 h-full w-64 z-50 transition-transform duration-300 ease-out",
+        darkMode ? "bg-gray-800" : "bg-white",
         "lg:translate-x-0",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
@@ -134,7 +150,9 @@ export default function EditorPortalShell({ children, currentPageName }) {
             {user?.role === 'admin' && (
               <Link 
                 to={createPageUrl('AdminDashboard')}
-                className="block text-xs text-gray-500 hover:text-gray-900 transition-colors"
+                className={cn("block text-xs transition-colors",
+                  darkMode ? "text-gray-500 hover:text-gray-300" : "text-gray-500 hover:text-gray-900"
+                )}
               >
                 Switch to Studio Manager →
               </Link>
@@ -155,11 +173,11 @@ export default function EditorPortalShell({ children, currentPageName }) {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
                     isActive 
-                      ? "bg-purple-50 text-purple-700" 
-                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                      ? darkMode ? "bg-purple-900/30 text-purple-400" : "bg-purple-50 text-purple-700"
+                      : darkMode ? "text-gray-400 hover:bg-gray-700 hover:text-gray-200" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                   )}
                 >
-                  <Icon className={cn("w-5 h-5", isActive && "text-purple-700")} />
+                  <Icon className={cn("w-5 h-5", isActive && (darkMode ? "text-purple-400" : "text-purple-700"))} />
                   <span className="text-sm font-medium">{item.name}</span>
                 </Link>
               );
@@ -168,27 +186,41 @@ export default function EditorPortalShell({ children, currentPageName }) {
 
           {/* User Section */}
           <div className="p-4 mt-auto">
-            <div className="bg-[#F8FAF7] rounded-xl p-4">
+            <div className={cn("rounded-xl p-4", darkMode ? "bg-gray-700" : "bg-[#F8FAF7]")}>
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                  <span className="text-sm font-medium text-purple-700">
+                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center",
+                  darkMode ? "bg-purple-900/50" : "bg-purple-100"
+                )}>
+                  <span className={cn("text-sm font-medium", darkMode ? "text-purple-300" : "text-purple-700")}>
                     {editor.name?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
+                  <p className={cn("text-sm font-medium truncate", darkMode ? "text-gray-200" : "text-gray-900")}>
                     {editor.name || user.email}
                   </p>
-                  <p className="text-xs text-gray-400 truncate">{editor.email}</p>
+                  <p className={cn("text-xs truncate", darkMode ? "text-gray-500" : "text-gray-400")}>{editor.email}</p>
                 </div>
               </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-500 hover:text-gray-700 rounded-lg transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Log out</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className={cn("flex items-center gap-2 flex-1 px-3 py-2 text-sm rounded-lg transition-colors",
+                    darkMode ? "text-gray-400 hover:text-gray-200" : "text-gray-500 hover:text-gray-700"
+                  )}
+                >
+                  {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  <span>{darkMode ? 'Licht' : 'Donker'}</span>
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className={cn("flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors",
+                    darkMode ? "text-gray-400 hover:text-gray-200" : "text-gray-500 hover:text-gray-700"
+                  )}
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
