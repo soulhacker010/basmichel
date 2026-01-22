@@ -36,19 +36,28 @@ export default function EditorPortalShell({ children, currentPageName }) {
         const userData = await base44.auth.me();
         setUser(userData);
 
-        // Check if user is an editor
+        // Check if user is an editor or admin
         const editors = await base44.entities.Editor.filter({ user_id: userData.id, status: 'active' });
-        if (editors.length === 0) {
-          // Not an editor, redirect
-          if (userData.role === 'admin') {
-            window.location.href = createPageUrl('AdminDashboard');
-          } else {
-            window.location.href = createPageUrl('ClientDashboard');
-          }
-          return;
-        }
         
-        setEditor(editors[0]);
+        if (editors.length === 0) {
+          // If admin, allow access without editor record
+          if (userData.role === 'admin') {
+            setEditor({
+              id: 'admin_editor_' + userData.id,
+              user_id: userData.id,
+              name: userData.full_name || userData.email,
+              email: userData.email,
+              specialization: 'Admin',
+              status: 'active'
+            });
+          } else {
+            // Not an editor and not admin, redirect to client
+            window.location.href = createPageUrl('ClientDashboard');
+            return;
+          }
+        } else {
+          setEditor(editors[0]);
+        }
       } catch (e) {
         window.location.href = createPageUrl('AdminLogin');
       } finally {
