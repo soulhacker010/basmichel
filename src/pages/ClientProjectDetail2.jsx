@@ -157,7 +157,14 @@ export default function ClientProjectDetail2() {
     );
   }
 
-  const currentStepIndex = statusSteps.findIndex(s => s.key === project.status);
+  // Map both shoot_uitgevoerd and wordt_bewerkt to step 2 (index 2 = "Wordt bewerkt")
+  const getStepIndex = (status) => {
+    if (status === 'geboekt') return 0;
+    if (status === 'shoot_uitgevoerd' || status === 'wordt_bewerkt') return 2;
+    if (status === 'klaar') return 3;
+    return 0;
+  };
+  const currentStepIndex = getStepIndex(project.status);
 
   const toggleFileSelection = (fileId) => {
     setSelectedFiles(prev => ({

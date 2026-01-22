@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 const statusConfig = {
   geboekt: { label: 'Geboekt', color: 'bg-blue-500', bgLight: 'bg-blue-50', textColor: 'text-blue-700' },
-  shoot_uitgevoerd: { label: 'Shoot uitgevoerd', color: 'bg-amber-500', bgLight: 'bg-amber-50', textColor: 'text-amber-700' },
+  shoot_uitgevoerd: { label: 'Wordt bewerkt', color: 'bg-purple-500', bgLight: 'bg-purple-50', textColor: 'text-purple-700' },
   wordt_bewerkt: { label: 'Wordt bewerkt', color: 'bg-purple-500', bgLight: 'bg-purple-50', textColor: 'text-purple-700' },
   klaar: { label: 'Klaar', color: 'bg-green-500', bgLight: 'bg-green-50', textColor: 'text-green-700' },
 };
