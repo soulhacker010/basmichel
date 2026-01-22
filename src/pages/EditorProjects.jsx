@@ -223,7 +223,11 @@ export default function EditorProjects() {
             </DropdownMenu>
           </div>
 
-          <div className="grid grid-cols-3 gap-6 text-sm">
+          <div className="grid grid-cols-4 gap-6 text-sm">
+            <div>
+              <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Project Nummer</p>
+              <p className={cn("font-medium mt-1", darkMode ? "text-gray-100" : "text-gray-900")}>{selectedProject.project_number || 'N/A'}</p>
+            </div>
             <div>
               <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Shoot Date</p>
               <p className={cn("font-medium mt-1", darkMode ? "text-gray-100" : "text-gray-900")}>
