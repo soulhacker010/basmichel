@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Search, Download, Upload, ArrowLeft, FileText, ChevronDown } from 'lucide-react';
+import { Search, Download, Upload, ArrowLeft, FileText, ChevronDown, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -31,6 +32,7 @@ export default function EditorProjects() {
   const [noteImages, setNoteImages] = useState([]);
   const [uploadingNote, setUploadingNote] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [showClientNotes, setShowClientNotes] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('editorDarkMode') === 'true';
   });
@@ -177,6 +179,21 @@ export default function EditorProjects() {
 
     return (
       <div className="max-w-7xl mx-auto">
+        <Dialog open={showClientNotes} onOpenChange={setShowClientNotes}>
+          <DialogContent className={cn(darkMode ? "bg-gray-800 border-gray-700 text-gray-100" : "bg-white")}>
+            <DialogHeader>
+              <DialogTitle>Client Notes - {client?.company_name}</DialogTitle>
+            </DialogHeader>
+            <div className={cn("mt-4", darkMode ? "text-gray-300" : "text-gray-700")}>
+              {client?.notes ? (
+                <p className="whitespace-pre-wrap">{client.notes}</p>
+              ) : (
+                <p className={cn("text-sm", darkMode ? "text-gray-500" : "text-gray-400")}>No notes available for this client.</p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <Button
           variant="ghost"
           onClick={() => {
@@ -193,7 +210,13 @@ export default function EditorProjects() {
           <div className="flex items-start justify-between mb-6">
             <div>
               <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>{selectedProject.title}</h1>
-              <p className={cn("mt-1", darkMode ? "text-gray-400" : "text-gray-500")}>{client?.company_name}</p>
+              <button
+                onClick={() => setShowClientNotes(true)}
+                className={cn("mt-1 flex items-center gap-1 hover:underline", darkMode ? "text-gray-400 hover:text-gray-300" : "text-gray-500 hover:text-gray-700")}
+              >
+                {client?.company_name}
+                <Info className="w-3 h-3" />
+              </button>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
