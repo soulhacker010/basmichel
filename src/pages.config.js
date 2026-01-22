@@ -14,10 +14,13 @@ import AdminSettings from './pages/AdminSettings';
 import AdminTemplates from './pages/AdminTemplates';
 import BookingPage from './pages/BookingPage';
 import ClientBooking from './pages/ClientBooking';
+import ClientDashboard from './pages/ClientDashboard';
 import ClientGalleries from './pages/ClientGalleries';
 import ClientInvoices from './pages/ClientInvoices';
 import ClientProfile from './pages/ClientProfile';
 import ClientProjectDetail from './pages/ClientProjectDetail';
+import ClientProjectDetail2 from './pages/ClientProjectDetail2';
+import ClientProjects from './pages/ClientProjects';
 import Contact from './pages/Contact';
 import EditorDashboard from './pages/EditorDashboard';
 import EditorFinished from './pages/EditorFinished';
@@ -29,9 +32,6 @@ import EditorSettings from './pages/EditorSettings';
 import EditorUpcoming from './pages/EditorUpcoming';
 import GalleryView from './pages/GalleryView';
 import Home from './pages/Home';
-import ClientDashboard from './pages/ClientDashboard';
-import ClientProjectDetail2 from './pages/ClientProjectDetail2';
-import ClientProjects from './pages/ClientProjects';
 import __Layout from './Layout.jsx';
 
 
@@ -52,10 +52,13 @@ export const PAGES = {
     "AdminTemplates": AdminTemplates,
     "BookingPage": BookingPage,
     "ClientBooking": ClientBooking,
+    "ClientDashboard": ClientDashboard,
     "ClientGalleries": ClientGalleries,
     "ClientInvoices": ClientInvoices,
     "ClientProfile": ClientProfile,
     "ClientProjectDetail": ClientProjectDetail,
+    "ClientProjectDetail2": ClientProjectDetail2,
+    "ClientProjects": ClientProjects,
     "Contact": Contact,
     "EditorDashboard": EditorDashboard,
     "EditorFinished": EditorFinished,
@@ -67,9 +70,6 @@ export const PAGES = {
     "EditorUpcoming": EditorUpcoming,
     "GalleryView": GalleryView,
     "Home": Home,
-    "ClientDashboard": ClientDashboard,
-    "ClientProjectDetail2": ClientProjectDetail2,
-    "ClientProjects": ClientProjects,
 }
 
 export const pagesConfig = {

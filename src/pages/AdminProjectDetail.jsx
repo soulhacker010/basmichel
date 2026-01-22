@@ -374,7 +374,14 @@ export default function AdminProjectDetail() {
     );
   }
 
-  const currentStepIndex = statusSteps.findIndex(s => s.key === selectedStatus);
+  // Map both shoot_uitgevoerd and wordt_bewerkt to step 2 (index 2 = "Wordt bewerkt")
+  const getStepIndex = (status) => {
+    if (status === 'geboekt') return 0;
+    if (status === 'shoot_uitgevoerd' || status === 'wordt_bewerkt') return 2;
+    if (status === 'klaar') return 3;
+    return 0;
+  };
+  const currentStepIndex = getStepIndex(selectedStatus);
 
   return (
     <div className="max-w-6xl mx-auto">
