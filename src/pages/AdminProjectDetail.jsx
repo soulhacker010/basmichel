@@ -625,7 +625,10 @@ export default function AdminProjectDetail() {
                 return (
                   <div key={category.key} className="border border-gray-100 rounded-xl p-6">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-base font-medium text-gray-900">{category.label}</h3>
+                      <div>
+                        <h3 className="text-base font-medium text-gray-900">{category.label}</h3>
+                        <p className="text-sm text-gray-500 mt-0.5">{categoryFiles.length} {categoryFiles.length === 1 ? 'bestand' : 'bestanden'}</p>
+                      </div>
                       <div className="flex items-center gap-2">
                         {categoryFiles.length > 0 && (
                           <>
