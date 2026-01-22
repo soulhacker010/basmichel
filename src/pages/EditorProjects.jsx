@@ -235,8 +235,8 @@ export default function EditorProjects() {
               <p className={cn("font-medium mt-1", darkMode ? "text-gray-100" : "text-gray-900")}>{client?.contact_name || 'N/A'}</p>
             </div>
             <div>
-              <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Email</p>
-              <p className={cn("font-medium mt-1", darkMode ? "text-gray-100" : "text-gray-900")}>{client?.user_id ? clients.find(c => c.id === client.id)?.contact_name : 'N/A'}</p>
+              <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Bedrijf</p>
+              <p className={cn("font-medium mt-1", darkMode ? "text-gray-100" : "text-gray-900")}>{client?.company_name || 'N/A'}</p>
             </div>
           </div>
         </div>
