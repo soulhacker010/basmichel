@@ -22,11 +22,11 @@ import ClientProjectDetail from './pages/ClientProjectDetail';
 import ClientProjectDetail2 from './pages/ClientProjectDetail2';
 import ClientProjects from './pages/ClientProjects';
 import Contact from './pages/Contact';
-import GalleryView from './pages/GalleryView';
-import Home from './pages/Home';
 import EditorDashboard from './pages/EditorDashboard';
 import EditorProjects from './pages/EditorProjects';
 import EditorSettings from './pages/EditorSettings';
+import GalleryView from './pages/GalleryView';
+import Home from './pages/Home';
 import __Layout from './Layout.jsx';
 
 
@@ -55,11 +55,11 @@ export const PAGES = {
     "ClientProjectDetail2": ClientProjectDetail2,
     "ClientProjects": ClientProjects,
     "Contact": Contact,
-    "GalleryView": GalleryView,
-    "Home": Home,
     "EditorDashboard": EditorDashboard,
     "EditorProjects": EditorProjects,
     "EditorSettings": EditorSettings,
+    "GalleryView": GalleryView,
+    "Home": Home,
 }
 
 export const pagesConfig = {

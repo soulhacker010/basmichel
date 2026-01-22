@@ -21,6 +21,18 @@ export default function EditorDashboard() {
     return localStorage.getItem('editorDarkMode') === 'true';
   });
 
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setDarkMode(localStorage.getItem('editorDarkMode') === 'true');
+    };
+    window.addEventListener('storage', handleStorageChange);
+    const interval = setInterval(handleStorageChange, 100);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
   const { data: userData } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
