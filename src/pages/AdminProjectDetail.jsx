@@ -24,6 +24,8 @@ import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import EditorNotesSection from '@/components/project/EditorNotesSection';
+import ExtraSessionsSection from '@/components/project/ExtraSessionsSection';
 import {
   Collapsible,
   CollapsibleContent,
@@ -745,6 +747,18 @@ export default function AdminProjectDetail() {
           </CollapsibleContent>
         </div>
       </Collapsible>
+
+      {/* Editor Notes */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-8">
+        <h2 className="text-lg font-medium text-gray-900 mb-6">Editor Notities</h2>
+        <EditorNotesSection projectId={projectId} />
+      </div>
+
+      {/* Extra Sessies */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-8">
+        <h2 className="text-lg font-medium text-gray-900 mb-6">Extra Sessies</h2>
+        <ExtraSessionsSection projectId={projectId} />
+      </div>
 
       {/* Factuur */}
       <div className="bg-white rounded-2xl border border-gray-100 p-8">
