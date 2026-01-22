@@ -630,6 +630,46 @@ export default function ClientProjectDetail2() {
         </div>
       </div>
 
+      {/* Gallery Link - Only when status is "klaar" and gallery exists */}
+      {project.status === 'klaar' && (() => {
+        const { data: galleries = [] } = useQuery({
+          queryKey: ['projectGallery', projectId],
+          queryFn: () => base44.entities.Gallery.filter({ project_id: projectId, status: 'gepubliceerd' }),
+          enabled: !!projectId,
+        });
+        
+        return galleries.length > 0 ? (
+          <Link
+            to={createPageUrl(`GalleryView?slug=${galleries[0].slug}`)}
+            className="block bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow mb-8"
+          >
+            <div className="p-8">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Galerij</h2>
+              <div className="flex items-center gap-6">
+                <div className="w-32 h-32 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  {galleries[0].cover_image_url ? (
+                    <img 
+                      src={galleries[0].cover_image_url} 
+                      alt="Gallery preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <FileText className="w-12 h-12 text-gray-300" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-gray-900 mb-2">{galleries[0].title}</p>
+                  <p className="text-sm text-gray-500 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-gray-400" />
+                    {project.title}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Link>
+        ) : null;
+      })()}
+
       {/* Bewerkte Opleverbestanden - Only when status is "klaar" */}
       {project.status === 'klaar' && deliveryFiles.length > 0 && (
         <Collapsible open={deliveryOpen} onOpenChange={setDeliveryOpen} className="mb-8">
