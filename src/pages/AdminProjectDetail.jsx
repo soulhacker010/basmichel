@@ -253,9 +253,10 @@ export default function AdminProjectDetail() {
       setUploadProgress({ current: 0, total: 0, fileName: '' });
       toast.success('Bestanden geüpload naar Google Drive');
     },
-    onError: () => {
+    onError: (error) => {
       setUploadingCategory(null);
       setUploadProgress({ current: 0, total: 0, fileName: '' });
+      toast.error(`Upload failed: ${error.message}`);
     },
   });
 
