@@ -210,13 +210,7 @@ export default function EditorProjects() {
           <div className="flex items-start justify-between mb-6">
             <div>
               <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>{selectedProject.title}</h1>
-              <button
-                onClick={() => setShowClientNotes(true)}
-                className={cn("mt-1 flex items-center gap-1 hover:underline", darkMode ? "text-gray-400 hover:text-gray-300" : "text-gray-500 hover:text-gray-700")}
-              >
-                {client?.company_name}
-                <Info className="w-3 h-3" />
-              </button>
+              <p className={cn("mt-1", darkMode ? "text-gray-400" : "text-gray-500")}>{client?.company_name}</p>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -259,7 +253,13 @@ export default function EditorProjects() {
             </div>
             <div>
               <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Client</p>
-              <p className={cn("font-medium mt-1", darkMode ? "text-gray-100" : "text-gray-900")}>{client?.contact_name || 'N/A'}</p>
+              <button
+                onClick={() => setShowClientNotes(true)}
+                className={cn("font-medium mt-1 flex items-center gap-1 hover:underline", darkMode ? "text-gray-100 hover:text-gray-300" : "text-gray-900 hover:text-gray-700")}
+              >
+                {client?.contact_name || 'N/A'}
+                <Info className="w-3 h-3" />
+              </button>
             </div>
             <div>
               <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Bedrijf</p>
