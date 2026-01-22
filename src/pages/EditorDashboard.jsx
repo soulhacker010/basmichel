@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { FolderKanban, Calendar, FileText } from 'lucide-react';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const statusConfig = {
   geboekt: { label: 'Booked', color: 'bg-blue-500' },
@@ -16,6 +17,9 @@ const statusConfig = {
 export default function EditorDashboard() {
   const [user, setUser] = useState(null);
   const [editor, setEditor] = useState(null);
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('editorDarkMode') === 'true';
+  });
 
   const { data: userData } = useQuery({
     queryKey: ['currentUser'],
@@ -58,10 +62,10 @@ export default function EditorDashboard() {
     <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-light text-gray-900">
+        <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>
           Welcome back, {editor?.name || user?.email}
         </h1>
-        <p className="text-gray-500 mt-1">
+        <p className={cn("mt-1", darkMode ? "text-gray-400" : "text-gray-500")}>
           {editor?.specialization && `${editor.specialization.replace('_', ' ')} • `}
           {format(new Date(), 'EEEE, MMMM d, yyyy')}
         </p>
@@ -69,51 +73,51 @@ export default function EditorDashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <div className={cn("rounded-xl p-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">In Editing</p>
-              <p className="text-3xl font-light text-gray-900 mt-2">{inEditingProjects.length}</p>
+              <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>In Editing</p>
+              <p className={cn("text-3xl font-light mt-2", darkMode ? "text-gray-100" : "text-gray-900")}>{inEditingProjects.length}</p>
             </div>
-            <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-              <FileText className="w-6 h-6 text-purple-600" />
+            <div className={cn("w-12 h-12 rounded-full flex items-center justify-center", darkMode ? "bg-purple-900/50" : "bg-purple-100")}>
+              <FileText className={cn("w-6 h-6", darkMode ? "text-purple-400" : "text-purple-600")} />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <div className={cn("rounded-xl p-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Total Projects</p>
-              <p className="text-3xl font-light text-gray-900 mt-2">{projects.length}</p>
+              <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>Total Projects</p>
+              <p className={cn("text-3xl font-light mt-2", darkMode ? "text-gray-100" : "text-gray-900")}>{projects.length}</p>
             </div>
-            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-              <FolderKanban className="w-6 h-6 text-blue-600" />
+            <div className={cn("w-12 h-12 rounded-full flex items-center justify-center", darkMode ? "bg-blue-900/50" : "bg-blue-100")}>
+              <FolderKanban className={cn("w-6 h-6", darkMode ? "text-blue-400" : "text-blue-600")} />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <div className={cn("rounded-xl p-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Completed</p>
-              <p className="text-3xl font-light text-gray-900 mt-2">
+              <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>Completed</p>
+              <p className={cn("text-3xl font-light mt-2", darkMode ? "text-gray-100" : "text-gray-900")}>
                 {projects.filter(p => p.status === 'klaar').length}
               </p>
             </div>
-            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-green-600" />
+            <div className={cn("w-12 h-12 rounded-full flex items-center justify-center", darkMode ? "bg-green-900/50" : "bg-green-100")}>
+              <Calendar className={cn("w-6 h-6", darkMode ? "text-green-400" : "text-green-600")} />
             </div>
           </div>
         </div>
       </div>
 
       {/* Recent Projects */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-lg font-medium text-gray-900">Recent Projects</h2>
+      <div className={cn("rounded-xl overflow-hidden", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
+        <div className={cn("p-6", darkMode ? "border-b border-gray-700" : "border-b border-gray-100")}>
+          <h2 className={cn("text-lg font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>Recent Projects</h2>
         </div>
-        <div className="divide-y divide-gray-100">
+        <div className={cn(darkMode ? "divide-y divide-gray-700" : "divide-y divide-gray-100")}>
           {recentProjects.map(project => {
             const client = clients.find(c => c.id === project.client_id);
             const status = statusConfig[project.status];
@@ -121,12 +125,12 @@ export default function EditorDashboard() {
               <Link
                 key={project.id}
                 to={`${createPageUrl('EditorProjects')}?id=${project.id}`}
-                className="block p-6 hover:bg-gray-50 transition-colors"
+                className={cn("block p-6 transition-colors", darkMode ? "hover:bg-gray-700" : "hover:bg-gray-50")}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{project.title}</h3>
-                    <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                    <h3 className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h3>
+                    <div className={cn("flex items-center gap-3 mt-1 text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
                       <span>{client?.company_name || 'Unknown Client'}</span>
                       {project.shoot_date && (
                         <>
@@ -144,8 +148,8 @@ export default function EditorDashboard() {
             );
           })}
           {recentProjects.length === 0 && (
-            <div className="p-12 text-center text-gray-400">
-              <FolderKanban className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <div className={cn("p-12 text-center", darkMode ? "text-gray-500" : "text-gray-400")}>
+              <FolderKanban className={cn("w-12 h-12 mx-auto mb-3", darkMode ? "text-gray-600" : "text-gray-300")} />
               <p>No projects yet</p>
             </div>
           )}

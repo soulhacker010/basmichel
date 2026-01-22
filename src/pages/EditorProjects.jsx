@@ -30,6 +30,9 @@ export default function EditorProjects() {
   const [noteImages, setNoteImages] = useState([]);
   const [uploadingNote, setUploadingNote] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('editorDarkMode') === 'true';
+  });
   const queryClient = useQueryClient();
 
   const { data: userData } = useQuery({
@@ -177,11 +180,11 @@ export default function EditorProjects() {
           Back to Projects
         </Button>
 
-        <div className="bg-white rounded-xl border border-gray-100 p-8 mb-6">
+        <div className={cn("rounded-xl p-8 mb-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
           <div className="flex items-start justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-light text-gray-900">{selectedProject.title}</h1>
-              <p className="text-gray-500 mt-1">{client?.company_name}</p>
+              <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>{selectedProject.title}</h1>
+              <p className={cn("mt-1", darkMode ? "text-gray-400" : "text-gray-500")}>{client?.company_name}</p>
             </div>
             <span className={cn(
               "px-3 py-1.5 rounded-full text-sm font-medium",
@@ -194,25 +197,25 @@ export default function EditorProjects() {
 
           <div className="grid grid-cols-3 gap-6 text-sm">
             <div>
-              <p className="text-gray-500">Shoot Date</p>
-              <p className="text-gray-900 font-medium mt-1">
+              <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Shoot Date</p>
+              <p className={cn("font-medium mt-1", darkMode ? "text-gray-100" : "text-gray-900")}>
                 {selectedProject.shoot_date ? format(new Date(selectedProject.shoot_date), 'MMM d, yyyy') : 'N/A'}
               </p>
             </div>
             <div>
-              <p className="text-gray-500">Client</p>
-              <p className="text-gray-900 font-medium mt-1">{client?.contact_name || 'N/A'}</p>
+              <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Client</p>
+              <p className={cn("font-medium mt-1", darkMode ? "text-gray-100" : "text-gray-900")}>{client?.contact_name || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-gray-500">Email</p>
-              <p className="text-gray-900 font-medium mt-1">{client?.user_id ? clients.find(c => c.id === client.id)?.contact_name : 'N/A'}</p>
+              <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Email</p>
+              <p className={cn("font-medium mt-1", darkMode ? "text-gray-100" : "text-gray-900")}>{client?.user_id ? clients.find(c => c.id === client.id)?.contact_name : 'N/A'}</p>
             </div>
           </div>
         </div>
 
         {/* Raw Files */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6 mb-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Raw Files ({rawFiles.length})</h2>
+        <div className={cn("rounded-xl p-6 mb-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
+          <h2 className={cn("text-lg font-medium mb-4", darkMode ? "text-gray-100" : "text-gray-900")}>Raw Files ({rawFiles.length})</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {rawFiles.map(file => (
               <div key={file.id} className="group relative">
@@ -237,8 +240,8 @@ export default function EditorProjects() {
         </div>
 
         {/* Upload Edited Files */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6 mb-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Upload Edited Files</h2>
+        <div className={cn("rounded-xl p-6 mb-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
+          <h2 className={cn("text-lg font-medium mb-4", darkMode ? "text-gray-100" : "text-gray-900")}>Upload Edited Files</h2>
           <input
             type="file"
             multiple
@@ -272,12 +275,12 @@ export default function EditorProjects() {
         </div>
 
         {/* Editor Notes */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Editor Notes</h2>
+        <div className={cn("rounded-xl p-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
+          <h2 className={cn("text-lg font-medium mb-4", darkMode ? "text-gray-100" : "text-gray-900")}>Editor Notes</h2>
           <div className="space-y-4 mb-6">
             {editorNotes.map(note => (
-              <div key={note.id} className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-900 whitespace-pre-wrap">{note.note}</p>
+              <div key={note.id} className={cn("rounded-lg p-4", darkMode ? "bg-gray-700" : "bg-gray-50")}>
+                <p className={cn("text-sm whitespace-pre-wrap", darkMode ? "text-gray-100" : "text-gray-900")}>{note.note}</p>
                 {note.images && note.images.length > 0 && (
                   <div className="grid grid-cols-3 gap-2 mt-3">
                     {note.images.map((img, idx) => (
@@ -285,7 +288,7 @@ export default function EditorProjects() {
                     ))}
                   </div>
                 )}
-                <p className="text-xs text-gray-400 mt-2">
+                <p className={cn("text-xs mt-2", darkMode ? "text-gray-500" : "text-gray-400")}>
                   {format(new Date(note.created_date), 'MMM d, yyyy HH:mm')}
                 </p>
               </div>
@@ -323,8 +326,8 @@ export default function EditorProjects() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-light text-gray-900">All Projects</h1>
-        <p className="text-gray-500 mt-1">View and manage project files</p>
+        <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>All Projects</h1>
+        <p className={cn("mt-1", darkMode ? "text-gray-400" : "text-gray-500")}>View and manage project files</p>
       </div>
 
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
@@ -357,7 +360,9 @@ export default function EditorProjects() {
                 setSelectedProject(project);
                 window.history.pushState({}, '', `${createPageUrl('EditorProjects')}?id=${project.id}`);
               }}
-              className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer group"
+              className={cn("rounded-xl overflow-hidden hover:shadow-md transition-shadow cursor-pointer group",
+                darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100"
+              )}
             >
               <div className="h-2 w-full">
                 <div className={cn("h-full", status?.color)} />
@@ -365,18 +370,20 @@ export default function EditorProjects() {
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="font-medium text-gray-900 group-hover:text-purple-600 transition-colors">
+                    <h3 className={cn("font-medium group-hover:text-purple-600 transition-colors",
+                      darkMode ? "text-gray-100" : "text-gray-900"
+                    )}>
                       {project.title}
                     </h3>
                     {client?.company_name && (
-                      <div className="text-xs text-gray-400 mt-1">{client.company_name}</div>
+                      <div className={cn("text-xs mt-1", darkMode ? "text-gray-500" : "text-gray-400")}>{client.company_name}</div>
                     )}
                   </div>
                   <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", status?.bgLight, status?.textColor)}>
                     {status?.label}
                   </span>
                 </div>
-                <div className="text-sm text-gray-400">
+                <div className={cn("text-sm", darkMode ? "text-gray-500" : "text-gray-400")}>
                   {project.created_date && format(new Date(project.created_date), 'MMM d, yyyy')}
                 </div>
               </div>
