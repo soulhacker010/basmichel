@@ -12,6 +12,7 @@ const clientPages = [
   'ClientProjectDetail',
   'ClientProjectDetail2',
   'ClientBooking', 
+  'ClientGalleries',
   'ClientInvoices',
   'ClientProfile'
 ];
