@@ -110,7 +110,7 @@ export default function EditorPortalShell({ children, currentPageName }) {
         </button>
         <img 
           src={darkMode 
-            ? "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/afb8cb7c8_image.png"
+            ? "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/fefc16c37_BasMichel_K102.png"
             : "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/9370b8342_BasMichel_K152.png"
           }
           alt="Basmichel Logo" 
@@ -139,7 +139,7 @@ export default function EditorPortalShell({ children, currentPageName }) {
             <Link to={createPageUrl('Home')} className="hover:opacity-80 transition-opacity block py-8">
               <img 
                 src={darkMode 
-                  ? "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/afb8cb7c8_image.png"
+                  ? "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/fefc16c37_BasMichel_K102.png"
                   : "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/9370b8342_BasMichel_K152.png"
                 }
                 alt="Basmichel Logo" 
