@@ -9,7 +9,8 @@ import {
   X,
   LogOut,
   Moon,
-  Sun
+  Sun,
+  Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,8 @@ import { cn } from '@/lib/utils';
 const editorPages = [
   { name: 'Dashboard', page: 'EditorDashboard', path: '/editor/dashboard', icon: LayoutDashboard },
   { name: 'Projects', page: 'EditorProjects', path: '/editor/projects', icon: FolderKanban },
+  { separator: true },
+  { name: 'Settings', page: 'EditorSettings', path: '/editor/settings', icon: Settings },
 ];
 
 export default function EditorPortalShell({ children, currentPageName }) {
@@ -167,7 +170,11 @@ export default function EditorPortalShell({ children, currentPageName }) {
 
           {/* Navigation */}
           <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-            {editorPages.map((item) => {
+            {editorPages.map((item, index) => {
+              if (item.separator) {
+                return <div key={`separator-${index}`} className={cn("h-px my-3 mx-2", darkMode ? "bg-gray-700" : "bg-gray-200")} />;
+              }
+
               const isActive = currentPageName === item.page;
               const Icon = item.icon;
 

@@ -26,6 +26,7 @@ import GalleryView from './pages/GalleryView';
 import Home from './pages/Home';
 import EditorDashboard from './pages/EditorDashboard';
 import EditorProjects from './pages/EditorProjects';
+import EditorSettings from './pages/EditorSettings';
 import __Layout from './Layout.jsx';
 
 
@@ -58,6 +59,7 @@ export const PAGES = {
     "Home": Home,
     "EditorDashboard": EditorDashboard,
     "EditorProjects": EditorProjects,
+    "EditorSettings": EditorSettings,
 }
 
 export const pagesConfig = {

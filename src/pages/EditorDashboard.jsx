@@ -58,17 +58,41 @@ export default function EditorDashboard() {
   const inEditingProjects = projects.filter(p => p.status === 'wordt_bewerkt');
   const recentProjects = projects.slice(0, 10);
 
+  // Amsterdam time
+  const [currentTime, setCurrentTime] = useState('');
+  useEffect(() => {
+    const updateTime = () => {
+      const amsterdamTime = new Date().toLocaleString('en-US', { 
+        timeZone: 'Europe/Amsterdam',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false 
+      });
+      setCurrentTime(amsterdamTime);
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>
-          Welcome back, {editor?.name || user?.email}
-        </h1>
-        <p className={cn("mt-1", darkMode ? "text-gray-400" : "text-gray-500")}>
-          {editor?.specialization && `${editor.specialization.replace('_', ' ')} • `}
-          {format(new Date(), 'EEEE, MMMM d, yyyy')}
-        </p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>
+            Welcome back, {editor?.name || user?.email}
+          </h1>
+          <p className={cn("mt-1", darkMode ? "text-gray-400" : "text-gray-500")}>
+            {editor?.specialization && `${editor.specialization.replace('_', ' ')} • `}
+            {format(new Date(), 'EEEE, MMMM d, yyyy')}
+          </p>
+        </div>
+        <div className={cn("text-right", darkMode ? "text-gray-300" : "text-gray-700")}>
+          <p className="text-xs uppercase tracking-wide mb-1">Amsterdam Time</p>
+          <p className="text-2xl font-light font-mono">{currentTime}</p>
+        </div>
       </div>
 
       {/* Stats */}

@@ -25,6 +25,7 @@ import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import EditorNotesSection from '@/components/project/EditorNotesSection';
+import AddEditorNote from '@/components/project/AddEditorNote';
 import ExtraSessionsSection from '@/components/project/ExtraSessionsSection';
 import {
   Collapsible,
@@ -752,6 +753,7 @@ export default function AdminProjectDetail() {
       <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-8">
         <h2 className="text-lg font-medium text-gray-900 mb-6">Editor Notities</h2>
         <EditorNotesSection projectId={projectId} />
+        <AddEditorNote projectId={projectId} />
       </div>
 
       {/* Extra Sessies */}

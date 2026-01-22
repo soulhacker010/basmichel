@@ -18,7 +18,8 @@ const clientPages = [
 
 const editorPages = [
   'EditorDashboard',
-  'EditorProjects'
+  'EditorProjects',
+  'EditorSettings'
 ];
 
 const adminPages = [
