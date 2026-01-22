@@ -78,7 +78,6 @@ export default function EditorDashboard() {
         timeZone: 'Europe/Amsterdam',
         hour: '2-digit',
         minute: '2-digit',
-        second: '2-digit',
         hour12: true 
       });
       setCurrentTime(amsterdamTime);
@@ -103,7 +102,7 @@ export default function EditorDashboard() {
         </div>
         <div className={cn("text-right", darkMode ? "text-gray-300" : "text-gray-700")}>
           <p className="text-xs uppercase tracking-wide mb-1">Amsterdam Time</p>
-          <p className="text-2xl font-light font-mono">{currentTime}</p>
+          <p className="text-2xl font-light">{currentTime}</p>
         </div>
       </div>
 
