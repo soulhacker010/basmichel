@@ -66,6 +66,8 @@ export default function AdminProjectDetail() {
   const [notes, setNotes] = useState('');
   const [selectedFiles, setSelectedFiles] = useState({});
   const [uploadingCategory, setUploadingCategory] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0, fileName: '' });
+  const [dragOver, setDragOver] = useState(null);
   const [deliveryOpen, setDeliveryOpen] = useState(true);
   const [rawOpen, setRawOpen] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
@@ -220,7 +222,12 @@ export default function AdminProjectDetail() {
   const uploadMutation = useMutation({
     mutationFn: async ({ category, files }) => {
       const uploadedFiles = [];
-      for (const file of files) {
+      setUploadProgress({ current: 0, total: files.length, fileName: '' });
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setUploadProgress({ current: i + 1, total: files.length, fileName: file.name });
+        
         const formData = new FormData();
         formData.append('file', file);
         formData.append('folder', `${project.project_number || projectId} - ${project.title}`);
@@ -243,7 +250,12 @@ export default function AdminProjectDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projectFiles', projectId] });
       setUploadingCategory(null);
+      setUploadProgress({ current: 0, total: 0, fileName: '' });
       toast.success('Bestanden geüpload naar Google Drive');
+    },
+    onError: () => {
+      setUploadingCategory(null);
+      setUploadProgress({ current: 0, total: 0, fileName: '' });
     },
   });
 
@@ -334,6 +346,27 @@ export default function AdminProjectDetail() {
     setUploadingCategory(category);
     uploadMutation.mutate({ category, files });
     event.target.value = '';
+  };
+
+  const handleDrop = (category, event) => {
+    event.preventDefault();
+    setDragOver(null);
+    
+    const files = Array.from(event.dataTransfer.files);
+    if (files.length === 0) return;
+    
+    setUploadingCategory(category);
+    uploadMutation.mutate({ category, files });
+  };
+
+  const handleDragOver = (category, event) => {
+    event.preventDefault();
+    setDragOver(category);
+  };
+
+  const handleDragLeave = (event) => {
+    event.preventDefault();
+    setDragOver(null);
   };
 
   const toggleFileSelection = (fileId) => {
@@ -643,16 +676,55 @@ export default function AdminProjectDetail() {
                       </div>
                     </div>
 
+                    {uploadingCategory === category.key && uploadProgress.total > 0 && (
+                      <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2 text-sm">
+                          <span className="text-blue-900 font-medium">
+                            Uploaden naar Google Drive... ({uploadProgress.current}/{uploadProgress.total})
+                          </span>
+                          <span className="text-blue-700">
+                            {Math.round((uploadProgress.current / uploadProgress.total) * 100)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-blue-100 rounded-full h-2 mb-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-blue-700 truncate">{uploadProgress.fileName}</p>
+                      </div>
+                    )}
+
                     {categoryFiles.length === 0 ? (
-                      <div className="text-center py-8 text-gray-400 text-sm">
-                        Nog geen bestanden geüpload
+                      <div 
+                        onDrop={(e) => handleDrop(category.key, e)}
+                        onDragOver={(e) => handleDragOver(category.key, e)}
+                        onDragLeave={handleDragLeave}
+                        className={cn(
+                          "text-center py-12 text-gray-400 text-sm border-2 border-dashed rounded-lg transition-colors",
+                          dragOver === category.key ? "border-green-500 bg-green-50" : "border-gray-200",
+                          uploadingCategory !== category.key && "cursor-pointer hover:border-gray-300 hover:bg-gray-50"
+                        )}
+                      >
+                        <Upload className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                        <p className="font-medium text-gray-600">Sleep bestanden hierheen</p>
+                        <p className="text-xs mt-1">of klik op "Uploaden"</p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 gap-2">
+                      <div 
+                        onDrop={(e) => handleDrop(category.key, e)}
+                        onDragOver={(e) => handleDragOver(category.key, e)}
+                        onDragLeave={handleDragLeave}
+                        className={cn(
+                          "grid grid-cols-1 gap-2 p-4 border-2 border-dashed rounded-lg transition-colors",
+                          dragOver === category.key ? "border-green-500 bg-green-50" : "border-transparent"
+                        )}
+                      >
                         {categoryFiles.map(file => (
                           <div 
                             key={file.id}
-                            className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50"
+                            className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 bg-white"
                           >
                             <input
                               type="checkbox"
