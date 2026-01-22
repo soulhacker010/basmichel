@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import EditorsTab from '@/components/admin/EditorsTab';
 
 export default function AdminSettings() {
   const [user, setUser] = useState(null);
@@ -143,6 +144,10 @@ export default function AdminSettings() {
               <TabsTrigger value="hours" className="data-[state=active]:bg-[#E8EDE5]">
                 <Clock className="w-4 h-4 mr-2" />
                 Werktijden
+              </TabsTrigger>
+              <TabsTrigger value="editors" className="data-[state=active]:bg-[#E8EDE5]">
+                <User className="w-4 h-4 mr-2" />
+                Editors
               </TabsTrigger>
             </TabsList>
           </div>
@@ -379,6 +384,10 @@ export default function AdminSettings() {
                 )}
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="editors" className="p-6">
+            <EditorsTab />
           </TabsContent>
         </Tabs>
       </div>
