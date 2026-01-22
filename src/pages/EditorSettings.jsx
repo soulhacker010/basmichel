@@ -47,10 +47,27 @@ export default function EditorSettings() {
   }, [user, editors]);
 
   const updateEditorMutation = useMutation({
-    mutationFn: (data) => base44.entities.Editor.update(editor.id, data),
+    mutationFn: async (data) => {
+      if (editor && editor.id) {
+        return await base44.entities.Editor.update(editor.id, data);
+      } else if (user?.role === 'admin') {
+        // Create editor record for admin if doesn't exist
+        return await base44.entities.Editor.create({
+          user_id: user.id,
+          name: data.name,
+          email: user.email,
+          status: 'active',
+        });
+      }
+      throw new Error('No editor profile');
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['editors'] });
       toast.success('Name updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update name');
+      console.error(error);
     },
   });
 
@@ -60,11 +77,7 @@ export default function EditorSettings() {
       return;
     }
 
-    if (editor && editor.id) {
-      updateEditorMutation.mutate({ name: editorName });
-    } else {
-      toast.error('Editor profile not found');
-    }
+    updateEditorMutation.mutate({ name: editorName });
   };
 
   return (
@@ -146,7 +159,7 @@ export default function EditorSettings() {
           <div className="flex justify-end pt-4">
             <Button 
               onClick={handleSave}
-              disabled={updateEditorMutation.isPending || !editor}
+              disabled={updateEditorMutation.isPending || !editorName.trim()}
               className="bg-purple-600 hover:bg-purple-700 text-white"
             >
               {updateEditorMutation.isPending ? 'Saving...' : 'Save Changes'}
