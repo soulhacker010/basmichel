@@ -208,10 +208,9 @@ export default function ClientDashboard() {
             {projects.slice(0, 5).map(project => {
               const status = statusConfig[project.status];
               return (
-                <Link
+                <div
                   key={project.id}
-                  to={createPageUrl(`ClientProjectDetail?id=${project.id}`)}
-                  className="flex items-center justify-between px-6 py-5 hover:bg-gray-50/50 transition-colors"
+                  className="flex items-center justify-between px-6 py-5"
                 >
                   <div className="flex items-center gap-4">
                     <div className={cn("w-2.5 h-2.5 rounded-full", status?.color)} />
@@ -235,7 +234,7 @@ export default function ClientDashboard() {
                       </p>
                     )}
                   </div>
-                </Link>
+                </div>
               );
             })}
           </div>
@@ -250,10 +249,9 @@ export default function ClientDashboard() {
           </div>
           <div className="divide-y divide-gray-50">
             {upcomingProjects.slice(0, 3).map(project => (
-              <Link
+              <div
                 key={project.id}
-                to={createPageUrl(`ClientProjectDetail2?id=${project.id}`)}
-                className="flex items-center justify-between px-6 py-5 hover:bg-gray-50/50 transition-colors"
+                className="flex items-center justify-between px-6 py-5"
               >
                 <div className="flex items-center gap-5">
                   <div className="w-16 h-16 rounded-xl bg-[#F8FAF7] flex flex-col items-center justify-center">
@@ -275,7 +273,7 @@ export default function ClientDashboard() {
                 <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
                   {statusConfig[project.status]?.label || 'Geboekt'}
                 </span>
-              </Link>
+              </div>
             ))}
           </div>
         </div>
