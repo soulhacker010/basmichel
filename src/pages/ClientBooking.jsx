@@ -82,6 +82,20 @@ export default function ClientBooking() {
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
   };
 
+  // Check Google Calendar availability
+  const checkGoogleCalendarAvailability = async (startTime, endTime) => {
+    try {
+      const response = await base44.functions.invoke('checkCalendarAvailability', {
+        start_datetime: startTime.toISOString(),
+        end_datetime: endTime.toISOString()
+      });
+      return response.data.available;
+    } catch (error) {
+      console.warn('Calendar check failed:', error);
+      return true; // Fallback to available if check fails
+    }
+  };
+
   // Generate available time slots for a date
   const getTimeSlots = (date) => {
     if (!date || !selectedService) return [];
@@ -136,6 +150,14 @@ export default function ClientBooking() {
       const startDatetime = selectedTime;
       const endDatetime = addMinutes(startDatetime, selectedService.duration_minutes || 60);
 
+      // Check Google Calendar availability before booking
+      const isAvailable = await checkGoogleCalendarAvailability(startDatetime, endDatetime);
+      if (!isAvailable) {
+        toast.error('Dit tijdslot is niet meer beschikbaar. Kies een ander tijdstip.');
+        setIsSubmitting(false);
+        return;
+      }
+
       // Get or create counter for project number
       const counters = await base44.entities.ProjectCounter.list();
       let nextNumber = 202700;
@@ -165,6 +187,20 @@ export default function ClientBooking() {
         shoot_date: format(selectedDate, 'yyyy-MM-dd'),
         shoot_time: format(selectedTime, 'HH:mm'),
         status: 'geboekt',
+        notes: formData.notes || '',
+      });
+
+      // Create booking (which will auto-sync to Google Calendar via automation)
+      await base44.entities.Booking.create({
+        project_id: project.id,
+        client_id: clientId,
+        service_type: selectedService.slug || selectedService.name.toLowerCase().replace(/\s+/g, '_'),
+        start_datetime: startDatetime.toISOString(),
+        end_datetime: endDatetime.toISOString(),
+        duration_minutes: selectedService.duration_minutes || 60,
+        status: 'bevestigd',
+        address: formData.address,
+        city: formData.city,
         notes: formData.notes || '',
       });
 
