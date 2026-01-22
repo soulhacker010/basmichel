@@ -41,10 +41,9 @@ export default function EditorRevisions() {
     queryFn: () => base44.entities.EditorNote.list('-created_date'),
   });
 
-  // Projects with editor notes indicating revisions needed
+  // Projects with status shoot_uitgevoerd (Revisions)
   const revisionProjects = projects.filter(project => {
-    const hasNotes = editorNotes.some(note => note.project_id === project.id);
-    return hasNotes && (project.status === 'wordt_bewerkt' || project.status === 'shoot_uitgevoerd');
+    return project.status === 'shoot_uitgevoerd';
   });
 
   const filteredProjects = revisionProjects.filter(project =>

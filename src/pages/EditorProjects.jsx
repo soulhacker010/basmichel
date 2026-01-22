@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 
 const statusConfig = {
   geboekt: { label: 'Booked', color: 'bg-blue-500', bgLight: 'bg-blue-50', textColor: 'text-blue-700' },
-  shoot_uitgevoerd: { label: 'Shoot Done', color: 'bg-amber-500', bgLight: 'bg-amber-50', textColor: 'text-amber-700' },
+  shoot_uitgevoerd: { label: 'Revisions', color: 'bg-orange-500', bgLight: 'bg-orange-50', textColor: 'text-orange-700' },
   wordt_bewerkt: { label: 'In Editing', color: 'bg-purple-500', bgLight: 'bg-purple-50', textColor: 'text-purple-700' },
   klaar: { label: 'Completed', color: 'bg-green-500', bgLight: 'bg-green-50', textColor: 'text-green-700' },
 };
@@ -371,7 +371,7 @@ export default function EditorProjects() {
         <Tabs value={statusFilter} onValueChange={setStatusFilter}>
           <TabsList>
             <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="shoot_uitgevoerd">Shoot Done</TabsTrigger>
+            <TabsTrigger value="shoot_uitgevoerd">Revisions</TabsTrigger>
             <TabsTrigger value="wordt_bewerkt">In Editing</TabsTrigger>
           </TabsList>
         </Tabs>
