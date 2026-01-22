@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Search, Download, Upload, ArrowLeft, FileText } from 'lucide-react';
+import { Search, Download, Upload, ArrowLeft, FileText, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -114,6 +115,14 @@ export default function EditorProjects() {
     },
   });
 
+  const updateProjectStatusMutation = useMutation({
+    mutationFn: ({ projectId, status }) => base44.entities.Project.update(projectId, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allProjects'] });
+      toast.success('Project status updated');
+    },
+  });
+
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -186,13 +195,32 @@ export default function EditorProjects() {
               <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>{selectedProject.title}</h1>
               <p className={cn("mt-1", darkMode ? "text-gray-400" : "text-gray-500")}>{client?.company_name}</p>
             </div>
-            <span className={cn(
-              "px-3 py-1.5 rounded-full text-sm font-medium",
-              statusConfig[selectedProject.status]?.bgLight,
-              statusConfig[selectedProject.status]?.textColor
-            )}>
-              {statusConfig[selectedProject.status]?.label}
-            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className={cn(
+                  "px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1 hover:opacity-80 transition-opacity",
+                  statusConfig[selectedProject.status]?.bgLight,
+                  statusConfig[selectedProject.status]?.textColor
+                )}>
+                  {statusConfig[selectedProject.status]?.label}
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => updateProjectStatusMutation.mutate({ projectId: selectedProject.id, status: 'geboekt' })}>
+                  Upcoming
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => updateProjectStatusMutation.mutate({ projectId: selectedProject.id, status: 'wordt_bewerkt' })}>
+                  In Progress
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => updateProjectStatusMutation.mutate({ projectId: selectedProject.id, status: 'klaar' })}>
+                  Finished
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => updateProjectStatusMutation.mutate({ projectId: selectedProject.id, status: 'shoot_uitgevoerd' })}>
+                  Revisions
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="grid grid-cols-3 gap-6 text-sm">
