@@ -133,7 +133,7 @@ export default function AdminProjectDetail() {
     queryKey: ['projectInvoice', projectId],
     queryFn: async () => {
       const invoices = await base44.entities.ProjectInvoice.filter({ project_id: projectId });
-      return invoices?.[0];
+      return invoices?.[0] || null;
     },
     enabled: !!projectId,
   });

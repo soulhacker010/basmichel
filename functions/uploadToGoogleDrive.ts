@@ -102,13 +102,13 @@ Deno.serve(async (req) => {
       }
     );
 
-    if (!uploadResponse.ok) {
-      const errorText = await uploadResponse.text();
+    const uploadedFile = await uploadResponse.json();
+
+    if (!uploadResponse.ok || !uploadedFile.id) {
+      const errorText = JSON.stringify(uploadedFile);
       console.error('Upload failed:', errorText);
       throw new Error(`Upload failed: ${errorText}`);
     }
-
-    const uploadedFile = await uploadResponse.json();
 
     // Make file accessible via link
     const permResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${uploadedFile.id}/permissions`, {
