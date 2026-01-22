@@ -29,6 +29,7 @@ import ProjectTimeline from '@/components/project/ProjectTimeline';
 
 const statusSteps = [
   { key: 'geboekt', label: 'Geboekt' },
+  { key: 'shoot_uitgevoerd', label: 'Shoot uitgevoerd' },
   { key: 'wordt_bewerkt', label: 'Wordt bewerkt' },
   { key: 'klaar', label: 'Klaar' },
 ];

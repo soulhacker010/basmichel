@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 const statusConfig = {
   geboekt: { label: 'Geboekt', color: 'bg-blue-500', bgLight: 'bg-blue-50', textColor: 'text-blue-700' },
-  shoot_uitgevoerd: { label: 'Wordt bewerkt', color: 'bg-purple-500', bgLight: 'bg-purple-50', textColor: 'text-purple-700' },
+  shoot_uitgevoerd: { label: 'Shoot uitgevoerd', color: 'bg-amber-500', bgLight: 'bg-amber-50', textColor: 'text-amber-700' },
   wordt_bewerkt: { label: 'Wordt bewerkt', color: 'bg-purple-500', bgLight: 'bg-purple-50', textColor: 'text-purple-700' },
   klaar: { label: 'Klaar', color: 'bg-green-500', bgLight: 'bg-green-50', textColor: 'text-green-700' },
 };
@@ -66,16 +66,15 @@ export default function ClientProjects() {
     const matchesSearch = 
       project.title?.toLowerCase().includes(search.toLowerCase()) ||
       project.address?.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || 
-      project.status === statusFilter || 
-      (statusFilter === 'wordt_bewerkt' && (project.status === 'wordt_bewerkt' || project.status === 'shoot_uitgevoerd'));
+    const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const statusCounts = {
     all: projects.length,
     geboekt: projects.filter(p => p.status === 'geboekt').length,
-    wordt_bewerkt: projects.filter(p => p.status === 'wordt_bewerkt' || p.status === 'shoot_uitgevoerd').length,
+    shoot_uitgevoerd: projects.filter(p => p.status === 'shoot_uitgevoerd').length,
+    wordt_bewerkt: projects.filter(p => p.status === 'wordt_bewerkt').length,
     klaar: projects.filter(p => p.status === 'klaar').length,
   };
 
@@ -152,8 +151,9 @@ export default function ClientProjects() {
                   <div 
                     className={cn("h-full transition-all", status?.color)}
                     style={{ 
-                      width: project.status === 'geboekt' ? '33%' :
-                             (project.status === 'shoot_uitgevoerd' || project.status === 'wordt_bewerkt') ? '66%' : '100%'
+                      width: project.status === 'geboekt' ? '25%' :
+                             project.status === 'shoot_uitgevoerd' ? '50%' :
+                             project.status === 'wordt_bewerkt' ? '75%' : '100%'
                     }}
                   />
                 </div>

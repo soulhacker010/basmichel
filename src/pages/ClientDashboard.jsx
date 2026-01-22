@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 
 const statusConfig = {
   geboekt: { label: 'Geboekt', color: 'bg-blue-500', icon: Calendar },
-  shoot_uitgevoerd: { label: 'Wordt bewerkt', color: 'bg-purple-500', icon: Clock },
+  shoot_uitgevoerd: { label: 'Shoot uitgevoerd', color: 'bg-amber-500', icon: CheckCircle2 },
   wordt_bewerkt: { label: 'Wordt bewerkt', color: 'bg-purple-500', icon: Clock },
   klaar: { label: 'Klaar', color: 'bg-green-500', icon: CheckCircle2 },
 };
@@ -223,7 +223,7 @@ export default function ClientDashboard() {
                       "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium",
                       project.status === 'klaar' ? "bg-green-50 text-green-700" :
                       project.status === 'geboekt' ? "bg-blue-50 text-blue-700" :
-                      (project.status === 'shoot_uitgevoerd' || project.status === 'wordt_bewerkt') ? "bg-purple-50 text-purple-700" :
+                      project.status === 'shoot_uitgevoerd' ? "bg-amber-50 text-amber-700" :
                       "bg-purple-50 text-purple-700"
                     )}>
                       {status?.label}
