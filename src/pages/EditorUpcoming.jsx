@@ -28,7 +28,13 @@ export default function EditorUpcoming() {
 
   const { data: projects = [] } = useQuery({
     queryKey: ['upcomingProjects'],
-    queryFn: () => base44.entities.Project.filter({ status: 'shoot_uitgevoerd' }, '-shoot_date'),
+    queryFn: async () => {
+      const [bookedProjects, shootDoneProjects] = await Promise.all([
+        base44.entities.Project.filter({ status: 'geboekt' }, '-shoot_date'),
+        base44.entities.Project.filter({ status: 'shoot_uitgevoerd' }, '-shoot_date')
+      ]);
+      return [...bookedProjects, ...shootDoneProjects];
+    },
   });
 
   const { data: clients = [] } = useQuery({
@@ -70,7 +76,7 @@ export default function EditorUpcoming() {
                 darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100"
               )}
             >
-              <div className="h-2 w-full bg-amber-500" />
+              <div className={cn("h-2 w-full", project.status === 'geboekt' ? 'bg-blue-500' : 'bg-amber-500')} />
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div>
@@ -83,8 +89,12 @@ export default function EditorUpcoming() {
                       <div className={cn("text-xs mt-1", darkMode ? "text-gray-500" : "text-gray-400")}>{client.company_name}</div>
                     )}
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
-                    Shoot Done
+                  <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium",
+                    project.status === 'geboekt' 
+                      ? 'bg-blue-50 text-blue-700' 
+                      : 'bg-amber-50 text-amber-700'
+                  )}>
+                    {project.status === 'geboekt' ? 'Booked' : 'Shoot Done'}
                   </span>
                 </div>
                 <div className={cn("text-sm", darkMode ? "text-gray-500" : "text-gray-400")}>
