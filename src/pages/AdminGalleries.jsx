@@ -140,14 +140,17 @@ export default function AdminGalleries() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    const projectId = formData.get('project_id');
+    const project = projects.find(p => p.id === projectId);
+    const title = project?.title || 'Galerij';
+    const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    
     const data = {
-      title: formData.get('title'),
-      slug: formData.get('slug') || formData.get('title').toLowerCase().replace(/\s+/g, '-'),
+      title,
+      slug,
       client_id: formData.get('client_id'),
-      project_id: formData.get('project_id'),
+      project_id: projectId,
       status: formData.get('status'),
-      description: formData.get('description'),
-      expiry_date: formData.get('expiry_date'),
     };
 
     if (editingGallery) {
@@ -355,34 +358,15 @@ export default function AdminGalleries() {
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="title">Titel *</Label>
-              <Input
-                id="title"
-                name="title"
-                defaultValue={editingGallery?.title || ''}
-                className="mt-1.5"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="slug">URL-slug</Label>
-              <Input
-                id="slug"
-                name="slug"
-                defaultValue={editingGallery?.slug || ''}
-                className="mt-1.5"
-                placeholder="wordt-automatisch-gegenereerd"
-              />
-            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="client_id">Klant</Label>
+                <Label htmlFor="client_id">Klant *</Label>
                 <select
                   id="client_id"
                   name="client_id"
                   defaultValue={editingGallery?.client_id || ''}
                   className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A8B5A0]"
+                  required
                 >
                   <option value="">Selecteer klant</option>
                   {clients.map(client => {
@@ -396,12 +380,13 @@ export default function AdminGalleries() {
                 </select>
               </div>
               <div>
-                <Label htmlFor="project_id">Project</Label>
+                <Label htmlFor="project_id">Project *</Label>
                 <select
                   id="project_id"
                   name="project_id"
                   defaultValue={editingGallery?.project_id || ''}
                   className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A8B5A0]"
+                  required
                 >
                   <option value="">Selecteer project</option>
                   {projects.map(project => (
@@ -412,40 +397,23 @@ export default function AdminGalleries() {
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <select
-                  id="status"
-                  name="status"
-                  defaultValue={editingGallery?.status || 'concept'}
-                  className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A8B5A0]"
-                >
-                  <option value="concept">Concept</option>
-                  <option value="gepubliceerd">Gepubliceerd</option>
-                  <option value="gearchiveerd">Gearchiveerd</option>
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="expiry_date">Vervaldatum</Label>
-                <Input
-                  id="expiry_date"
-                  name="expiry_date"
-                  type="date"
-                  defaultValue={editingGallery?.expiry_date || ''}
-                  className="mt-1.5"
-                />
-              </div>
-            </div>
             <div>
-              <Label htmlFor="description">Beschrijving</Label>
-              <Textarea
-                id="description"
-                name="description"
-                defaultValue={editingGallery?.description || ''}
-                className="mt-1.5"
-                rows={3}
-              />
+              <Label htmlFor="status">Status *</Label>
+              <select
+                id="status"
+                name="status"
+                defaultValue={editingGallery?.status || 'concept'}
+                className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A8B5A0]"
+              >
+                <option value="concept">Concept</option>
+                <option value="gepubliceerd">Gepubliceerd</option>
+                <option value="gearchiveerd">Gearchiveerd</option>
+              </select>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-xs text-blue-900">
+                <strong>Let op:</strong> De titel en URL-slug worden automatisch gegenereerd op basis van de projecttitel.
+              </p>
             </div>
             <div className="flex justify-end gap-3 pt-4">
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
