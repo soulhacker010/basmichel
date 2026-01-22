@@ -133,20 +133,18 @@ export default function AdminPortalShell({ children, currentPageName }) {
             </Link>
           </div>
 
-          {/* Portal Switcher */}
-          {user?.role === 'admin' && (
-            <div className="px-6 pb-6 space-y-2">
-              <div className="px-4 py-2.5 rounded-lg bg-gray-900 text-white text-center">
-                <span className="text-xs font-medium">Studio Manager</span>
-              </div>
-              <Link 
-                to={createPageUrl('EditorDashboard')}
-                className="block px-4 py-2.5 rounded-lg text-center hover:bg-gray-100 transition-colors"
-              >
-                <span className="text-xs font-medium text-gray-600">Editor Portal</span>
-              </Link>
-            </div>
-          )}
+          {/* Badge & Portal Switcher */}
+          <div className="px-6 pb-6 space-y-3">
+            <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-900 text-white">
+              Studio Manager
+            </span>
+            <Link 
+              to={createPageUrl('EditorDashboard')}
+              className="block text-xs text-gray-500 hover:text-purple-600 transition-colors"
+            >
+              Switch to Editor Portal →
+            </Link>
+          </div>
 
           {/* Navigation */}
           <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
