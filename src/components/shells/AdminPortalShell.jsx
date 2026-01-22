@@ -135,18 +135,16 @@ export default function AdminPortalShell({ children, currentPageName }) {
 
           {/* Portal Switcher */}
           {user?.role === 'admin' && (
-            <div className="px-6 pb-6">
-              <div className="flex items-center bg-gray-100 rounded-full p-1">
-                <div className="flex-1 px-4 py-2 rounded-full bg-gray-900 text-white text-center">
-                  <span className="text-xs font-medium">Studio Manager</span>
-                </div>
-                <Link 
-                  to={createPageUrl('EditorDashboard')}
-                  className="flex-1 px-4 py-2 rounded-full text-center hover:bg-white/50 transition-colors"
-                >
-                  <span className="text-xs font-medium text-gray-700">Editor Portal</span>
-                </Link>
+            <div className="px-6 pb-6 space-y-2">
+              <div className="px-4 py-2.5 rounded-lg bg-gray-900 text-white text-center">
+                <span className="text-xs font-medium">Studio Manager</span>
               </div>
+              <Link 
+                to={createPageUrl('EditorDashboard')}
+                className="block px-4 py-2.5 rounded-lg text-center hover:bg-gray-100 transition-colors"
+              >
+                <span className="text-xs font-medium text-gray-600">Editor Portal</span>
+              </Link>
             </div>
           )}
 
