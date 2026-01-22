@@ -27,6 +27,11 @@ import EditorProjects from './pages/EditorProjects';
 import EditorSettings from './pages/EditorSettings';
 import GalleryView from './pages/GalleryView';
 import Home from './pages/Home';
+import EditorUpcoming from './pages/EditorUpcoming';
+import EditorInProgress from './pages/EditorInProgress';
+import EditorFinished from './pages/EditorFinished';
+import EditorRevisions from './pages/EditorRevisions';
+import EditorNotifications from './pages/EditorNotifications';
 import __Layout from './Layout.jsx';
 
 
@@ -60,6 +65,11 @@ export const PAGES = {
     "EditorSettings": EditorSettings,
     "GalleryView": GalleryView,
     "Home": Home,
+    "EditorUpcoming": EditorUpcoming,
+    "EditorInProgress": EditorInProgress,
+    "EditorFinished": EditorFinished,
+    "EditorRevisions": EditorRevisions,
+    "EditorNotifications": EditorNotifications,
 }
 
 export const pagesConfig = {

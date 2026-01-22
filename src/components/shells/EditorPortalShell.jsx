@@ -4,7 +4,11 @@ import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '../../utils';
 import { 
   LayoutDashboard, 
+  Clock, 
   FolderKanban, 
+  CheckCircle, 
+  RotateCcw, 
+  Bell, 
   Menu,
   X,
   LogOut,
@@ -17,8 +21,13 @@ import { cn } from '@/lib/utils';
 
 const editorPages = [
   { name: 'Dashboard', page: 'EditorDashboard', path: '/editor/dashboard', icon: LayoutDashboard },
-  { name: 'Projects', page: 'EditorProjects', path: '/editor/projects', icon: FolderKanban },
   { separator: true },
+  { name: 'Upcoming', page: 'EditorUpcoming', path: '/editor/upcoming', icon: Clock },
+  { name: 'In Progress', page: 'EditorInProgress', path: '/editor/in-progress', icon: FolderKanban },
+  { name: 'Finished', page: 'EditorFinished', path: '/editor/finished', icon: CheckCircle },
+  { name: 'Revisions', page: 'EditorRevisions', path: '/editor/revisions', icon: RotateCcw },
+  { separator: true },
+  { name: 'Notifications', page: 'EditorNotifications', path: '/editor/notifications', icon: Bell },
   { name: 'Settings', page: 'EditorSettings', path: '/editor/settings', icon: Settings },
 ];
 

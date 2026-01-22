@@ -19,6 +19,11 @@ const clientPages = [
 const editorPages = [
   'EditorDashboard',
   'EditorProjects',
+  'EditorUpcoming',
+  'EditorInProgress',
+  'EditorFinished',
+  'EditorRevisions',
+  'EditorNotifications',
   'EditorSettings'
 ];
 
