@@ -138,12 +138,15 @@ export default function AdminPortalShell({ children, currentPageName }) {
             <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-900 text-white">
               Studio Manager
             </span>
-            <Link 
-              to={createPageUrl('EditorDashboard')}
-              className="block text-xs text-gray-500 hover:text-purple-600 transition-colors"
-            >
-              Switch to Editor Portal →
-            </Link>
+            {user?.role === 'admin' && (
+              <Link 
+                to={createPageUrl('EditorDashboard')}
+                className="flex items-center justify-between px-3 py-2 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors group"
+              >
+                <span className="text-xs font-medium text-purple-700">Editor Portal</span>
+                <span className="text-xs text-purple-400 group-hover:text-purple-600">→</span>
+              </Link>
+            )}
           </div>
 
           {/* Navigation */}

@@ -134,9 +134,10 @@ export default function EditorPortalShell({ children, currentPageName }) {
             {user?.role === 'admin' && (
               <Link 
                 to={createPageUrl('AdminDashboard')}
-                className="block text-xs text-gray-500 hover:text-gray-900 transition-colors"
+                className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors group"
               >
-                Switch to Studio Manager →
+                <span className="text-xs font-medium text-gray-700">Studio Manager</span>
+                <span className="text-xs text-gray-400 group-hover:text-gray-600">→</span>
               </Link>
             )}
           </div>
