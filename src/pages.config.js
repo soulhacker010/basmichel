@@ -24,6 +24,8 @@ import ClientProjects from './pages/ClientProjects';
 import Contact from './pages/Contact';
 import GalleryView from './pages/GalleryView';
 import Home from './pages/Home';
+import EditorDashboard from './pages/EditorDashboard';
+import EditorProjects from './pages/EditorProjects';
 import __Layout from './Layout.jsx';
 
 
@@ -54,6 +56,8 @@ export const PAGES = {
     "Contact": Contact,
     "GalleryView": GalleryView,
     "Home": Home,
+    "EditorDashboard": EditorDashboard,
+    "EditorProjects": EditorProjects,
 }
 
 export const pagesConfig = {

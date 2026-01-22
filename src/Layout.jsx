@@ -2,6 +2,7 @@ import React from 'react';
 import PublicShell from '@/components/shells/PublicShell';
 import ClientPortalShell from '@/components/shells/ClientPortalShell';
 import AdminPortalShell from '@/components/shells/AdminPortalShell';
+import EditorPortalShell from '@/components/shells/EditorPortalShell';
 
 const publicPages = ['Home', 'BookingPage', 'GalleryView', 'AdminLogin', 'Contact'];
 
@@ -13,6 +14,11 @@ const clientPages = [
   'ClientBooking', 
   'ClientInvoices',
   'ClientProfile'
+];
+
+const editorPages = [
+  'EditorDashboard',
+  'EditorProjects'
 ];
 
 const adminPages = [
@@ -42,6 +48,15 @@ export default function Layout({ children, currentPageName }) {
       <ClientPortalShell currentPageName={currentPageName}>
         {children}
       </ClientPortalShell>
+    );
+  }
+
+  // Editor portal pages - require authentication + editor role
+  if (editorPages.includes(currentPageName)) {
+    return (
+      <EditorPortalShell currentPageName={currentPageName}>
+        {children}
+      </EditorPortalShell>
     );
   }
 
