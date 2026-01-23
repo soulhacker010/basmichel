@@ -284,8 +284,10 @@ Basmichel
       setStep(4); // Success step
     } catch (error) {
       console.error('Booking error:', error);
+      console.error('Error stack:', error.stack);
       toast.error(error.message || 'Er ging iets mis bij het boeken');
     } finally {
+      console.log('Submission finished');
       setIsSubmitting(false);
     }
   };
