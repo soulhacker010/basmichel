@@ -98,10 +98,6 @@ export default function AdminProjects() {
       
       const project = await base44.entities.Project.create(projectData);
       
-      // Create Dropbox folder for project
-      const folderName = `${nextNumber} - ${projectData.title}`;
-      await base44.functions.invoke('createDropboxFolder', { folderName });
-      
       // Create booking/agenda item
       if (data.shoot_date && data.shoot_time) {
         const shootDateTime = new Date(`${data.shoot_date}T${data.shoot_time}`);

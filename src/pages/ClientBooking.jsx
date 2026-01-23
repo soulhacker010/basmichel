@@ -139,26 +139,16 @@ export default function ClientBooking() {
   };
 
   const handleSubmit = async () => {
-    console.log('handleSubmit called');
-    console.log('clientId:', clientId);
-    console.log('selectedService:', selectedService);
-    console.log('selectedDate:', selectedDate);
-    console.log('selectedTime:', selectedTime);
-    console.log('formData:', formData);
-    
-    if (!clientId || !selectedService || !selectedDate || !selectedTime || !formData.address || !formData.city) {
+    if (!clientId || !selectedService || !selectedDate || !selectedTime || !formData.address) {
       toast.error('Vul alle velden in');
-      console.error('Validation failed - missing required fields');
       return;
     }
 
     setIsSubmitting(true);
-    console.log('Starting submission...');
 
     try {
       const startDatetime = selectedTime;
       const endDatetime = addMinutes(startDatetime, selectedService.duration_minutes || 60);
-      console.log('Datetime set:', startDatetime, endDatetime);
 
       // Check Google Calendar availability before booking
       const isAvailable = await checkGoogleCalendarAvailability(startDatetime, endDatetime);
@@ -199,14 +189,6 @@ export default function ClientBooking() {
         status: 'geboekt',
         notes: formData.notes || '',
       });
-
-      // Create Dropbox folder for project
-      try {
-        const folderName = `${nextNumber} - ${projectTitle}`;
-        await base44.functions.invoke('createDropboxFolder', { folderName });
-      } catch (folderError) {
-        console.warn('Dropbox folder creation failed:', folderError);
-      }
 
       // Create booking (which will auto-sync to Google Calendar via automation)
       await base44.entities.Booking.create({
@@ -284,10 +266,8 @@ Basmichel
       setStep(4); // Success step
     } catch (error) {
       console.error('Booking error:', error);
-      console.error('Error stack:', error.stack);
       toast.error(error.message || 'Er ging iets mis bij het boeken');
     } finally {
-      console.log('Submission finished');
       setIsSubmitting(false);
     }
   };
