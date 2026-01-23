@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { createPageUrl } from '@/utils';
 import { Search, Download, Upload, ArrowLeft, FileText, ChevronDown, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -92,13 +91,7 @@ export default function EditorProjects() {
 
   const uploadFileMutation = useMutation({
     mutationFn: async (file) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('folder', `${selectedProject.project_number || selectedProject.id} - ${selectedProject.title}`);
-      
-      const response = await base44.functions.invoke('uploadToDropbox', formData);
-      const { file_url, dropbox_path } = response.data;
-      
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
       return base44.entities.ProjectFile.create({
         project_id: selectedProject.id,
         category: 'bewerkte_fotos',
@@ -109,8 +102,8 @@ export default function EditorProjects() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projectFiles', selectedProject.id] });
-      toast.success('File uploaded to Dropbox');
+      queryClient.invalidateQueries({ queryKey: ['projectFiles'] });
+      toast.success('File uploaded');
     },
   });
 
