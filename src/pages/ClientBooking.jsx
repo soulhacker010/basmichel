@@ -180,6 +180,16 @@ export default function ClientBooking() {
         notes: formData.notes || '',
       });
 
+      // Create client notification
+      await base44.entities.Notification.create({
+        client_id: clientId,
+        user_id: user.id,
+        type: 'boeking_bevestigd',
+        title: 'Boeking bevestigd',
+        message: `Uw shoot is bevestigd voor ${format(startDatetime, 'd MMMM yyyy', { locale: nl })} om ${format(startDatetime, 'HH:mm')}`,
+        project_id: project.id,
+      });
+
       // Create admin notification
       await base44.entities.Notification.create({
         type: 'nieuwe_sessie',
