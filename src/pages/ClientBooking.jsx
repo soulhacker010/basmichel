@@ -139,16 +139,26 @@ export default function ClientBooking() {
   };
 
   const handleSubmit = async () => {
+    console.log('handleSubmit called');
+    console.log('clientId:', clientId);
+    console.log('selectedService:', selectedService);
+    console.log('selectedDate:', selectedDate);
+    console.log('selectedTime:', selectedTime);
+    console.log('formData:', formData);
+    
     if (!clientId || !selectedService || !selectedDate || !selectedTime || !formData.address || !formData.city) {
       toast.error('Vul alle velden in');
+      console.error('Validation failed - missing required fields');
       return;
     }
 
     setIsSubmitting(true);
+    console.log('Starting submission...');
 
     try {
       const startDatetime = selectedTime;
       const endDatetime = addMinutes(startDatetime, selectedService.duration_minutes || 60);
+      console.log('Datetime set:', startDatetime, endDatetime);
 
       // Check Google Calendar availability before booking
       const isAvailable = await checkGoogleCalendarAvailability(startDatetime, endDatetime);
