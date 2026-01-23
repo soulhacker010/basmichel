@@ -20,8 +20,9 @@ export default function NotificationCenter({ userId, clientId, isAdmin = false }
     queryKey: ['notifications', userId, clientId],
     queryFn: async () => {
       if (isAdmin) {
-        // Admin sees all notifications or system notifications
-        return base44.entities.Notification.list('-created_date', 50);
+        // Admin sees only admin notifications (without client_id)
+        const allNotifications = await base44.entities.Notification.list('-created_date', 50);
+        return allNotifications.filter(n => !n.client_id);
       } else {
         // Client sees their own notifications by user_id or client_id
         if (clientId) {
