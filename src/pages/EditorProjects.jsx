@@ -96,8 +96,8 @@ export default function EditorProjects() {
       formData.append('file', file);
       formData.append('folder', `${selectedProject.project_number || selectedProject.id} - ${selectedProject.title}`);
       
-      const response = await base44.functions.invoke('uploadToGoogleDrive', formData);
-      const { file_url, drive_id } = response.data;
+      const response = await base44.functions.invoke('uploadToDropbox', formData);
+      const { file_url, dropbox_path } = response.data;
       
       return base44.entities.ProjectFile.create({
         project_id: selectedProject.id,
