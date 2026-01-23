@@ -139,7 +139,7 @@ export default function ClientBooking() {
   };
 
   const handleSubmit = async () => {
-    if (!clientId || !selectedService || !selectedDate || !selectedTime || !formData.address) {
+    if (!clientId || !selectedService || !selectedDate || !selectedTime || !formData.address || !formData.city) {
       toast.error('Vul alle velden in');
       return;
     }
