@@ -190,6 +190,14 @@ export default function ClientBooking() {
         notes: formData.notes || '',
       });
 
+      // Create Dropbox folder for project
+      try {
+        const folderName = `${nextNumber} - ${projectTitle}`;
+        await base44.functions.invoke('createDropboxFolder', { folderName });
+      } catch (folderError) {
+        console.warn('Dropbox folder creation failed:', folderError);
+      }
+
       // Create booking (which will auto-sync to Google Calendar via automation)
       await base44.entities.Booking.create({
         project_id: project.id,
