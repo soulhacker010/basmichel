@@ -232,8 +232,8 @@ export default function AdminProjectDetail() {
         formData.append('file', file);
         formData.append('folder', `${project.project_number || projectId} - ${project.title}`);
         
-        const response = await base44.functions.invoke('uploadToGoogleDrive', formData);
-        const { file_url, drive_id } = response.data;
+        const response = await base44.functions.invoke('uploadToDropbox', formData);
+        const { file_url, dropbox_path } = response.data;
         
         await base44.entities.ProjectFile.create({
           project_id: projectId,
@@ -251,7 +251,7 @@ export default function AdminProjectDetail() {
       queryClient.invalidateQueries({ queryKey: ['projectFiles', projectId] });
       setUploadingCategory(null);
       setUploadProgress({ current: 0, total: 0, fileName: '' });
-      toast.success('Bestanden geüpload naar Google Drive');
+      toast.success('Bestanden geüpload naar Dropbox');
     },
     onError: (error) => {
       setUploadingCategory(null);
@@ -684,7 +684,7 @@ export default function AdminProjectDetail() {
                       <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2 text-sm">
                           <span className="text-blue-900 font-medium">
-                            Uploaden naar Google Drive... ({uploadProgress.current}/{uploadProgress.total})
+                            Uploaden naar Dropbox... ({uploadProgress.current}/{uploadProgress.total})
                           </span>
                           <span className="text-blue-700">
                             {Math.round((uploadProgress.current / uploadProgress.total) * 100)}%

@@ -110,7 +110,7 @@ export default function EditorProjects() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projectFiles', selectedProject.id] });
-      toast.success('File uploaded to Google Drive');
+      toast.success('File uploaded to Dropbox');
     },
   });
 
