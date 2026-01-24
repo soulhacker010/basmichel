@@ -68,6 +68,8 @@ export default function AdminProjectDetail() {
   const [uploadingCategory, setUploadingCategory] = useState(null);
   const [deliveryOpen, setDeliveryOpen] = useState(true);
   const [rawOpen, setRawOpen] = useState(false);
+  const [driveFiles, setDriveFiles] = useState([]);
+  const [loadingDriveFiles, setLoadingDriveFiles] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
   const [invoiceData, setInvoiceData] = useState({
     items: [{ title: '', description: '', quantity: 1, unit_price: '' }],
@@ -149,6 +151,32 @@ export default function AdminProjectDetail() {
       setSelectedStatus(project.status);
       setNotes(project.notes || '');
       setDeliveryDate(project.delivery_date || '');
+      
+      // Create Drive folder if not exists
+      if (!project.drive_folder_id && project.project_number) {
+        base44.functions.invoke('googleDrive', {
+          action: 'createFolder',
+          projectId: project.id,
+          projectNumber: project.project_number
+        }).then(() => {
+          queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+        }).catch(err => console.error('Failed to create Drive folder:', err));
+      }
+      
+      // Load Drive files
+      if (project.drive_raw_folder_id) {
+        setLoadingDriveFiles(true);
+        base44.functions.invoke('googleDrive', {
+          action: 'listFiles',
+          folderId: project.drive_raw_folder_id
+        }).then(response => {
+          setDriveFiles(response.data.files || []);
+          setLoadingDriveFiles(false);
+        }).catch(err => {
+          console.error('Failed to load Drive files:', err);
+          setLoadingDriveFiles(false);
+        });
+      }
     }
   }, [project]);
 
@@ -221,6 +249,7 @@ export default function AdminProjectDetail() {
     mutationFn: async ({ category, files }) => {
       const uploadedFiles = [];
       for (const file of files) {
+        // Upload to regular storage
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
         await base44.entities.ProjectFile.create({
           project_id: projectId,
@@ -231,6 +260,32 @@ export default function AdminProjectDetail() {
           mime_type: file.type,
         });
         uploadedFiles.push(file_url);
+        
+        // Upload raw files to Google Drive
+        if (category.includes('raw') && project.drive_raw_folder_id) {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = async () => {
+            const base64Data = reader.result.split(',')[1];
+            try {
+              await base44.functions.invoke('googleDrive', {
+                action: 'uploadFile',
+                folderId: project.drive_raw_folder_id,
+                fileName: file.name,
+                fileData: base64Data
+              });
+              
+              // Refresh Drive files list
+              const response = await base44.functions.invoke('googleDrive', {
+                action: 'listFiles',
+                folderId: project.drive_raw_folder_id
+              });
+              setDriveFiles(response.data.files || []);
+            } catch (err) {
+              console.error('Failed to upload to Drive:', err);
+            }
+          };
+        }
       }
       return uploadedFiles;
     },
@@ -571,7 +626,9 @@ export default function AdminProjectDetail() {
           <CollapsibleTrigger className="w-full px-8 py-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
             <div>
               <h2 className="text-lg font-medium text-gray-900">Raw Bestanden</h2>
-              <p className="text-sm text-gray-400 mt-1">Alleen zichtbaar voor admin</p>
+              <p className="text-sm text-gray-400 mt-1">
+                Alleen zichtbaar voor admin • {driveFiles.length} bestanden in Google Drive
+              </p>
             </div>
             <ChevronDown className={cn("w-5 h-5 text-gray-400 transition-transform", rawOpen && "rotate-180")} />
           </CollapsibleTrigger>

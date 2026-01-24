@@ -1,3 +1,4 @@
+import AdminBookings from './pages/AdminBookings';
 import AdminClients from './pages/AdminClients';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminDiscounts from './pages/AdminDiscounts';
@@ -7,9 +8,12 @@ import AdminInbox from './pages/AdminInbox';
 import AdminInvoices from './pages/AdminInvoices';
 import AdminLogin from './pages/AdminLogin';
 import AdminPayments from './pages/AdminPayments';
+import AdminProjectDetail from './pages/AdminProjectDetail';
+import AdminProjects from './pages/AdminProjects';
 import AdminSettings from './pages/AdminSettings';
 import AdminTemplates from './pages/AdminTemplates';
 import BookingPage from './pages/BookingPage';
+import ClientBooking from './pages/ClientBooking';
 import ClientDashboard from './pages/ClientDashboard';
 import ClientGalleries from './pages/ClientGalleries';
 import ClientInvoices from './pages/ClientInvoices';
@@ -22,20 +26,17 @@ import EditorDashboard from './pages/EditorDashboard';
 import EditorFinished from './pages/EditorFinished';
 import EditorInProgress from './pages/EditorInProgress';
 import EditorNotifications from './pages/EditorNotifications';
+import EditorProjects from './pages/EditorProjects';
 import EditorRevisions from './pages/EditorRevisions';
 import EditorSettings from './pages/EditorSettings';
 import EditorUpcoming from './pages/EditorUpcoming';
 import GalleryView from './pages/GalleryView';
 import Home from './pages/Home';
-import AdminProjects from './pages/AdminProjects';
-import AdminBookings from './pages/AdminBookings';
-import AdminProjectDetail from './pages/AdminProjectDetail';
-import EditorProjects from './pages/EditorProjects';
-import ClientBooking from './pages/ClientBooking';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AdminBookings": AdminBookings,
     "AdminClients": AdminClients,
     "AdminDashboard": AdminDashboard,
     "AdminDiscounts": AdminDiscounts,
@@ -45,9 +46,12 @@ export const PAGES = {
     "AdminInvoices": AdminInvoices,
     "AdminLogin": AdminLogin,
     "AdminPayments": AdminPayments,
+    "AdminProjectDetail": AdminProjectDetail,
+    "AdminProjects": AdminProjects,
     "AdminSettings": AdminSettings,
     "AdminTemplates": AdminTemplates,
     "BookingPage": BookingPage,
+    "ClientBooking": ClientBooking,
     "ClientDashboard": ClientDashboard,
     "ClientGalleries": ClientGalleries,
     "ClientInvoices": ClientInvoices,
@@ -60,16 +64,12 @@ export const PAGES = {
     "EditorFinished": EditorFinished,
     "EditorInProgress": EditorInProgress,
     "EditorNotifications": EditorNotifications,
+    "EditorProjects": EditorProjects,
     "EditorRevisions": EditorRevisions,
     "EditorSettings": EditorSettings,
     "EditorUpcoming": EditorUpcoming,
     "GalleryView": GalleryView,
     "Home": Home,
-    "AdminProjects": AdminProjects,
-    "AdminBookings": AdminBookings,
-    "AdminProjectDetail": AdminProjectDetail,
-    "EditorProjects": EditorProjects,
-    "ClientBooking": ClientBooking,
 }
 
 export const pagesConfig = {

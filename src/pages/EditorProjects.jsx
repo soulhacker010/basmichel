@@ -33,6 +33,8 @@ export default function EditorProjects() {
   const [uploadingNote, setUploadingNote] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [showClientNotes, setShowClientNotes] = useState(false);
+  const [driveFiles, setDriveFiles] = useState([]);
+  const [loadingDriveFiles, setLoadingDriveFiles] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('editorDarkMode') === 'true';
   });
@@ -85,7 +87,24 @@ export default function EditorProjects() {
   useEffect(() => {
     if (projectId && projects.length > 0) {
       const project = projects.find(p => p.id === projectId);
-      if (project) setSelectedProject(project);
+      if (project) {
+        setSelectedProject(project);
+        
+        // Load Drive files
+        if (project.drive_raw_folder_id) {
+          setLoadingDriveFiles(true);
+          base44.functions.invoke('googleDrive', {
+            action: 'listFiles',
+            folderId: project.drive_raw_folder_id
+          }).then(response => {
+            setDriveFiles(response.data.files || []);
+            setLoadingDriveFiles(false);
+          }).catch(err => {
+            console.error('Failed to load Drive files:', err);
+            setLoadingDriveFiles(false);
+          });
+        }
+      }
     }
   }, [projectId, projects]);
 
@@ -268,30 +287,46 @@ export default function EditorProjects() {
           </div>
         </div>
 
-        {/* Raw Files */}
+        {/* Raw Files from Google Drive */}
         <div className={cn("rounded-xl p-6 mb-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
-          <h2 className={cn("text-lg font-medium mb-4", darkMode ? "text-gray-100" : "text-gray-900")}>Raw Files ({rawFiles.length})</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {rawFiles.map(file => (
-              <div key={file.id} className="group relative">
-                {file.mime_type?.startsWith('image/') ? (
-                  <img src={file.file_url} alt={file.filename} className="w-full h-32 object-cover rounded-lg" />
-                ) : (
-                  <div className="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <FileText className="w-8 h-8 text-gray-400" />
+          <h2 className={cn("text-lg font-medium mb-4", darkMode ? "text-gray-100" : "text-gray-900")}>
+            Raw Files ({loadingDriveFiles ? '...' : driveFiles.length})
+          </h2>
+          {loadingDriveFiles ? (
+            <div className="text-center py-8">
+              <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>Loading files from Drive...</p>
+            </div>
+          ) : driveFiles.length === 0 ? (
+            <div className="text-center py-8">
+              <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>No raw files uploaded yet</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              {driveFiles.map((file, idx) => (
+                <div key={idx} className={cn("flex items-center justify-between p-3 rounded-lg border", 
+                  darkMode ? "border-gray-700 hover:bg-gray-700" : "border-gray-100 hover:bg-gray-50"
+                )}>
+                  <div className="flex items-center gap-3">
+                    <FileText className={cn("w-5 h-5", darkMode ? "text-gray-400" : "text-gray-500")} />
+                    <div>
+                      <p className={cn("text-sm font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>{file.name}</p>
+                      <p className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
+                        {file.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'N/A'}
+                      </p>
+                    </div>
                   </div>
-                )}
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => handleDownloadFile(file.file_url, file.filename)}
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Download className="w-3 h-3" />
-                </Button>
-              </div>
-            ))}
-          </div>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => window.open(file.webViewLink || file.webContentLink, '_blank')}
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    Download
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Upload Edited Files */}
