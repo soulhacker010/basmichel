@@ -29,7 +29,9 @@ Deno.serve(async (req) => {
       });
 
       if (!folderResponse.ok) {
-        throw new Error('Failed to create folder');
+        const errorText = await folderResponse.text();
+        console.error('Drive folder creation failed:', errorText);
+        throw new Error(`Failed to create folder: ${folderResponse.status}`);
       }
 
       const folder = await folderResponse.json();
@@ -54,17 +56,20 @@ Deno.serve(async (req) => {
           body: JSON.stringify(subfolderMetadata)
         });
 
+        if (!subfolderResponse.ok) {
+          const errorText = await subfolderResponse.text();
+          console.error('Subfolder creation failed:', errorText);
+        }
+
         const subfolder_data = await subfolderResponse.json();
         subfolderIds[subfolder] = subfolder_data.id;
       }
 
       // Store folder IDs in project
       await base44.asServiceRole.entities.Project.update(projectId, {
-        notes: JSON.stringify({
-          drive_folder_id: folder.id,
-          drive_raw_folder_id: subfolderIds['Raw Files'],
-          drive_edited_folder_id: subfolderIds['Edited Files']
-        })
+        drive_folder_id: folder.id,
+        drive_raw_folder_id: subfolderIds['Raw Files'],
+        drive_edited_folder_id: subfolderIds['Edited Files']
       });
 
       return Response.json({ 
@@ -76,39 +81,49 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'uploadFile') {
-      // Upload file to Drive
-      const boundary = '-------314159265358979323846';
-      const delimiter = "\r\n--" + boundary + "\r\n";
-      const close_delim = "\r\n--" + boundary + "--";
-
+      // Upload file to Drive using resumable upload for better reliability
       const metadata = {
         name: fileName,
         parents: [folderId]
       };
 
-      // Decode base64 file data
-      const fileBytes = Uint8Array.from(atob(fileData), c => c.charCodeAt(0));
-
-      const multipartRequestBody =
-        delimiter +
-        'Content-Type: application/json\r\n\r\n' +
-        JSON.stringify(metadata) +
-        delimiter +
-        'Content-Type: application/octet-stream\r\n\r\n' +
-        fileData +
-        close_delim;
-
-      const uploadResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      // Start resumable upload session
+      const initResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': `multipart/related; boundary="${boundary}"`
+          'Content-Type': 'application/json'
         },
-        body: multipartRequestBody
+        body: JSON.stringify(metadata)
+      });
+
+      if (!initResponse.ok) {
+        const errorText = await initResponse.text();
+        console.error('Failed to init upload:', errorText);
+        throw new Error(`Failed to initialize upload: ${initResponse.status}`);
+      }
+
+      const uploadUrl = initResponse.headers.get('Location');
+
+      // Decode base64 and upload file data
+      const binaryString = atob(fileData);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/octet-stream'
+        },
+        body: bytes
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('Failed to upload file');
+        const errorText = await uploadResponse.text();
+        console.error('Upload failed:', errorText);
+        throw new Error(`Failed to upload file: ${uploadResponse.status}`);
       }
 
       const file = await uploadResponse.json();
@@ -127,7 +142,9 @@ Deno.serve(async (req) => {
       );
 
       if (!response.ok) {
-        throw new Error('Failed to list files');
+        const errorText = await response.text();
+        console.error('List files failed:', errorText);
+        throw new Error(`Failed to list files: ${response.status}`);
       }
 
       const data = await response.json();
