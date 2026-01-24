@@ -694,55 +694,72 @@ export default function AdminProjectDetail() {
                       </div>
                     </div>
 
-                    {categoryFiles.length === 0 ? (
-                      <div className="text-center py-8 text-gray-400 text-sm">
-                        Nog geen bestanden geüpload
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-2">
-                        {categoryFiles.map(file => (
-                          <div 
-                            key={file.id}
-                            className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={!!selectedFiles[file.id]}
-                              onChange={() => toggleFileSelection(file.id)}
-                              className="w-4 h-4 rounded border-gray-300"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">{file.filename}</p>
-                              <p className="text-xs text-gray-400">
-                                {(file.file_size / 1024 / 1024).toFixed(2)} MB
-                              </p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteMutation.mutate(file.id)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    <div
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const files = Array.from(e.dataTransfer.files);
+                        if (files.length > 0) {
+                          setUploadingCategory(category.key);
+                          uploadMutation.mutate({ category: category.key, files });
+                        }
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      className={cn(
+                        "border-2 border-dashed rounded-lg transition-colors",
+                        categoryFiles.length === 0 ? "border-gray-200 bg-gray-50" : "border-transparent"
+                      )}
+                    >
+                      {categoryFiles.length === 0 ? (
+                        <div className="text-center py-8 text-gray-400 text-sm">
+                          <Upload className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                          Sleep bestanden hierheen of klik op Uploaden
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 gap-2 p-2">
+                          {categoryFiles.map(file => (
+                            <div 
+                              key={file.id}
+                              className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50"
                             >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                              <input
+                                type="checkbox"
+                                checked={!!selectedFiles[file.id]}
+                                onChange={() => toggleFileSelection(file.id)}
+                                className="w-4 h-4 rounded border-gray-300"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">{file.filename}</p>
+                                <p className="text-xs text-gray-400">
+                                  {(file.file_size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => deleteMutation.mutate(file.id)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}
+
+              {/* Editor Notes */}
+              <div className="border border-gray-100 rounded-xl p-6 mt-6">
+                <h3 className="text-base font-medium text-gray-900 mb-4">Editor Notities</h3>
+                <EditorNotesSection projectId={projectId} />
+                <AddEditorNote projectId={projectId} />
+              </div>
             </div>
           </CollapsibleContent>
         </div>
       </Collapsible>
-
-      {/* Editor Notes */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-8">
-        <h2 className="text-lg font-medium text-gray-900 mb-6">Editor Notities</h2>
-        <EditorNotesSection projectId={projectId} />
-        <AddEditorNote projectId={projectId} />
-      </div>
 
       {/* Extra Sessies */}
       <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-8">
