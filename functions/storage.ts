@@ -3,7 +3,7 @@ import { getSignedUrl } from "https://esm.sh/@aws-sdk/s3-request-presigner@3.525
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.6";
 
 // Lazy load S3 Client to prevent top-level crashes if env vars are missing during build/init
-let S3: S3Client | null = null;
+let S3 = null;
 
 function getS3Client() {
   if (S3) return S3;
