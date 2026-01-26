@@ -28,3 +28,6 @@ dist-ssr
 *.sw?
 
 .env
+.agent/
+install-skills.ps1
+brain/
