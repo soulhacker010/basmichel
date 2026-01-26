@@ -1,23 +1,31 @@
-
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "npm:@aws-sdk/client-s3";
-import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "https://esm.sh/@aws-sdk/client-s3@3.525.0";
+import { getSignedUrl } from "https://esm.sh/@aws-sdk/s3-request-presigner@3.525.0";
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.6";
 
-// Initialize S3 Client for Cloudflare R2
-const R2_ACCOUNT_ID = Deno.env.get("R2_ACCOUNT_ID");
-const R2_ACCESS_KEY_ID = Deno.env.get("R2_ACCESS_KEY_ID");
-const R2_SECRET_ACCESS_KEY = Deno.env.get("R2_SECRET_ACCESS_KEY");
-const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME");
-const R2_PUBLIC_URL = Deno.env.get("R2_PUBLIC_URL"); // Optional: Custom domain or R2.dev URL
+// Lazy load S3 Client to prevent top-level crashes if env vars are missing during build/init
+let S3: S3Client | null = null;
 
-const S3 = new S3Client({
-  region: "auto",
-  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID || "",
-    secretAccessKey: R2_SECRET_ACCESS_KEY || "",
-  },
-});
+function getS3Client() {
+  if (S3) return S3;
+
+  const R2_ACCOUNT_ID = Deno.env.get("R2_ACCOUNT_ID");
+  const R2_ACCESS_KEY_ID = Deno.env.get("R2_ACCESS_KEY_ID");
+  const R2_SECRET_ACCESS_KEY = Deno.env.get("R2_SECRET_ACCESS_KEY");
+
+  if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+    throw new Error("R2 Secrets (ACCOUNT_ID, ACCESS_KEY_ID, SECRET_ACCESS_KEY) are missing in environment variables.");
+  }
+
+  S3 = new S3Client({
+    region: "auto",
+    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: R2_ACCESS_KEY_ID,
+      secretAccessKey: R2_SECRET_ACCESS_KEY,
+    },
+  });
+  return S3;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -47,13 +55,18 @@ Deno.serve(async (req) => {
       }
 
       const key = `${crypto.randomUUID()}-${fileName}`;
+      const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME");
+      const R2_PUBLIC_URL = Deno.env.get("R2_PUBLIC_URL");
+
+      if (!R2_BUCKET_NAME) throw new Error("R2_BUCKET_NAME is not set");
+
       const command = new PutObjectCommand({
         Bucket: R2_BUCKET_NAME,
         Key: key,
         ContentType: fileType,
       });
 
-      const uploadUrl = await getSignedUrl(S3, command, { expiresIn: 3600 });
+      const uploadUrl = await getSignedUrl(getS3Client(), command, { expiresIn: 3600 });
 
       return Response.json({
         success: true,
@@ -65,20 +78,23 @@ Deno.serve(async (req) => {
 
     // 2. Delete File
     if (action === "deleteFile") {
-        if (!fileKey) {
-            return Response.json({ error: "Missing fileKey" }, { status: 400 });
-        }
-        
-        // Optional: specific role check?
-        // if (user.role !== 'admin') ...
+      if (!fileKey) {
+        return Response.json({ error: "Missing fileKey" }, { status: 400 });
+      }
 
-        const command = new DeleteObjectCommand({
-            Bucket: R2_BUCKET_NAME,
-            Key: fileKey,
-        });
+      // Optional: specific role check?
+      // if (user.role !== 'admin') ...
 
-        await S3.send(command);
-        return Response.json({ success: true });
+      const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME");
+      if (!R2_BUCKET_NAME) throw new Error("R2_BUCKET_NAME is not set");
+
+      const command = new DeleteObjectCommand({
+        Bucket: R2_BUCKET_NAME,
+        Key: fileKey,
+      });
+
+      await getS3Client().send(command);
+      return Response.json({ success: true });
     }
 
     return Response.json({ error: "Invalid action" }, { status: 400 });
