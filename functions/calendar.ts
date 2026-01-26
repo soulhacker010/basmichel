@@ -103,41 +103,64 @@ Deno.serve(async (req) => {
             });
         }
 
-        // 3. Check Availability (Prevent Conflict)
-        if (action === 'checkAvailability') {
-            const timeMin = new Date(shootDate).toISOString();
-            const timeMax = new Date(new Date(shootDate).getTime() + (24 * 60 * 60 * 1000)).toISOString(); // Check the whole day
+    }
 
-            const response = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    timeMin,
-                    timeMax,
-                    items: [{ id: 'primary' }]
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to check availability');
-            }
-
-            const data = await response.json();
-            const busySlots = data.calendars.primary.busy;
-
-            return Response.json({
-                success: true,
-                busySlots
-            });
+        // 4. Delete Event (Cancellation)
+        if (action === 'deleteEvent') {
+        if (!calendarEventId) {
+            return Response.json({ error: 'Calendar Event ID is required' }, { status: 400 });
         }
 
-        return Response.json({ error: 'Invalid action' }, { status: 400 });
+        const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${calendarEventId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
 
-    } catch (error) {
-        console.error('Calendar Sync Error:', error);
-        return Response.json({ error: error.message }, { status: 500 });
+        if (!response.ok && response.status !== 404) { // Ignore 404 if already deleted
+            throw new Error('Failed to delete calendar event');
+        }
+
+        return Response.json({ success: true });
     }
+
+    // 3. Check Availability (Prevent Conflict)
+    if (action === 'checkAvailability') {
+        const timeMin = new Date(shootDate).toISOString();
+        const timeMax = new Date(new Date(shootDate).getTime() + (24 * 60 * 60 * 1000)).toISOString(); // Check the whole day
+
+        const response = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                timeMin,
+                timeMax,
+                items: [{ id: 'primary' }]
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to check availability');
+        }
+
+        const data = await response.json();
+        const busySlots = data.calendars.primary.busy;
+
+        return Response.json({
+            success: true,
+            busySlots
+        });
+    }
+
+    return Response.json({ error: 'Invalid action' }, { status: 400 });
+
+} catch (error) {
+    console.error('Calendar Sync Error:', error);
+    return Response.json({ error: error.message }, { status: 500 });
+}
 });
