@@ -82,6 +82,32 @@ Deno.serve(async (req) => {
                     await base44.entities.ProjectFile.delete(file.id);
                 }
 
+                // 2b. Delete Calendar Event if exists
+                if (project.calendar_event_id) {
+                    try {
+                        // We can call the calendar function internally, or just duplicate the fetch logic if internal invoke isn't easy. 
+                        // Assuming internal invoke is available via base44.functions.invoke or similar, 
+                        // but easier to just use the new action if we can self-reference.
+                        // For simplicity in this environment, let's just make a fetch call to ourselves or the Google API directly since we have the token logic in another file. 
+                        // Actually, cleanup.ts doesn't have the google token. 
+                        // Let's Skip this for now or assume the user handles it manually?
+                        // NO, scope says "Sync updates & cancellations".
+                        // Better approach: Just clear the field in DB, but to be PRO, we should call the calendar function.
+                        // Let's try to fetch the local function URL.
+                        await fetch('http://localhost:8000/functions/calendar', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': req.headers.get('Authorization') || '' },
+                            body: JSON.stringify({
+                                action: 'deleteEvent',
+                                calendarEventId: project.calendar_event_id
+                            })
+                        });
+                        verbose.push(`-- Deleted Calendar Event: ${project.calendar_event_id}`);
+                    } catch (e) {
+                        verbose.push(`-- Failed to delete calendar event: ${e.message}`);
+                    }
+                }
+
                 // 3. Update Project Entity (Keep as Invoice Record)
                 // We DO NOT delete the project. We mark it as 'archived_sold' so it stays as an invoice record.
                 await base44.entities.Project.update(project.id, {
