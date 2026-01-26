@@ -1,23 +1,31 @@
-
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { S3Client, DeleteObjectCommand } from "https://esm.sh/@aws-sdk/client-s3@3.525.0";
 
-// Re-using the storage logic would be ideal, but for now we'll implement direct R2 deletion or call the storage function if possible.
-// Since we are in the same environment, we can use the same R2 credentials.
-import { S3Client, DeleteObjectCommand, ListObjectsV2Command } from "npm:@aws-sdk/client-s3";
+// Lazy load S3
+let S3 = null;
 
-const R2_ACCOUNT_ID = Deno.env.get("R2_ACCOUNT_ID");
-const R2_ACCESS_KEY_ID = Deno.env.get("R2_ACCESS_KEY_ID");
-const R2_SECRET_ACCESS_KEY = Deno.env.get("R2_SECRET_ACCESS_KEY");
-const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME");
+function getS3Client() {
+    if (S3) return S3;
 
-const S3 = new S3Client({
-    region: "auto",
-    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-        accessKeyId: R2_ACCESS_KEY_ID || "",
-        secretAccessKey: R2_SECRET_ACCESS_KEY || "",
-    },
-});
+    // Check secrets inside the function, not at top level
+    const R2_ACCOUNT_ID = Deno.env.get("R2_ACCOUNT_ID");
+    const R2_ACCESS_KEY_ID = Deno.env.get("R2_ACCESS_KEY_ID");
+    const R2_SECRET_ACCESS_KEY = Deno.env.get("R2_SECRET_ACCESS_KEY");
+
+    if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+        throw new Error("R2 Secrets are missing");
+    }
+
+    S3 = new S3Client({
+        region: "auto",
+        endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+        credentials: {
+            accessKeyId: R2_ACCESS_KEY_ID,
+            secretAccessKey: R2_SECRET_ACCESS_KEY,
+        },
+    });
+    return S3;
+}
 
 Deno.serve(async (req) => {
     if (req.method === 'OPTIONS') {
@@ -68,11 +76,14 @@ Deno.serve(async (req) => {
                 for (const file of projectFiles) {
                     if (file.file_key) {
                         try {
+                            const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME");
+                            if (!R2_BUCKET_NAME) throw new Error("R2_BUCKET_NAME is not set");
+
                             const command = new DeleteObjectCommand({
                                 Bucket: R2_BUCKET_NAME,
                                 Key: file.file_key,
                             });
-                            await S3.send(command);
+                            await getS3Client().send(command);
                             verbose.push(`-- Deleted R2 file: ${file.file_key}`);
                         } catch (e) {
                             verbose.push(`-- Error deleting R2 file ${file.file_key}: ${e.message}`);
