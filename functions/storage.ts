@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
       },
     });
-  }
+  } 
 
   try {
     const base44 = createClientFromRequest(req);
