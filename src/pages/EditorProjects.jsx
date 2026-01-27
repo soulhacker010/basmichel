@@ -186,7 +186,6 @@ export default function EditorProjects() {
         shootDate: selectedProject.shoot_date,
         calendarEventId: selectedProject.calendar_event_id
       });
-      console.log('Sync Response:', response);
 
       const data = response.data;
       if (!data || !data.success) throw new Error(data?.error || 'Sync function returned no success');
@@ -322,7 +321,7 @@ export default function EditorProjects() {
         </Button>
 
         <div className={cn("rounded-xl p-8 mb-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
-          <div className="flex items-start justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 gap-4">
             <div>
               <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>{selectedProject.title}</h1>
               <p className={cn("mt-1", darkMode ? "text-gray-400" : "text-gray-500")}>{client?.company_name}</p>
@@ -370,7 +369,7 @@ export default function EditorProjects() {
             </div>
           )}
 
-          <div className="grid grid-cols-4 gap-6 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-sm">
             <div>
               <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Project Nummer</p>
               <p className={cn("font-medium mt-1", darkMode ? "text-gray-100" : "text-gray-900")}>{selectedProject.project_number || 'N/A'}</p>
@@ -414,7 +413,7 @@ export default function EditorProjects() {
 
         {/* Project Files Section */}
         <div className={cn("rounded-xl p-6 mb-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
             <h2 className={cn("text-lg font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>Project Files</h2>
             <div className="flex gap-2">
               <input type="file" multiple onChange={(e) => handleFileUpload(e, 'raw')} className="hidden" id="raw-upload" />
@@ -503,7 +502,7 @@ export default function EditorProjects() {
               <div key={note.id} className={cn("rounded-lg p-4", darkMode ? "bg-gray-700" : "bg-gray-50")}>
                 <p className={cn("text-sm whitespace-pre-wrap", darkMode ? "text-gray-100" : "text-gray-900")}>{note.note}</p>
                 {note.images && note.images.length > 0 && (
-                  <div className="grid grid-cols-3 gap-2 mt-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
                     {note.images.map((img, idx) => (
                       <img key={idx} src={img} alt="" className="w-full h-24 object-cover rounded" />
                     ))}
@@ -546,7 +545,7 @@ export default function EditorProjects() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="mb-8 flex items-end justify-between">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>All Projects</h1>
           <p className={cn("mt-1", darkMode ? "text-gray-400" : "text-gray-500")}>View and manage project files</p>
