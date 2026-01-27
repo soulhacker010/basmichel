@@ -20,6 +20,21 @@ const statusConfig = {
   sold: { label: 'Sold', color: 'bg-red-500', bgLight: 'bg-red-50', textColor: 'text-red-700' },
 };
 
+// File category definitions (matching AdminProjectDetail)
+const rawCategories = [
+  { key: 'raw_fotos', label: "Raw Foto's" },
+  { key: 'raw_videos', label: "Raw Video's" },
+  { key: '360_raw', label: "360° Foto's" },
+  { key: 'pointcloud', label: 'Pointcloud' },
+];
+
+const deliveryCategories = [
+  { key: 'bewerkte_fotos', label: "Foto's" },
+  { key: 'bewerkte_videos', label: "Video's" },
+  { key: '360_matterport', label: '360° / Matterport' },
+  { key: 'meetrapport', label: 'MRP' },
+];
+
 export default function EditorProjects() {
   const urlParams = new URLSearchParams(window.location.search);
   const projectId = urlParams.get('id');
@@ -33,6 +48,7 @@ export default function EditorProjects() {
   const [noteImages, setNoteImages] = useState([]);
   const [uploadingNote, setUploadingNote] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [uploadingCategory, setUploadingCategory] = useState(null);
   const [showClientNotes, setShowClientNotes] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('editorDarkMode') === 'true';
@@ -103,38 +119,57 @@ export default function EditorProjects() {
 
       if (!presignedData.success) throw new Error(presignedData.error || 'Failed to get upload URL');
 
-      // 2. Upload to R2 directly
-      const uploadRes = await fetch(presignedData.uploadUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': file.type
-        },
-        body: file
-      });
+      // 2. Upload to R2 directly with AbortController for timeout
+      const controller = new AbortController();
+      const timeoutMs = Math.max(60000, file.size / 50000); // At least 60s, or ~20KB/s minimum speed
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-      if (!uploadRes.ok) throw new Error('Failed to upload file to storage');
+      try {
+        const uploadRes = await fetch(presignedData.uploadUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': file.type,
+            'Content-Length': file.size.toString(),
+          },
+          body: file,
+          signal: controller.signal
+        });
 
-      // 3. Save Metadata
+        clearTimeout(timeoutId);
+
+        if (!uploadRes.ok) {
+          throw new Error(`Upload failed with status ${uploadRes.status}`);
+        }
+
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          throw new Error(`Upload timed out for ${file.name}. File may be too large or connection too slow.`);
+        }
+        throw err;
+      }
+
+      // 3. Save Metadata with the original file size
       const fileUrl = presignedData.publicUrl
         ? presignedData.publicUrl
-        : presignedData.uploadUrl.split('?')[0]; // Fallback if public URL not configured, though private buckets need signed GETs usually. Assuming public read for now or we add a getDownloadUrl action later.
+        : presignedData.uploadUrl.split('?')[0];
 
       return base44.entities.ProjectFile.create({
         project_id: selectedProject.id,
         category: category || 'general',
         file_url: fileUrl,
-        file_key: presignedData.fileKey, // Save the key for deletion!
+        file_key: presignedData.fileKey,
         filename: file.name,
-        file_size: file.size,
+        file_size: file.size, // Store expected size
         mime_type: file.type,
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projectFiles'] });
+      queryClient.invalidateQueries({ queryKey: ['projectFiles', selectedProject?.id] });
       toast.success('File uploaded successfully');
     },
     onError: (err) => {
-      console.error(err);
+      console.error('Upload error:', err);
       toast.error('Upload failed: ' + err.message);
     }
   });
@@ -143,17 +178,27 @@ export default function EditorProjects() {
     mutationFn: async (file) => {
       // If we have a file_key, delete from R2
       if (file.file_key) {
-        await base44.functions.invoke('storage', {
-          action: 'deleteFile',
-          fileKey: file.file_key
-        });
+        try {
+          await base44.functions.invoke('storage', {
+            action: 'deleteFile',
+            fileKey: file.file_key
+          });
+        } catch (err) {
+          console.warn('R2 delete failed (file may already be gone):', err);
+        }
+      } else {
+        console.warn('No file_key found for file:', file.filename, '- skipping R2 delete');
       }
-      // Delete from DB
+      // Always delete from DB
       return base44.entities.ProjectFile.delete(file.id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projectFiles'] });
+      queryClient.invalidateQueries({ queryKey: ['projectFiles', selectedProject?.id] });
       toast.success('File deleted');
+    },
+    onError: (err) => {
+      console.error('Delete error:', err);
+      toast.error('Failed to delete file: ' + err.message);
     }
   });
 
@@ -242,15 +287,20 @@ export default function EditorProjects() {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    setUploadingFiles(true);
+    setUploadingCategory(category);
     try {
       for (const file of files) {
+        // Validate file size (warn for files > 100MB)
+        if (file.size > 100 * 1024 * 1024) {
+          toast.warning(`Large file detected: ${file.name} (${(file.size / 1024 / 1024).toFixed(0)}MB). Upload may take a while.`);
+        }
         await uploadFileMutation.mutateAsync({ file, category });
       }
-    } catch (e) {
-      // Error handled in mutation
+    } catch (err) {
+      // Error already handled in mutation
     }
-    setUploadingFiles(false);
+    setUploadingCategory(null);
+    e.target.value = ''; // Reset input to allow re-upload of same file
   };
 
   const handleAddNote = async () => {
@@ -286,10 +336,6 @@ export default function EditorProjects() {
 
   if (selectedProject) {
     const client = clients.find(c => c.id === selectedProject.client_id);
-
-    // Group files by simplified categories
-    const rawFiles = projectFiles.filter(f => f.category === 'raw' || f.category.includes('raw'));
-    const editedFiles = projectFiles.filter(f => f.category === 'edited' || f.category === 'bewerkte_fotos' || !f.category.includes('raw'));
 
     return (
       <div className="max-w-7xl mx-auto">
@@ -376,23 +422,9 @@ export default function EditorProjects() {
             </div>
             <div>
               <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Shoot Date</p>
-              <div className="flex items-center gap-2 mt-1">
-                <p className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
-                  {selectedProject.shoot_date ? format(new Date(selectedProject.shoot_date), 'MMM d, yyyy') : 'N/A'}
-                </p>
-                {selectedProject.shoot_date && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className={cn("h-6 px-2 text-xs", selectedProject.calendar_event_id ? "text-green-600 bg-green-50" : "text-gray-500")}
-                    onClick={() => syncCalendarMutation.mutate()}
-                    disabled={syncCalendarMutation.isPending}
-                  >
-                    <Calendar className="w-3 h-3 mr-1" />
-                    {syncCalendarMutation.isPending ? 'Syncing...' : selectedProject.calendar_event_id ? 'Synced' : 'Sync to Calendar'}
-                  </Button>
-                )}
-              </div>
+              <p className={cn("font-medium mt-1", darkMode ? "text-gray-100" : "text-gray-900")}>
+                {selectedProject.shoot_date ? format(new Date(selectedProject.shoot_date), 'MMM d, yyyy') : 'N/A'}
+              </p>
             </div>
             <div>
               <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Client</p>
@@ -411,87 +443,144 @@ export default function EditorProjects() {
           </div>
         </div>
 
-        {/* Project Files Section */}
+        {/* Project Files Section - Delivery Categories */}
         <div className={cn("rounded-xl p-6 mb-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
-            <h2 className={cn("text-lg font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>Project Files</h2>
-            <div className="flex gap-2">
-              <input type="file" multiple onChange={(e) => handleFileUpload(e, 'raw')} className="hidden" id="raw-upload" />
-              <label htmlFor="raw-upload">
-                <Button variant="outline" size="sm" asChild disabled={uploadingFiles}>
-                  <span className="cursor-pointer">Upload Raw</span>
-                </Button>
-              </label>
-
-              <input type="file" multiple onChange={(e) => handleFileUpload(e, 'edited')} className="hidden" id="edited-upload" />
-              <label htmlFor="edited-upload">
-                <Button size="sm" asChild disabled={uploadingFiles}>
-                  <span className="cursor-pointer">Upload Edited</span>
-                </Button>
-              </label>
-            </div>
-          </div>
-
-          {projectFiles.length === 0 ? (
-            <div className="text-center py-8">
-              <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>No files uploaded yet</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-3">
-              {/* List Files */}
-              {[...rawFiles, ...editedFiles].map((file) => (
-                <div key={file.id} className={cn("flex items-center justify-between p-3 rounded-lg border",
-                  darkMode ? "border-gray-700 hover:bg-gray-700" : "border-gray-100 hover:bg-gray-50"
-                )}>
-                  <div className="flex items-center gap-3">
-                    {file.mime_type?.startsWith('image/') ? (
-                      <div className="w-10 h-10 rounded overflow-hidden bg-gray-100 flex-shrink-0">
-                        <img src={file.file_url} alt="" className="w-full h-full object-cover" />
-                      </div>
-                    ) : (
-                      <FileText className={cn("w-10 h-10 p-2 rounded bg-gray-100 text-gray-500")} />
-                    )}
-                    <div>
-                      <p className={cn("text-sm font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>{file.filename}</p>
-                      <div className="flex items-center gap-2">
-                        <span className={cn("text-xs px-1.5 py-0.5 rounded",
-                          file.category.includes('raw')
-                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                            : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                        )}>
-                          {file.category.includes('raw') ? 'Raw' : 'Edited'}
+          <h2 className={cn("text-lg font-medium mb-4", darkMode ? "text-gray-100" : "text-gray-900")}>Bewerkte Bestanden</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {deliveryCategories.map(category => {
+              const categoryFiles = projectFiles.filter(f => f.category === category.key);
+              return (
+                <div key={category.key} className={cn("border rounded-xl p-4", darkMode ? "border-gray-700" : "border-gray-200")}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className={cn("font-medium text-sm", darkMode ? "text-gray-100" : "text-gray-900")}>{category.label}</h3>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={(e) => handleFileUpload(e, category.key)}
+                      className="hidden"
+                      id={`upload-${category.key}`}
+                    />
+                    <label htmlFor={`upload-${category.key}`}>
+                      <Button size="sm" variant="outline" asChild disabled={uploadingCategory === category.key}>
+                        <span className="cursor-pointer flex items-center gap-1">
+                          <Upload className="w-3 h-3" />
+                          {uploadingCategory === category.key ? 'Uploading...' : 'Upload'}
                         </span>
-                        <p className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
-                          {file.file_size ? `${(file.file_size / 1024 / 1024).toFixed(2)} MB` : 'N/A'}
-                        </p>
-                      </div>
+                      </Button>
+                    </label>
+                  </div>
+                  {categoryFiles.length === 0 ? (
+                    <p className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>Geen bestanden</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {categoryFiles.map(file => (
+                        <div key={file.id} className={cn("flex items-center justify-between p-2 rounded-lg", darkMode ? "bg-gray-700" : "bg-gray-50")}>
+                          <div className="flex items-center gap-2 min-w-0">
+                            {file.mime_type?.startsWith('image/') ? (
+                              <img src={file.file_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                            ) : (
+                              <FileText className="w-8 h-8 p-1.5 text-gray-400 flex-shrink-0" />
+                            )}
+                            <div className="min-w-0">
+                              <p className={cn("text-xs font-medium truncate", darkMode ? "text-gray-100" : "text-gray-900")}>{file.filename}</p>
+                              <p className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
+                                {file.file_size ? `${(file.file_size / 1024 / 1024).toFixed(2)} MB` : ''}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => window.open(file.file_url, '_blank')}>
+                              <Download className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-500 hover:text-red-700"
+                              onClick={() => {
+                                if (confirm('Delete this file?')) deleteFileMutation.mutate(file);
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => window.open(file.file_url, '_blank')}
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      onClick={() => {
-                        if (confirm('Are you sure you want to delete this file?')) {
-                          deleteFileMutation.mutate(file);
-                        }
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Raw Files Section */}
+        <div className={cn("rounded-xl p-6 mb-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
+          <h2 className={cn("text-lg font-medium mb-4", darkMode ? "text-gray-100" : "text-gray-900")}>Raw Bestanden</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {rawCategories.map(category => {
+              const categoryFiles = projectFiles.filter(f => f.category === category.key);
+              return (
+                <div key={category.key} className={cn("border rounded-xl p-4", darkMode ? "border-gray-700" : "border-gray-200")}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className={cn("font-medium text-sm", darkMode ? "text-gray-100" : "text-gray-900")}>{category.label}</h3>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={(e) => handleFileUpload(e, category.key)}
+                      className="hidden"
+                      id={`upload-raw-${category.key}`}
+                    />
+                    <label htmlFor={`upload-raw-${category.key}`}>
+                      <Button size="sm" variant="outline" asChild disabled={uploadingCategory === category.key}>
+                        <span className="cursor-pointer flex items-center gap-1">
+                          <Upload className="w-3 h-3" />
+                          {uploadingCategory === category.key ? 'Uploading...' : 'Upload'}
+                        </span>
+                      </Button>
+                    </label>
+                  </div>
+                  {categoryFiles.length === 0 ? (
+                    <p className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>Geen bestanden</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {categoryFiles.map(file => (
+                        <div key={file.id} className={cn("flex items-center justify-between p-2 rounded-lg", darkMode ? "bg-gray-700" : "bg-gray-50")}>
+                          <div className="flex items-center gap-2 min-w-0">
+                            {file.mime_type?.startsWith('image/') ? (
+                              <img src={file.file_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                            ) : (
+                              <FileText className="w-8 h-8 p-1.5 text-gray-400 flex-shrink-0" />
+                            )}
+                            <div className="min-w-0">
+                              <p className={cn("text-xs font-medium truncate", darkMode ? "text-gray-100" : "text-gray-900")}>{file.filename}</p>
+                              <p className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
+                                {file.file_size ? `${(file.file_size / 1024 / 1024).toFixed(2)} MB` : ''}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => window.open(file.file_url, '_blank')}>
+                              <Download className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-500 hover:text-red-700"
+                              onClick={() => {
+                                if (confirm('Delete this file?')) deleteFileMutation.mutate(file);
+                              }}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Editor Notes */}
