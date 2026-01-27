@@ -49,6 +49,7 @@ export default function EditorProjects() {
   const [uploadingNote, setUploadingNote] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [uploadingCategory, setUploadingCategory] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState({ total: 0, completed: 0, failed: 0, current: [] });
   const [showClientNotes, setShowClientNotes] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('editorDarkMode') === 'true';
@@ -283,24 +284,75 @@ export default function EditorProjects() {
     }
   });
 
+  // Parallel upload handler - uploads 5 files at a time
   const handleFileUpload = async (e, category = 'general') => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
+    const CONCURRENT_UPLOADS = 5; // Upload 5 files at once
     setUploadingCategory(category);
-    try {
-      for (const file of files) {
-        // Validate file size (warn for files > 100MB)
-        if (file.size > 100 * 1024 * 1024) {
-          toast.warning(`Large file detected: ${file.name} (${(file.size / 1024 / 1024).toFixed(0)}MB). Upload may take a while.`);
-        }
+    setUploadProgress({ total: files.length, completed: 0, failed: 0, current: [] });
+
+    // Create upload queue
+    const queue = [...files];
+    const results = { completed: 0, failed: 0 };
+
+    // Process files in parallel batches
+    const uploadFile = async (file) => {
+      try {
+        // Update current uploading files
+        setUploadProgress(prev => ({
+          ...prev,
+          current: [...prev.current, file.name].slice(-5) // Show last 5 uploading
+        }));
+
         await uploadFileMutation.mutateAsync({ file, category });
+        results.completed++;
+        setUploadProgress(prev => ({
+          ...prev,
+          completed: results.completed,
+          current: prev.current.filter(n => n !== file.name)
+        }));
+      } catch (err) {
+        results.failed++;
+        setUploadProgress(prev => ({
+          ...prev,
+          failed: results.failed,
+          current: prev.current.filter(n => n !== file.name)
+        }));
+        console.error(`Failed to upload ${file.name}:`, err);
       }
-    } catch (err) {
-      // Error already handled in mutation
+    };
+
+    // Process queue with concurrency limit
+    const activeUploads = new Set();
+
+    while (queue.length > 0 || activeUploads.size > 0) {
+      // Start new uploads up to the concurrency limit
+      while (activeUploads.size < CONCURRENT_UPLOADS && queue.length > 0) {
+        const file = queue.shift();
+        const uploadPromise = uploadFile(file).finally(() => {
+          activeUploads.delete(uploadPromise);
+        });
+        activeUploads.add(uploadPromise);
+      }
+
+      // Wait for at least one upload to complete
+      if (activeUploads.size > 0) {
+        await Promise.race(activeUploads);
+      }
     }
+
+    // Show completion toast
+    if (results.failed === 0) {
+      toast.success(`Successfully uploaded ${results.completed} files!`);
+    } else {
+      toast.warning(`Uploaded ${results.completed} files, ${results.failed} failed`);
+    }
+
     setUploadingCategory(null);
-    e.target.value = ''; // Reset input to allow re-upload of same file
+    setUploadProgress({ total: 0, completed: 0, failed: 0, current: [] });
+    e.target.value = ''; // Reset input
   };
 
   const handleAddNote = async () => {
@@ -442,6 +494,32 @@ export default function EditorProjects() {
             </div>
           </div>
         </div>
+
+        {/* Upload Progress Bar */}
+        {uploadProgress.total > 0 && (
+          <div className={cn("rounded-xl p-4 mb-6", darkMode ? "bg-blue-900/30 border border-blue-700" : "bg-blue-50 border border-blue-200")}>
+            <div className="flex items-center justify-between mb-2">
+              <span className={cn("text-sm font-medium", darkMode ? "text-blue-300" : "text-blue-700")}>
+                Uploading files: {uploadProgress.completed} / {uploadProgress.total}
+                {uploadProgress.failed > 0 && <span className="text-red-500 ml-2">({uploadProgress.failed} failed)</span>}
+              </span>
+              <span className={cn("text-xs", darkMode ? "text-blue-400" : "text-blue-600")}>
+                {Math.round((uploadProgress.completed / uploadProgress.total) * 100)}%
+              </span>
+            </div>
+            <div className={cn("h-2 rounded-full overflow-hidden", darkMode ? "bg-gray-700" : "bg-blue-100")}>
+              <div
+                className="h-full bg-blue-500 transition-all duration-300"
+                style={{ width: `${(uploadProgress.completed / uploadProgress.total) * 100}%` }}
+              />
+            </div>
+            {uploadProgress.current.length > 0 && (
+              <p className={cn("text-xs mt-2 truncate", darkMode ? "text-gray-400" : "text-gray-500")}>
+                Currently uploading: {uploadProgress.current.join(', ')}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Project Files Section - Delivery Categories */}
         <div className={cn("rounded-xl p-6 mb-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
