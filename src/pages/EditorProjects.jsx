@@ -111,6 +111,8 @@ export default function EditorProjects() {
 
   const uploadFileMutation = useMutation({
     mutationFn: async ({ file, category }) => {
+      console.log(`Starting upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+
       // 1. Get Presigned URL
       const { data: presignedData } = await base44.functions.invoke('storage', {
         action: 'getPresignedUrl',
@@ -118,39 +120,52 @@ export default function EditorProjects() {
         fileType: file.type
       });
 
-      if (!presignedData.success) throw new Error(presignedData.error || 'Failed to get upload URL');
-
-      // 2. Upload to R2 directly with AbortController for timeout
-      const controller = new AbortController();
-      const timeoutMs = Math.max(60000, file.size / 50000); // At least 60s, or ~20KB/s minimum speed
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-      try {
-        const uploadRes = await fetch(presignedData.uploadUrl, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': file.type,
-            'Content-Length': file.size.toString(),
-          },
-          body: file,
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!uploadRes.ok) {
-          throw new Error(`Upload failed with status ${uploadRes.status}`);
-        }
-
-      } catch (err) {
-        clearTimeout(timeoutId);
-        if (err.name === 'AbortError') {
-          throw new Error(`Upload timed out for ${file.name}. File may be too large or connection too slow.`);
-        }
-        throw err;
+      if (!presignedData.success) {
+        console.error('Presigned URL failed:', presignedData);
+        throw new Error(presignedData.error || 'Failed to get upload URL');
       }
 
-      // 3. Save Metadata with the original file size
+      console.log(`Got presigned URL for: ${file.name}`);
+
+      // 2. Upload to R2 using XMLHttpRequest for progress tracking
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            console.log(`${file.name}: ${percentComplete}% (${(e.loaded / 1024 / 1024).toFixed(1)}MB / ${(e.total / 1024 / 1024).toFixed(1)}MB)`);
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            console.log(`Upload complete for ${file.name}: ${xhr.status}`);
+            resolve();
+          } else {
+            console.error(`Upload failed for ${file.name}: ${xhr.status}`, xhr.responseText);
+            reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`));
+          }
+        });
+
+        xhr.addEventListener('error', () => {
+          console.error(`Network error uploading ${file.name}`);
+          reject(new Error('Network error during upload'));
+        });
+
+        xhr.addEventListener('abort', () => {
+          console.error(`Upload aborted for ${file.name}`);
+          reject(new Error('Upload was aborted'));
+        });
+
+        xhr.open('PUT', presignedData.uploadUrl);
+        xhr.setRequestHeader('Content-Type', file.type);
+        xhr.send(file);
+      });
+
+      console.log(`Upload complete, saving metadata: ${file.name}`);
+
+      // 3. Save Metadata
       const fileUrl = presignedData.publicUrl
         ? presignedData.publicUrl
         : presignedData.uploadUrl.split('?')[0];
@@ -161,16 +176,15 @@ export default function EditorProjects() {
         file_url: fileUrl,
         file_key: presignedData.fileKey,
         filename: file.name,
-        file_size: file.size, // Store expected size
+        file_size: file.size,
         mime_type: file.type,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projectFiles', selectedProject?.id] });
-      toast.success('File uploaded successfully');
     },
     onError: (err) => {
-      console.error('Upload error:', err);
+      console.error('Upload mutation error:', err);
       toast.error('Upload failed: ' + err.message);
     }
   });
@@ -289,7 +303,13 @@ export default function EditorProjects() {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    const CONCURRENT_UPLOADS = 5; // Upload 5 files at once
+    // For large files (>50MB avg), use fewer concurrent uploads
+    const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+    const avgSize = totalSize / files.length;
+    const CONCURRENT_UPLOADS = avgSize > 50 * 1024 * 1024 ? 2 : 5;
+
+    console.log(`Starting batch upload: ${files.length} files, ${(totalSize / 1024 / 1024).toFixed(0)}MB total, ${CONCURRENT_UPLOADS} concurrent`);
+
     setUploadingCategory(category);
     setUploadProgress({ total: files.length, completed: 0, failed: 0, current: [] });
 
