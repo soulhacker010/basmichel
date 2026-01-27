@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
       },
     });
-  } 
+  }
 
   try {
     const base44 = createClientFromRequest(req);
@@ -57,8 +57,6 @@ Deno.serve(async (req) => {
       const key = `${crypto.randomUUID()}-${fileName}`;
       const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME");
       const R2_PUBLIC_URL = Deno.env.get("R2_PUBLIC_URL");
-      console.log("DEBUG: R2_BUCKET_NAME =", R2_BUCKET_NAME);
-      console.log("DEBUG: R2_PUBLIC_URL =", R2_PUBLIC_URL);
 
       if (!R2_BUCKET_NAME) throw new Error("R2_BUCKET_NAME is not set");
 

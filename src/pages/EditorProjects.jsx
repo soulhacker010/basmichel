@@ -179,15 +179,17 @@ export default function EditorProjects() {
     mutationFn: async () => {
       if (!selectedProject.shoot_date) throw new Error('No shoot date set');
 
-      const { data } = await base44.functions.invoke('calendar', {
+      const response = await base44.functions.invoke('calendar', {
         action: 'syncEvent',
         projectId: selectedProject.id,
         projectTitle: selectedProject.title,
         shootDate: selectedProject.shoot_date,
         calendarEventId: selectedProject.calendar_event_id
       });
+      console.log('Sync Response:', response);
 
-      if (!data.success) throw new Error(data.error);
+      const data = response.data;
+      if (!data || !data.success) throw new Error(data?.error || 'Sync function returned no success');
 
       // Update project with event ID so we know it is synced
       await base44.entities.Project.update(selectedProject.id, {
