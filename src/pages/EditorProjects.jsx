@@ -49,7 +49,7 @@ export default function EditorProjects() {
   const [uploadingNote, setUploadingNote] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [uploadingCategory, setUploadingCategory] = useState(null);
-  const [uploadProgress, setUploadProgress] = useState({ total: 0, completed: 0, failed: 0, current: [] });
+  const [uploadProgress, setUploadProgress] = useState({ total: 0, completed: 0, failed: 0, current: [], bytesUploaded: 0, bytesTotal: 0 });
   const [showClientNotes, setShowClientNotes] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('editorDarkMode') === 'true';
@@ -130,11 +130,20 @@ export default function EditorProjects() {
       // 2. Upload to R2 using XMLHttpRequest for progress tracking
       await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
+        let lastLoaded = 0;
 
         xhr.upload.addEventListener('progress', (e) => {
           if (e.lengthComputable) {
             const percentComplete = Math.round((e.loaded / e.total) * 100);
             console.log(`${file.name}: ${percentComplete}% (${(e.loaded / 1024 / 1024).toFixed(1)}MB / ${(e.total / 1024 / 1024).toFixed(1)}MB)`);
+
+            // Update progress state with bytes uploaded
+            const bytesIncrease = e.loaded - lastLoaded;
+            lastLoaded = e.loaded;
+            setUploadProgress(prev => ({
+              ...prev,
+              bytesUploaded: prev.bytesUploaded + bytesIncrease
+            }));
           }
         });
 
@@ -311,7 +320,7 @@ export default function EditorProjects() {
     console.log(`Starting batch upload: ${files.length} files, ${(totalSize / 1024 / 1024).toFixed(0)}MB total, ${CONCURRENT_UPLOADS} concurrent`);
 
     setUploadingCategory(category);
-    setUploadProgress({ total: files.length, completed: 0, failed: 0, current: [] });
+    setUploadProgress({ total: files.length, completed: 0, failed: 0, current: [], bytesUploaded: 0, bytesTotal: totalSize });
 
     // Create upload queue
     const queue = [...files];
@@ -371,7 +380,7 @@ export default function EditorProjects() {
     }
 
     setUploadingCategory(null);
-    setUploadProgress({ total: 0, completed: 0, failed: 0, current: [] });
+    setUploadProgress({ total: 0, completed: 0, failed: 0, current: [], bytesUploaded: 0, bytesTotal: 0 });
     e.target.value = ''; // Reset input
   };
 
@@ -520,17 +529,20 @@ export default function EditorProjects() {
           <div className={cn("rounded-xl p-4 mb-6", darkMode ? "bg-blue-900/30 border border-blue-700" : "bg-blue-50 border border-blue-200")}>
             <div className="flex items-center justify-between mb-2">
               <span className={cn("text-sm font-medium", darkMode ? "text-blue-300" : "text-blue-700")}>
-                Uploading files: {uploadProgress.completed} / {uploadProgress.total}
+                Uploading: {uploadProgress.completed} / {uploadProgress.total} files
                 {uploadProgress.failed > 0 && <span className="text-red-500 ml-2">({uploadProgress.failed} failed)</span>}
               </span>
               <span className={cn("text-xs", darkMode ? "text-blue-400" : "text-blue-600")}>
-                {Math.round((uploadProgress.completed / uploadProgress.total) * 100)}%
+                {uploadProgress.bytesTotal > 0
+                  ? `${Math.round((uploadProgress.bytesUploaded / uploadProgress.bytesTotal) * 100)}% • ${(uploadProgress.bytesUploaded / 1024 / 1024).toFixed(0)}MB / ${(uploadProgress.bytesTotal / 1024 / 1024).toFixed(0)}MB`
+                  : `${Math.round((uploadProgress.completed / uploadProgress.total) * 100)}%`
+                }
               </span>
             </div>
             <div className={cn("h-2 rounded-full overflow-hidden", darkMode ? "bg-gray-700" : "bg-blue-100")}>
               <div
                 className="h-full bg-blue-500 transition-all duration-300"
-                style={{ width: `${(uploadProgress.completed / uploadProgress.total) * 100}%` }}
+                style={{ width: `${uploadProgress.bytesTotal > 0 ? (uploadProgress.bytesUploaded / uploadProgress.bytesTotal) * 100 : (uploadProgress.completed / uploadProgress.total) * 100}%` }}
               />
             </div>
             {uploadProgress.current.length > 0 && (
