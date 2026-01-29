@@ -490,9 +490,9 @@ export default function AdminBookings() {
                   darkMode ? "bg-gray-700 border-gray-600 text-gray-100" : "bg-white border-gray-200 text-gray-900"
                 )}
               >
-                <option value="">Selecteer type</option>
+                <option value="" className={darkMode ? "bg-gray-700 text-gray-100" : ""}>Selecteer type</option>
                 {sessionTypes.map(type => (
-                  <option key={type.id} value={type.id}>{type.name}</option>
+                  <option key={type.id} value={type.id} className={darkMode ? "bg-gray-700 text-gray-100" : ""}>{type.name}</option>
                 ))}
               </select>
             </div>
@@ -507,11 +507,11 @@ export default function AdminBookings() {
                     darkMode ? "bg-gray-700 border-gray-600 text-gray-100" : "bg-white border-gray-200 text-gray-900"
                   )}
                 >
-                  <option value="">Selecteer klant</option>
+                  <option value="" className={darkMode ? "bg-gray-700 text-gray-100" : ""}>Selecteer klant</option>
                   {clients.map(client => {
                     const user = users.find(u => u.id === client.user_id);
                     return (
-                      <option key={client.id} value={client.id}>
+                      <option key={client.id} value={client.id} className={darkMode ? "bg-gray-700 text-gray-100" : ""}>
                         {user?.full_name || client.company_name || 'Onbekend'}
                       </option>
                     );
@@ -528,9 +528,9 @@ export default function AdminBookings() {
                     darkMode ? "bg-gray-700 border-gray-600 text-gray-100" : "bg-white border-gray-200 text-gray-900"
                   )}
                 >
-                  <option value="">Selecteer project</option>
+                  <option value="" className={darkMode ? "bg-gray-700 text-gray-100" : ""}>Selecteer project</option>
                   {projects.map(project => (
-                    <option key={project.id} value={project.id}>{project.title}</option>
+                    <option key={project.id} value={project.id} className={darkMode ? "bg-gray-700 text-gray-100" : ""}>{project.title}</option>
                   ))}
                 </select>
               </div>
@@ -601,11 +601,11 @@ export default function AdminBookings() {
                   darkMode ? "bg-gray-700 border-gray-600 text-gray-100" : "bg-white border-gray-200 text-gray-900"
                 )}
               >
-                <option value="aanvraag">Aanvraag</option>
-                <option value="wachten_op_klant">Wachten op klant</option>
-                <option value="bevestigd">Bevestigd</option>
-                <option value="afgerond">Afgerond</option>
-                <option value="geannuleerd">Geannuleerd</option>
+                <option value="aanvraag" className={darkMode ? "bg-gray-700 text-gray-100" : ""}>Aanvraag</option>
+                <option value="wachten_op_klant" className={darkMode ? "bg-gray-700 text-gray-100" : ""}>Wachten op klant</option>
+                <option value="bevestigd" className={darkMode ? "bg-gray-700 text-gray-100" : ""}>Bevestigd</option>
+                <option value="afgerond" className={darkMode ? "bg-gray-700 text-gray-100" : ""}>Afgerond</option>
+                <option value="geannuleerd" className={darkMode ? "bg-gray-700 text-gray-100" : ""}>Geannuleerd</option>
               </select>
             </div>
             <div>
