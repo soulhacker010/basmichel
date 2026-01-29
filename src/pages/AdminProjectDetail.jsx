@@ -71,9 +71,7 @@ export default function AdminProjectDetail() {
   const [driveFiles, setDriveFiles] = useState([]);
   const [loadingDriveFiles, setLoadingDriveFiles] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('adminDarkMode') === 'true';
-  });
+  const [darkMode, setDarkMode] = useState(false);
   const [invoiceData, setInvoiceData] = useState({
     items: [{ title: '', description: '', quantity: 1, unit_price: '' }],
     vat_percentage: 21,
@@ -86,6 +84,19 @@ export default function AdminProjectDetail() {
   });
   
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setDarkMode(localStorage.getItem('adminDarkMode') === 'true');
+    };
+    checkDarkMode();
+    window.addEventListener('storage', checkDarkMode);
+    const interval = setInterval(checkDarkMode, 100);
+    return () => {
+      window.removeEventListener('storage', checkDarkMode);
+      clearInterval(interval);
+    };
+  }, []);
 
   const urlParams = new URLSearchParams(window.location.search);
   const projectId = urlParams.get('id');

@@ -15,9 +15,7 @@ import { cn } from '@/lib/utils';
 
 export default function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('adminDarkMode') === 'true';
-  });
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     const getUser = async () => {
@@ -25,6 +23,19 @@ export default function AdminDashboard() {
       setCurrentUser(user);
     };
     getUser();
+  }, []);
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setDarkMode(localStorage.getItem('adminDarkMode') === 'true');
+    };
+    checkDarkMode();
+    window.addEventListener('storage', checkDarkMode);
+    const interval = setInterval(checkDarkMode, 100);
+    return () => {
+      window.removeEventListener('storage', checkDarkMode);
+      clearInterval(interval);
+    };
   }, []);
 
   const { data: projects = [] } = useQuery({
