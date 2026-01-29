@@ -113,17 +113,145 @@ export default function EditorProjects() {
     mutationFn: async ({ file, category }) => {
       console.log(`Starting upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB), type: ${file.type || 'unknown'}`);
 
-      // Detect MIME type - use octet-stream for RAW formats and unknown types
+      // Detect MIME type
       const extension = file.name.split('.').pop().toLowerCase();
-      const rawFormats = ['dng', 'cr2', 'nef', 'arw', 'raw', 'orf', 'rw2'];
+      const rawFormats = ['dng', 'cr2', 'cr3', 'nef', 'arw', 'raw', 'orf', 'rw2', 'srw', 'raf'];
+      const videoFormats = ['mp4', 'mov', 'm4v', 'mxf', 'avi', 'prores'];
+      const pointCloud = ['e57', 'ply', 'las', 'laz', 'pts', 'xyz', 'pcd', 'obj', 'fbx'];
+      const archives = ['zip', 'rar', '7z'];
+
       let fileType = file.type;
 
-      if (!fileType || rawFormats.includes(extension)) {
-        fileType = 'application/octet-stream'; // Faster for binary files
-        console.log(`Detected RAW/binary file (.${extension}), using octet-stream`);
+      if (!fileType || rawFormats.includes(extension) || pointCloud.includes(extension) || archives.includes(extension)) {
+        fileType = 'application/octet-stream';
+        console.log(`Detected binary file (.${extension}), using octet-stream`);
+      } else if (videoFormats.includes(extension) && !fileType.startsWith('video/')) {
+        fileType = 'video/mp4'; // Default video type
       }
 
-      // 1. Get Presigned URL
+      const MULTIPART_THRESHOLD = 50 * 1024 * 1024; // 50MB
+      const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks
+
+      // Use multipart upload for large files
+      if (file.size > MULTIPART_THRESHOLD) {
+        console.log(`File >50MB, using multipart upload with ${Math.ceil(file.size / CHUNK_SIZE)} chunks`);
+
+        // 1. Create multipart upload
+        const { data: multipartData } = await base44.functions.invoke('storage', {
+          action: 'createMultipartUpload',
+          fileName: file.name,
+          fileType: fileType
+        });
+
+        if (!multipartData.success) {
+          throw new Error(multipartData.error || 'Failed to create multipart upload');
+        }
+
+        const { uploadId, fileKey, publicUrl } = multipartData;
+        console.log(`Multipart upload created: ${uploadId}`);
+
+        // 2. Split file into chunks
+        const numChunks = Math.ceil(file.size / CHUNK_SIZE);
+
+        // 3. Get presigned URLs for all parts
+        const { data: urlsData } = await base44.functions.invoke('storage', {
+          action: 'getPartPresignedUrls',
+          fileKey: fileKey,
+          uploadId: uploadId,
+          numParts: numChunks
+        });
+
+        if (!urlsData.success) {
+          throw new Error('Failed to get presigned URLs for parts');
+        }
+
+        console.log(`Got ${urlsData.presignedUrls.length} presigned URLs for chunks`);
+
+        // 4. Upload chunks in parallel (5 at a time)
+        const uploadedParts = [];
+        const CONCURRENT_CHUNKS = 5;
+
+        for (let i = 0; i < numChunks; i += CONCURRENT_CHUNKS) {
+          const batch = [];
+
+          for (let j = 0; j < CONCURRENT_CHUNKS && (i + j) < numChunks; j++) {
+            const chunkIndex = i + j;
+            const start = chunkIndex * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, file.size);
+            const chunk = file.slice(start, end);
+            const { partNumber, url } = urlsData.presignedUrls[chunkIndex];
+
+            const uploadPromise = new Promise((resolve, reject) => {
+              const xhr = new XMLHttpRequest();
+              let lastLoaded = 0;
+
+              xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                  const bytesIncrease = e.loaded - lastLoaded;
+                  lastLoaded = e.loaded;
+                  setUploadProgress(prev => ({
+                    ...prev,
+                    bytesUploaded: prev.bytesUploaded + bytesIncrease
+                  }));
+                }
+              });
+
+              xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                  const etag = xhr.getResponseHeader('ETag');
+                  console.log(`Chunk ${partNumber}/${numChunks} uploaded, ETag: ${etag}`);
+                  resolve({ PartNumber: partNumber, ETag: etag?.replace(/"/g, '') });
+                } else {
+                  reject(new Error(`Chunk ${partNumber} failed: ${xhr.status}`));
+                }
+              });
+
+              xhr.addEventListener('error', () => reject(new Error(`Network error on chunk ${partNumber}`)));
+              xhr.addEventListener('abort', () => reject(new Error(`Chunk ${partNumber} aborted`)));
+
+              xhr.open('PUT', url);
+              xhr.send(chunk);
+            });
+
+            batch.push(uploadPromise);
+          }
+
+          const batchResults = await Promise.all(batch);
+          uploadedParts.push(...batchResults);
+        }
+
+        console.log(`All ${uploadedParts.length} chunks uploaded, completing multipart upload`);
+
+        // 5. Complete multipart upload
+        const { data: completeData } = await base44.functions.invoke('storage', {
+          action: 'completeMultipartUpload',
+          fileKey: fileKey,
+          uploadId: uploadId,
+          parts: uploadedParts
+        });
+
+        if (!completeData.success) {
+          throw new Error('Failed to complete multipart upload');
+        }
+
+        console.log(`Multipart upload complete for: ${file.name}`);
+
+        // Save metadata
+        const fileUrl = publicUrl || `https://r2/${fileKey}`;
+        return base44.entities.ProjectFile.create({
+          project_id: selectedProject.id,
+          category: category || 'general',
+          file_url: fileUrl,
+          file_key: fileKey,
+          filename: file.name,
+          file_size: file.size,
+          mime_type: fileType,
+        });
+      }
+
+      // Simple upload for small files (<50MB)
+      console.log(`File <50MB, using simple PUT upload`);
+
       const { data: presignedData } = await base44.functions.invoke('storage', {
         action: 'getPresignedUrl',
         fileName: file.name,
@@ -131,23 +259,15 @@ export default function EditorProjects() {
       });
 
       if (!presignedData.success) {
-        console.error('Presigned URL failed:', presignedData);
         throw new Error(presignedData.error || 'Failed to get upload URL');
       }
 
-      console.log(`Got presigned URL for: ${file.name}`);
-
-      // 2. Upload to R2 using XMLHttpRequest for progress tracking
       await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         let lastLoaded = 0;
 
         xhr.upload.addEventListener('progress', (e) => {
           if (e.lengthComputable) {
-            const percentComplete = Math.round((e.loaded / e.total) * 100);
-            console.log(`${file.name}: ${percentComplete}% (${(e.loaded / 1024 / 1024).toFixed(1)}MB / ${(e.total / 1024 / 1024).toFixed(1)}MB)`);
-
-            // Update progress state with bytes uploaded
             const bytesIncrease = e.loaded - lastLoaded;
             lastLoaded = e.loaded;
             setUploadProgress(prev => ({
@@ -159,36 +279,21 @@ export default function EditorProjects() {
 
         xhr.addEventListener('load', () => {
           if (xhr.status >= 200 && xhr.status < 300) {
-            console.log(`Upload complete for ${file.name}: ${xhr.status}`);
             resolve();
           } else {
-            console.error(`Upload failed for ${file.name}: ${xhr.status}`, xhr.responseText);
-            reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`));
+            reject(new Error(`Upload failed: ${xhr.status}`));
           }
         });
 
-        xhr.addEventListener('error', () => {
-          console.error(`Network error uploading ${file.name}`);
-          reject(new Error('Network error during upload'));
-        });
-
-        xhr.addEventListener('abort', () => {
-          console.error(`Upload aborted for ${file.name}`);
-          reject(new Error('Upload was aborted'));
-        });
+        xhr.addEventListener('error', () => reject(new Error('Network error')));
+        xhr.addEventListener('abort', () => reject(new Error('Upload aborted')));
 
         xhr.open('PUT', presignedData.uploadUrl);
         xhr.setRequestHeader('Content-Type', fileType);
         xhr.send(file);
       });
 
-      console.log(`Upload complete, saving metadata: ${file.name}`);
-
-      // 3. Save Metadata
-      const fileUrl = presignedData.publicUrl
-        ? presignedData.publicUrl
-        : presignedData.uploadUrl.split('?')[0];
-
+      const fileUrl = presignedData.publicUrl || presignedData.uploadUrl.split('?')[0];
       return base44.entities.ProjectFile.create({
         project_id: selectedProject.id,
         category: category || 'general',
@@ -196,7 +301,7 @@ export default function EditorProjects() {
         file_key: presignedData.fileKey,
         filename: file.name,
         file_size: file.size,
-        mime_type: file.type,
+        mime_type: fileType,
       });
     },
     onSuccess: () => {

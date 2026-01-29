@@ -1,4 +1,13 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "https://esm.sh/@aws-sdk/client-s3@3.525.0";
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  AbortMultipartUploadCommand
+} from "https://esm.sh/@aws-sdk/client-s3@3.525.0";
 import { getSignedUrl } from "https://esm.sh/@aws-sdk/s3-request-presigner@3.525.0";
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.6";
 
@@ -46,9 +55,82 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { action, fileName, fileType, fileKey } = await req.json();
+    const { action, fileName, fileType, fileKey, uploadId, parts, numParts } = await req.json();
 
-    // 1. Get Presigned URL for Upload (PUT)
+    // 1. Create Multipart Upload (for large files)
+    if (action === "createMultipartUpload") {
+      if (!fileName || !fileType) {
+        return Response.json({ error: "Missing fileName or fileType" }, { status: 400 });
+      }
+
+      const key = `${crypto.randomUUID()}-${fileName}`;
+      const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME");
+      const R2_PUBLIC_URL = Deno.env.get("R2_PUBLIC_URL");
+
+      if (!R2_BUCKET_NAME) throw new Error("R2_BUCKET_NAME is not set");
+
+      const command = new CreateMultipartUploadCommand({
+        Bucket: R2_BUCKET_NAME,
+        Key: key,
+        ContentType: fileType,
+      });
+
+      const result = await getS3Client().send(command);
+
+      return Response.json({
+        success: true,
+        uploadId: result.UploadId,
+        fileKey: key,
+        publicUrl: R2_PUBLIC_URL ? `${R2_PUBLIC_URL}/${key}` : null,
+      });
+    }
+
+    // 2. Get Presigned URLs for Parts
+    if (action === "getPartPresignedUrls") {
+      if (!fileKey || !uploadId || !numParts) {
+        return Response.json({ error: "Missing fileKey, uploadId, or numParts" }, { status: 400 });
+      }
+
+      const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME");
+      if (!R2_BUCKET_NAME) throw new Error("R2_BUCKET_NAME is not set");
+
+      const presignedUrls = [];
+      for (let partNumber = 1; partNumber <= numParts; partNumber++) {
+        const command = new UploadPartCommand({
+          Bucket: R2_BUCKET_NAME,
+          Key: fileKey,
+          UploadId: uploadId,
+          PartNumber: partNumber,
+        });
+
+        const url = await getSignedUrl(getS3Client(), command, { expiresIn: 3600 });
+        presignedUrls.push({ partNumber, url });
+      }
+
+      return Response.json({ success: true, presignedUrls });
+    }
+
+    // 3. Complete Multipart Upload
+    if (action === "completeMultipartUpload") {
+      if (!fileKey || !uploadId || !parts) {
+        return Response.json({ error: "Missing fileKey, uploadId, or parts" }, { status: 400 });
+      }
+
+      const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME");
+      if (!R2_BUCKET_NAME) throw new Error("R2_BUCKET_NAME is not set");
+
+      const command = new CompleteMultipartUploadCommand({
+        Bucket: R2_BUCKET_NAME,
+        Key: fileKey,
+        UploadId: uploadId,
+        MultipartUpload: { Parts: parts },
+      });
+
+      await getS3Client().send(command);
+      return Response.json({ success: true });
+    }
+
+    // 4. Get Presigned URL for Upload (PUT) - for small files
     if (action === "getPresignedUrl") {
       if (!fileName || !fileType) {
         return Response.json({ error: "Missing fileName or fileType" }, { status: 400 });
