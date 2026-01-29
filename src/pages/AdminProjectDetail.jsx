@@ -71,6 +71,9 @@ export default function AdminProjectDetail() {
   const [driveFiles, setDriveFiles] = useState([]);
   const [loadingDriveFiles, setLoadingDriveFiles] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('adminDarkMode') === 'true';
+  });
   const [invoiceData, setInvoiceData] = useState({
     items: [{ title: '', description: '', quantity: 1, unit_price: '' }],
     vat_percentage: 21,
@@ -423,8 +426,8 @@ export default function AdminProjectDetail() {
   if (isLoading || !project) {
     return (
       <div className="max-w-7xl mx-auto py-16 text-center">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-3" />
-        <p className="text-gray-500">Laden...</p>
+        <Loader2 className={cn("w-8 h-8 animate-spin mx-auto mb-3", darkMode ? "text-gray-600" : "text-gray-400")} />
+        <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Laden...</p>
       </div>
     );
   }
@@ -442,18 +445,20 @@ export default function AdminProjectDetail() {
     <div className="max-w-6xl mx-auto">
       <Link 
         to={createPageUrl('AdminProjects')}
-        className="inline-flex items-center gap-2 text-gray-400 hover:text-gray-600 mb-8 transition-colors text-sm"
+        className={cn("inline-flex items-center gap-2 mb-8 transition-colors text-sm",
+          darkMode ? "text-gray-500 hover:text-gray-300" : "text-gray-400 hover:text-gray-600"
+        )}
       >
         <ArrowLeft className="w-4 h-4" />
         Terug naar projecten
       </Link>
 
       {/* Status Bar */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-8">
-        <h1 className="text-2xl font-light text-gray-900 mb-8">{project.title}</h1>
+      <div className={cn("rounded-2xl p-8 mb-8", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
+        <h1 className={cn("text-2xl font-light mb-8", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h1>
         
         <div className="relative pt-2">
-          <div className="absolute top-7 left-6 right-6 h-0.5 bg-gray-100">
+          <div className={cn("absolute top-7 left-6 right-6 h-0.5", darkMode ? "bg-gray-700" : "bg-gray-100")}>
             <div 
               className="h-full bg-[#5C6B52] transition-all duration-700"
               style={{ width: `${(currentStepIndex / (statusSteps.length - 1)) * 100}%` }}
@@ -471,11 +476,12 @@ export default function AdminProjectDetail() {
                     onClick={() => isManual && setSelectedStatus(step.key)}
                     disabled={!isManual}
                     className={cn(
-                      "w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all bg-white",
+                      "w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all",
+                      darkMode ? "bg-gray-700" : "bg-white",
                       isCompleted 
                         ? "bg-[#5C6B52] border-[#5C6B52] text-white" 
-                        : "border-gray-200 text-gray-300",
-                      isManual && !isCompleted && "hover:border-gray-300 cursor-pointer",
+                        : darkMode ? "border-gray-600 text-gray-500" : "border-gray-200 text-gray-300",
+                      isManual && !isCompleted && (darkMode ? "hover:border-gray-500" : "hover:border-gray-300") + " cursor-pointer",
                       !isManual && "cursor-not-allowed"
                     )}
                   >
@@ -487,11 +493,13 @@ export default function AdminProjectDetail() {
                   </button>
                   <p className={cn(
                     "text-sm mt-3 font-medium text-center max-w-[100px]",
-                    isCurrent ? "text-[#5C6B52]" : isCompleted ? "text-gray-700" : "text-gray-300"
+                    isCurrent ? "text-[#5C6B52]" : 
+                    isCompleted ? (darkMode ? "text-gray-300" : "text-gray-700") : 
+                    (darkMode ? "text-gray-600" : "text-gray-300")
                   )}>
                     {step.label}
                   </p>
-                  {!isManual && <p className="text-xs text-gray-400 mt-1">Automatisch</p>}
+                  {!isManual && <p className={cn("text-xs mt-1", darkMode ? "text-gray-500" : "text-gray-400")}>Automatisch</p>}
                 </div>
               );
             })}
@@ -500,55 +508,55 @@ export default function AdminProjectDetail() {
       </div>
 
       {/* Project Info */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-8">
-        <h2 className="text-lg font-medium text-gray-900 mb-6">Projectinformatie</h2>
+      <div className={cn("rounded-2xl p-8 mb-8", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
+        <h2 className={cn("text-lg font-medium mb-6", darkMode ? "text-gray-100" : "text-gray-900")}>Projectinformatie</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
-            <p className="text-sm text-gray-400 mb-1">Projectnummer</p>
-            <p className="font-medium text-gray-900">{project.project_number || '-'}</p>
+            <p className={cn("text-sm mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Projectnummer</p>
+            <p className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>{project.project_number || '-'}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-400 mb-1">Projectnaam</p>
-            <p className="font-medium text-gray-900">{project.title}</p>
+            <p className={cn("text-sm mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Projectnaam</p>
+            <p className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-400 mb-1">Klantnaam</p>
-            <p className="font-medium text-gray-900">
+            <p className={cn("text-sm mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Klantnaam</p>
+            <p className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
               {user?.first_name && user?.last_name 
                 ? `${user.first_name} ${user.last_name}` 
                 : user?.full_name || '-'}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-400 mb-1">Bedrijf</p>
-            <p className="font-medium text-gray-900">{client?.company_name || '-'}</p>
+            <p className={cn("text-sm mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Bedrijf</p>
+            <p className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>{client?.company_name || '-'}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-400 mb-1">E-mailadres klant</p>
-            <p className="font-medium text-gray-900">{user?.email || '-'}</p>
+            <p className={cn("text-sm mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>E-mailadres klant</p>
+            <p className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>{user?.email || '-'}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-400 mb-1">Adres object</p>
-            <p className="font-medium text-gray-900">{project.title || '-'}</p>
+            <p className={cn("text-sm mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Adres object</p>
+            <p className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title || '-'}</p>
           </div>
           <div>
-            <p className="text-sm text-gray-400 mb-1">Shootdatum</p>
-            <p className="font-medium text-gray-900">
+            <p className={cn("text-sm mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Shootdatum</p>
+            <p className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
               {project.shoot_date ? format(new Date(project.shoot_date), 'd MMMM yyyy', { locale: nl }) : 
                booking?.start_datetime ? format(new Date(booking.start_datetime), 'd MMMM yyyy', { locale: nl }) : '-'}
             </p>
           </div>
           <div>
-            <p className="text-sm text-gray-400 mb-1">Starttijd</p>
-            <p className="font-medium text-gray-900">
+            <p className={cn("text-sm mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Starttijd</p>
+            <p className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
               {project.shoot_time || 
                (booking?.start_datetime ? format(new Date(booking.start_datetime), 'HH:mm') : '-')}
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-100">
+        <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t", darkMode ? "border-gray-700" : "border-gray-100")}>
           <div>
             <Label htmlFor="delivery">Verwachte opleverdatum</Label>
             <Input
@@ -587,12 +595,16 @@ export default function AdminProjectDetail() {
       {/* Gallery Preview */}
       <Link 
         to={createPageUrl('AdminGalleries')}
-        className="block bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow mb-8"
+        className={cn("block rounded-2xl overflow-hidden hover:shadow-md transition-shadow mb-8",
+          darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100"
+        )}
       >
         <div className="p-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Galerij</h2>
+          <h2 className={cn("text-lg font-medium mb-4", darkMode ? "text-gray-100" : "text-gray-900")}>Galerij</h2>
           <div className="flex items-center gap-6">
-            <div className="w-32 h-32 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className={cn("w-32 h-32 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0",
+              darkMode ? "bg-gray-700" : "bg-gray-100"
+            )}>
               {projectFiles.filter(f => f.category === 'bewerkte_fotos' && f.mime_type?.startsWith('image/')).length > 0 ? (
                 <img 
                   src={projectFiles.filter(f => f.category === 'bewerkte_fotos' && f.mime_type?.startsWith('image/'))[0].file_url} 
@@ -606,11 +618,11 @@ export default function AdminProjectDetail() {
             <div className="flex-1">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">
+                  <p className={cn("text-sm mb-1", darkMode ? "text-gray-400" : "text-gray-500")}>
                     {projectFiles.filter(f => f.category === 'bewerkte_fotos').length} bestanden
                   </p>
-                  <p className="font-medium text-gray-900 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-gray-400" />
+                  <p className={cn("font-medium flex items-center gap-2", darkMode ? "text-gray-100" : "text-gray-900")}>
+                    <MapPin className={cn("w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />
                     {project.title}
                   </p>
                 </div>
@@ -622,15 +634,17 @@ export default function AdminProjectDetail() {
 
       {/* Raw Bestanden (Admin Only) */}
       <Collapsible open={rawOpen} onOpenChange={setRawOpen} className="mb-8">
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <CollapsibleTrigger className="w-full px-8 py-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
+        <div className={cn("rounded-2xl overflow-hidden", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
+          <CollapsibleTrigger className={cn("w-full px-8 py-6 flex items-center justify-between transition-colors",
+            darkMode ? "hover:bg-gray-700" : "hover:bg-gray-50"
+          )}>
             <div>
-              <h2 className="text-lg font-medium text-gray-900">Raw Bestanden</h2>
-              <p className="text-sm text-gray-400 mt-1">
+              <h2 className={cn("text-lg font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>Raw Bestanden</h2>
+              <p className={cn("text-sm mt-1", darkMode ? "text-gray-500" : "text-gray-400")}>
                 Alleen zichtbaar voor admin • {driveFiles.length} bestanden in Google Drive
               </p>
             </div>
-            <ChevronDown className={cn("w-5 h-5 text-gray-400 transition-transform", rawOpen && "rotate-180")} />
+            <ChevronDown className={cn("w-5 h-5 transition-transform", darkMode ? "text-gray-500" : "text-gray-400", rawOpen && "rotate-180")} />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="px-8 pb-8 space-y-6">
@@ -762,15 +776,15 @@ export default function AdminProjectDetail() {
       </Collapsible>
 
       {/* Extra Sessies */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-8">
-        <h2 className="text-lg font-medium text-gray-900 mb-6">Extra Sessies</h2>
+      <div className={cn("rounded-2xl p-8 mb-8", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
+        <h2 className={cn("text-lg font-medium mb-6", darkMode ? "text-gray-100" : "text-gray-900")}>Extra Sessies</h2>
         <ExtraSessionsSection projectId={projectId} />
       </div>
 
       {/* Factuur */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-8">
+      <div className={cn("rounded-2xl p-8", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-medium text-gray-900">Factuur</h2>
+          <h2 className={cn("text-lg font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>Factuur</h2>
           {!projectInvoice && (
             <Button 
               onClick={() => setInvoiceDialogOpen(true)}
@@ -885,7 +899,7 @@ export default function AdminProjectDetail() {
             </div>
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-400">
+          <div className={cn("text-center py-12", darkMode ? "text-gray-500" : "text-gray-400")}>
             Nog geen factuur aangemaakt
           </div>
         )}
