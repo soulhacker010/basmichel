@@ -46,6 +46,8 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, addDays } from 'date-fns';
 import { nl } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+import { useEffect } from 'react';
 
 export default function AdminBookings() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -57,8 +59,22 @@ export default function AdminBookings() {
   const [editingType, setEditingType] = useState(null);
   const [deleteSessionId, setDeleteSessionId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
   
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setDarkMode(localStorage.getItem('adminDarkMode') === 'true');
+    };
+    checkDarkMode();
+    window.addEventListener('storage', checkDarkMode);
+    const interval = setInterval(checkDarkMode, 100);
+    return () => {
+      window.removeEventListener('storage', checkDarkMode);
+      clearInterval(interval);
+    };
+  }, []);
 
   const { data: sessions = [] } = useQuery({
     queryKey: ['sessions'],
@@ -262,8 +278,8 @@ export default function AdminBookings() {
       />
 
       {/* Calendar Navigation */}
-      <div className="bg-white rounded-xl border border-gray-100 mb-6">
-        <div className="p-4 flex items-center justify-between border-b border-gray-50">
+      <div className={cn("rounded-xl mb-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
+        <div className={cn("p-4 flex items-center justify-between border-b", darkMode ? "border-gray-700" : "border-gray-50")}>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Button 
@@ -281,7 +297,7 @@ export default function AdminBookings() {
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
-            <h2 className="text-lg font-medium text-gray-900">
+            <h2 className={cn("text-lg font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
               {format(currentDate, 'MMMM yyyy', { locale: nl })}
             </h2>
           </div>
@@ -308,7 +324,7 @@ export default function AdminBookings() {
           {/* Weekday Headers */}
           <div className="grid grid-cols-7 mb-2">
             {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map(day => (
-              <div key={day} className="text-center text-xs font-medium text-gray-500 py-2">
+              <div key={day} className={cn("text-center text-xs font-medium py-2", darkMode ? "text-gray-400" : "text-gray-500")}>
                 {day}
               </div>
             ))}
@@ -330,14 +346,25 @@ export default function AdminBookings() {
                     setEditingSession(null);
                     setIsSessionDialogOpen(true);
                   }}
-                  className={`
-                    min-h-24 p-1.5 rounded-lg border cursor-pointer transition-colors
-                    ${isCurrentMonth ? 'bg-white border-gray-100' : 'bg-gray-50 border-gray-50'}
-                    ${isToday ? 'ring-2 ring-[#A8B5A0]' : ''}
-                    hover:border-[#A8B5A0]
-                  `}
+                  className={cn(
+                    "min-h-24 p-1.5 rounded-lg border cursor-pointer transition-colors",
+                    darkMode 
+                      ? isCurrentMonth 
+                        ? "bg-gray-700 border-gray-600" 
+                        : "bg-gray-800 border-gray-700"
+                      : isCurrentMonth 
+                        ? "bg-white border-gray-100" 
+                        : "bg-gray-50 border-gray-50",
+                    isToday && "ring-2 ring-[#A8B5A0]",
+                    "hover:border-[#A8B5A0]"
+                  )}
                 >
-                  <div className={`text-sm font-medium mb-1 ${isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}`}>
+                  <div className={cn(
+                    "text-sm font-medium mb-1",
+                    darkMode 
+                      ? isCurrentMonth ? "text-gray-100" : "text-gray-600"
+                      : isCurrentMonth ? "text-gray-900" : "text-gray-400"
+                  )}>
                     {format(day, 'd')}
                   </div>
                   <div className="space-y-0.5">
@@ -359,14 +386,16 @@ export default function AdminBookings() {
                       );
                     })}
                     {daySessions.length > 2 && (
-                      <div className="text-xs text-gray-400 px-1.5">
+                      <div className={cn("text-xs px-1.5", darkMode ? "text-gray-500" : "text-gray-400")}>
                         +{daySessions.length - 2} meer
                       </div>
                     )}
                     {dayBlocked.map(blocked => (
                       <div
                         key={blocked.id}
-                        className="text-xs px-1.5 py-0.5 rounded truncate bg-gray-200 text-gray-600"
+                        className={cn("text-xs px-1.5 py-0.5 rounded truncate", 
+                          darkMode ? "bg-gray-600 text-gray-300" : "bg-gray-200 text-gray-600"
+                        )}
                       >
                         Geblokkeerd
                       </div>
@@ -380,9 +409,9 @@ export default function AdminBookings() {
       </div>
 
       {/* Session Types List */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6">
+      <div className={cn("rounded-xl p-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Sessietypes</h3>
+          <h3 className={cn("text-lg font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>Sessietypes</h3>
           <Button 
             variant="outline"
             size="sm"
@@ -396,7 +425,7 @@ export default function AdminBookings() {
           </Button>
         </div>
         {sessionTypes.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-8">
+          <p className={cn("text-sm text-center py-8", darkMode ? "text-gray-400" : "text-gray-500")}>
             Nog geen sessietypes aangemaakt
           </p>
         ) : (
@@ -404,7 +433,9 @@ export default function AdminBookings() {
             {sessionTypes.map(type => (
               <div 
                 key={type.id}
-                className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50"
+                className={cn("flex items-center justify-between p-3 rounded-lg border",
+                  darkMode ? "border-gray-700 hover:bg-gray-700" : "border-gray-100 hover:bg-gray-50"
+                )}
               >
                 <div className="flex items-center gap-3">
                   <div 
@@ -412,13 +443,15 @@ export default function AdminBookings() {
                     style={{ backgroundColor: type.color || '#A8B5A0' }}
                   />
                   <div>
-                    <p className="font-medium text-gray-900">{type.name}</p>
-                    <p className="text-sm text-gray-500">{type.duration_minutes} minuten</p>
+                    <p className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>{type.name}</p>
+                    <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>{type.duration_minutes} minuten</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {!type.is_active && (
-                    <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">Inactief</span>
+                    <span className={cn("text-xs px-2 py-0.5 rounded",
+                      darkMode ? "bg-gray-700 text-gray-400" : "bg-gray-100 text-gray-500"
+                    )}>Inactief</span>
                   )}
                   <Button
                     variant="ghost"
