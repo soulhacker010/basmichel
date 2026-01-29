@@ -45,6 +45,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { useEffect } from 'react';
 
 export default function AdminProjects() {
   const [search, setSearch] = useState('');
@@ -52,8 +54,22 @@ export default function AdminProjects() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
   
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setDarkMode(localStorage.getItem('adminDarkMode') === 'true');
+    };
+    checkDarkMode();
+    window.addEventListener('storage', checkDarkMode);
+    const interval = setInterval(checkDarkMode, 100);
+    return () => {
+      window.removeEventListener('storage', checkDarkMode);
+      clearInterval(interval);
+    };
+  }, []);
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ['projects'],
@@ -235,7 +251,7 @@ export default function AdminProjects() {
     <div className="max-w-7xl mx-auto">
       {/* Header - Pixieset style */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-light text-gray-900">Projecten</h1>
+        <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>Projecten</h1>
         <Button 
           onClick={() => {
             setEditingProject(null);
@@ -251,7 +267,7 @@ export default function AdminProjects() {
       {/* Search and Filters */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />
           <Input
             placeholder="Zoek project of contactnaam"
             value={search}
@@ -260,7 +276,7 @@ export default function AdminProjects() {
           />
         </div>
         <Tabs value={statusFilter} onValueChange={setStatusFilter} className="shrink-0">
-          <TabsList className="bg-white border border-gray-200 h-10">
+          <TabsList className={cn("h-10 border", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200")}>
             <TabsTrigger value="all" className="text-sm">Alle Projecten</TabsTrigger>
             <TabsTrigger value="geboekt" className="text-sm">Geboekt</TabsTrigger>
             <TabsTrigger value="shoot_uitgevoerd" className="text-sm">Shoot uitgevoerd</TabsTrigger>
@@ -272,10 +288,10 @@ export default function AdminProjects() {
 
       {/* Projects Grid */}
       {filteredProjects.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-100 p-16 text-center">
-          <FolderKanban className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-900 font-medium mb-1">Geen projecten gevonden</p>
-          <p className="text-sm text-gray-400">Probeer je filters aan te passen</p>
+        <div className={cn("rounded-lg p-16 text-center border", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100")}>
+          <FolderKanban className={cn("w-12 h-12 mx-auto mb-4", darkMode ? "text-gray-600" : "text-gray-300")} />
+          <p className={cn("font-medium mb-1", darkMode ? "text-gray-100" : "text-gray-900")}>Geen projecten gevonden</p>
+          <p className={cn("text-sm", darkMode ? "text-gray-500" : "text-gray-400")}>Probeer je filters aan te passen</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -283,16 +299,18 @@ export default function AdminProjects() {
             <Link
               key={project.id}
               to={`${createPageUrl('AdminProjectDetail')}?id=${project.id}`}
-              className="bg-white rounded-lg border border-gray-100 p-5 hover:shadow-sm transition-all group block"
+              className={cn("rounded-lg border p-5 hover:shadow-sm transition-all group block",
+                darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
+              )}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-gray-900 truncate">{project.title}</h3>
-                  <p className="text-sm text-gray-500 truncate">{getClientName(project.client_id)}</p>
+                  <h3 className={cn("font-medium truncate", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h3>
+                  <p className={cn("text-sm truncate", darkMode ? "text-gray-400" : "text-gray-500")}>{getClientName(project.client_id)}</p>
                   {(() => {
                     const client = clients.find(c => c.id === project.client_id);
                     return client?.company_name && (
-                      <p className="text-xs text-gray-400 truncate">{client.company_name}</p>
+                      <p className={cn("text-xs truncate", darkMode ? "text-gray-500" : "text-gray-400")}>{client.company_name}</p>
                     );
                   })()}
                 </div>
@@ -333,7 +351,7 @@ export default function AdminProjects() {
               <div className="flex items-center justify-between">
                 <StatusBadge status={project.status} />
                 {project.shoot_date && (
-                  <span className="text-xs text-gray-400">
+                  <span className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
                     {format(new Date(project.shoot_date), 'd MMM yyyy', { locale: nl })}
                     {project.shoot_time && ` • ${project.shoot_time}`}
                   </span>

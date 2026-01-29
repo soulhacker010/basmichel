@@ -14,6 +14,20 @@ import {
 
 export default function NotificationCenter({ userId, clientId, isAdmin = false }) {
   const queryClient = useQueryClient();
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setDarkMode(localStorage.getItem('adminDarkMode') === 'true');
+    };
+    checkDarkMode();
+    window.addEventListener('storage', checkDarkMode);
+    const interval = setInterval(checkDarkMode, 100);
+    return () => {
+      window.removeEventListener('storage', checkDarkMode);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Fetch notifications
   const { data: notifications = [] } = useQuery({
@@ -76,8 +90,10 @@ export default function NotificationCenter({ userId, clientId, isAdmin = false }
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
-          <Bell className="w-5 h-5 text-gray-600" />
+        <button className={cn("relative p-2 rounded-lg transition-colors",
+          darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+        )}>
+          <Bell className={cn("w-5 h-5", darkMode ? "text-gray-400" : "text-gray-600")} />
           {unreadCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 text-white text-xs font-medium rounded-full flex items-center justify-center">
               {unreadCount > 9 ? '9+' : unreadCount}
@@ -85,9 +101,9 @@ export default function NotificationCenter({ userId, clientId, isAdmin = false }
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-96 p-0" align="end">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="font-medium text-gray-900">Meldingen</h3>
+      <PopoverContent className={cn("w-96 p-0", darkMode && "bg-gray-800 border-gray-700")} align="end">
+        <div className={cn("flex items-center justify-between p-4 border-b", darkMode ? "border-gray-700" : "border-gray-200")}>
+          <h3 className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>Meldingen</h3>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
@@ -104,17 +120,19 @@ export default function NotificationCenter({ userId, clientId, isAdmin = false }
         <div className="max-h-[400px] overflow-y-auto">
           {notifications.length === 0 ? (
             <div className="py-12 text-center">
-              <Bell className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-              <p className="text-sm text-gray-400">Geen meldingen</p>
+              <Bell className={cn("w-12 h-12 mx-auto mb-3", darkMode ? "text-gray-700" : "text-gray-200")} />
+              <p className={cn("text-sm", darkMode ? "text-gray-500" : "text-gray-400")}>Geen meldingen</p>
             </div>
           ) : (
-            <div className="divide-y">
+            <div className={cn("divide-y", darkMode ? "divide-gray-700" : "divide-gray-200")}>
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
                   className={cn(
-                    "p-4 hover:bg-gray-50 transition-colors cursor-pointer",
-                    !notification.is_read && "bg-blue-50/30"
+                    "p-4 transition-colors cursor-pointer",
+                    darkMode 
+                      ? "hover:bg-gray-700" + (!notification.is_read ? " bg-gray-700/50" : "")
+                      : "hover:bg-gray-50" + (!notification.is_read ? " bg-blue-50/30" : "")
                   )}
                   onClick={() => {
                     if (!notification.is_read) {
@@ -132,7 +150,8 @@ export default function NotificationCenter({ userId, clientId, isAdmin = false }
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <p className={cn(
-                          "text-sm font-medium text-gray-900",
+                          "text-sm font-medium",
+                          darkMode ? "text-gray-100" : "text-gray-900",
                           !notification.is_read && "font-semibold"
                         )}>
                           {notification.title}
@@ -141,10 +160,10 @@ export default function NotificationCenter({ userId, clientId, isAdmin = false }
                           <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1.5" />
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                      <p className={cn("text-sm mt-1 line-clamp-2", darkMode ? "text-gray-400" : "text-gray-600")}>
                         {notification.message}
                       </p>
-                      <p className="text-xs text-gray-400 mt-2">
+                      <p className={cn("text-xs mt-2", darkMode ? "text-gray-500" : "text-gray-400")}>
                         {format(new Date(notification.created_date), 'd MMM yyyy HH:mm', { locale: nl })}
                       </p>
                     </div>
