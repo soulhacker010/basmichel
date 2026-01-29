@@ -486,7 +486,9 @@ export default function AdminBookings() {
                 id="session_type_id"
                 name="session_type_id"
                 defaultValue={editingSession?.session_type_id || ''}
-                className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A8B5A0]"
+                className={cn("w-full mt-1.5 rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A8B5A0]",
+                  darkMode ? "bg-gray-700 border-gray-600 text-gray-100" : "bg-white border-gray-200 text-gray-900"
+                )}
               >
                 <option value="">Selecteer type</option>
                 {sessionTypes.map(type => (
@@ -501,7 +503,9 @@ export default function AdminBookings() {
                   id="client_id"
                   name="client_id"
                   defaultValue={editingSession?.client_id || ''}
-                  className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A8B5A0]"
+                  className={cn("w-full mt-1.5 rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A8B5A0]",
+                    darkMode ? "bg-gray-700 border-gray-600 text-gray-100" : "bg-white border-gray-200 text-gray-900"
+                  )}
                 >
                   <option value="">Selecteer klant</option>
                   {clients.map(client => {
@@ -520,7 +524,9 @@ export default function AdminBookings() {
                   id="project_id"
                   name="project_id"
                   defaultValue={editingSession?.project_id || ''}
-                  className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A8B5A0]"
+                  className={cn("w-full mt-1.5 rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A8B5A0]",
+                    darkMode ? "bg-gray-700 border-gray-600 text-gray-100" : "bg-white border-gray-200 text-gray-900"
+                  )}
                 >
                   <option value="">Selecteer project</option>
                   {projects.map(project => (
@@ -591,7 +597,9 @@ export default function AdminBookings() {
                 id="status"
                 name="status"
                 defaultValue={editingSession?.status || 'aanvraag'}
-                className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A8B5A0]"
+                className={cn("w-full mt-1.5 rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A8B5A0]",
+                  darkMode ? "bg-gray-700 border-gray-600 text-gray-100" : "bg-white border-gray-200 text-gray-900"
+                )}
               >
                 <option value="aanvraag">Aanvraag</option>
                 <option value="wachten_op_klant">Wachten op klant</option>
@@ -685,7 +693,7 @@ export default function AdminBookings() {
                   name="color"
                   type="color"
                   defaultValue={editingType?.color || '#A8B5A0'}
-                  className="mt-1.5 h-10"
+                  className={cn("mt-1.5 h-10", darkMode && "bg-gray-700 border-gray-600")}
                 />
               </div>
             </div>
