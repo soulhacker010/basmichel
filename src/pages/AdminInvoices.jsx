@@ -46,6 +46,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { useEffect } from 'react';
 
 export default function AdminInvoices() {
   const [search, setSearch] = useState('');
@@ -53,8 +54,22 @@ export default function AdminInvoices() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
 
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setDarkMode(localStorage.getItem('adminDarkMode') === 'true');
+    };
+    checkDarkMode();
+    window.addEventListener('storage', checkDarkMode);
+    const interval = setInterval(checkDarkMode, 100);
+    return () => {
+      window.removeEventListener('storage', checkDarkMode);
+      clearInterval(interval);
+    };
+  }, []);
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['invoices'],
@@ -133,30 +148,30 @@ export default function AdminInvoices() {
     <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-light text-gray-900">Facturen</h1>
-        <p className="text-sm text-gray-500">Alle facturen uit projecten</p>
+        <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>Facturen</h1>
+        <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>Alle facturen uit projecten</p>
       </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-white rounded-lg border border-gray-100 p-5">
-          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Betaald</p>
-          <p className="text-2xl font-light text-gray-900">€{totalPaid.toFixed(2)}</p>
+        <div className={cn("rounded-lg border p-5", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100")}>
+          <p className={cn("text-xs uppercase tracking-wide mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Betaald</p>
+          <p className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>€{totalPaid.toFixed(2)}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-100 p-5">
-          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Onbetaald</p>
-          <p className="text-2xl font-light text-gray-900">€{totalUnpaid.toFixed(2)}</p>
+        <div className={cn("rounded-lg border p-5", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100")}>
+          <p className={cn("text-xs uppercase tracking-wide mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Onbetaald</p>
+          <p className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>€{totalUnpaid.toFixed(2)}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-100 p-5">
-          <p className="text-xs uppercase tracking-wide text-gray-400 mb-1">Concept</p>
-          <p className="text-2xl font-light text-gray-900">€{totalDraft.toFixed(2)}</p>
+        <div className={cn("rounded-lg border p-5", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100")}>
+          <p className={cn("text-xs uppercase tracking-wide mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Concept</p>
+          <p className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>€{totalDraft.toFixed(2)}</p>
         </div>
       </div>
 
       {/* Search and Filters */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />
           <Input
             placeholder="Zoek e-mail of contactnaam"
             value={search}
@@ -165,7 +180,7 @@ export default function AdminInvoices() {
           />
         </div>
         <Tabs value={statusFilter} onValueChange={setStatusFilter} className="shrink-0">
-          <TabsList className="bg-white border border-gray-200 h-10">
+          <TabsList className={cn("h-10 border", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200")}>
             <TabsTrigger value="all" className="text-sm">Alle Facturen</TabsTrigger>
             <TabsTrigger value="concept" className="text-sm">Concept</TabsTrigger>
             <TabsTrigger value="verzonden" className="text-sm">Onbetaald</TabsTrigger>
@@ -176,31 +191,31 @@ export default function AdminInvoices() {
 
       {/* Invoices Table */}
       {filteredInvoices.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-100 p-16 text-center">
-          <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-900 font-medium mb-1">Geen facturen gevonden</p>
-          <p className="text-sm text-gray-400">Probeer je filters aan te passen</p>
+        <div className={cn("rounded-lg border p-16 text-center", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100")}>
+          <FileText className={cn("w-12 h-12 mx-auto mb-4", darkMode ? "text-gray-600" : "text-gray-300")} />
+          <p className={cn("font-medium mb-1", darkMode ? "text-gray-100" : "text-gray-900")}>Geen facturen gevonden</p>
+          <p className={cn("text-sm", darkMode ? "text-gray-500" : "text-gray-400")}>Probeer je filters aan te passen</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-100">
+        <div className={cn("rounded-lg border", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100")}>
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Factuur #</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Klant</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Project</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Bedrag</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Vervaldatum</th>
-                <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Status</th>
+              <tr className={cn("border-b", darkMode ? "border-gray-700" : "border-gray-100")}>
+                <th className={cn("text-left px-6 py-3 text-xs font-medium uppercase tracking-wide", darkMode ? "text-gray-400" : "text-gray-500")}>Factuur #</th>
+                <th className={cn("text-left px-6 py-3 text-xs font-medium uppercase tracking-wide", darkMode ? "text-gray-400" : "text-gray-500")}>Klant</th>
+                <th className={cn("text-left px-6 py-3 text-xs font-medium uppercase tracking-wide", darkMode ? "text-gray-400" : "text-gray-500")}>Project</th>
+                <th className={cn("text-left px-6 py-3 text-xs font-medium uppercase tracking-wide", darkMode ? "text-gray-400" : "text-gray-500")}>Bedrag</th>
+                <th className={cn("text-left px-6 py-3 text-xs font-medium uppercase tracking-wide", darkMode ? "text-gray-400" : "text-gray-500")}>Vervaldatum</th>
+                <th className={cn("text-left px-6 py-3 text-xs font-medium uppercase tracking-wide", darkMode ? "text-gray-400" : "text-gray-500")}>Status</th>
                 <th className="w-8 px-6 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className={cn("divide-y", darkMode ? "divide-gray-700" : "divide-gray-50")}>
               {filteredInvoices.map(invoice => (
-                <tr key={invoice.id} className="hover:bg-gray-50 cursor-pointer">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{invoice.invoice_number || 'Concept'}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{getClientName(invoice)}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                <tr key={invoice.id} className={cn("cursor-pointer", darkMode ? "hover:bg-gray-700" : "hover:bg-gray-50")}>
+                  <td className={cn("px-6 py-4 text-sm font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>{invoice.invoice_number || 'Concept'}</td>
+                  <td className={cn("px-6 py-4 text-sm", darkMode ? "text-gray-300" : "text-gray-600")}>{getClientName(invoice)}</td>
+                  <td className={cn("px-6 py-4 text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
                     {invoice.project_id && (
                       <Link 
                         to={`${createPageUrl('AdminProjectDetail')}?id=${invoice.project_id}`}
@@ -210,8 +225,8 @@ export default function AdminInvoices() {
                       </Link>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">€ {invoice.total_amount?.toFixed(2)}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className={cn("px-6 py-4 text-sm font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>€ {invoice.total_amount?.toFixed(2)}</td>
+                  <td className={cn("px-6 py-4 text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
                     {invoice.due_date ? format(new Date(invoice.due_date), 'd MMM yyyy', { locale: nl }) : 
                      invoice.invoice_date ? '-' : 'Bij status Klaar'}
                   </td>

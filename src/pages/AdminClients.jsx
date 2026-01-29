@@ -43,6 +43,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+import { useEffect } from 'react';
 
 export default function AdminClients() {
   const [search, setSearch] = useState('');
@@ -52,8 +54,22 @@ export default function AdminClients() {
   const [deleteId, setDeleteId] = useState(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
   
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setDarkMode(localStorage.getItem('adminDarkMode') === 'true');
+    };
+    checkDarkMode();
+    window.addEventListener('storage', checkDarkMode);
+    const interval = setInterval(checkDarkMode, 100);
+    return () => {
+      window.removeEventListener('storage', checkDarkMode);
+      clearInterval(interval);
+    };
+  }, []);
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ['clients'],
@@ -140,13 +156,13 @@ export default function AdminClients() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className={cn("min-h-screen", darkMode ? "bg-gradient-to-b from-gray-900 to-gray-800" : "bg-gradient-to-b from-white to-gray-50")}>
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-light text-gray-900 mb-2">Klanten</h1>
-              <p className="text-gray-500">Beheer je klanten en hun gegevens</p>
+              <h1 className={cn("text-3xl font-light mb-2", darkMode ? "text-gray-100" : "text-gray-900")}>Klanten</h1>
+              <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Beheer je klanten en hun gegevens</p>
             </div>
             <div className="flex gap-3">
               <Button 
@@ -172,7 +188,7 @@ export default function AdminClients() {
 
           {/* Search */}
           <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />
             <Input
               placeholder="Zoek op naam, e-mail of bedrijf..."
               value={search}
@@ -207,23 +223,27 @@ export default function AdminClients() {
               return (
                 <div 
                   key={client.id}
-                  className="group bg-white/80 backdrop-blur-sm rounded-lg border border-gray-100 p-6 hover:shadow-md transition-all duration-300 hover:border-[#A8B5A0]/30"
+                  className={cn("group rounded-lg border p-6 hover:shadow-md transition-all duration-300 hover:border-[#A8B5A0]/30",
+                    darkMode ? "bg-gray-800/80 backdrop-blur-sm border-gray-700" : "bg-white/80 backdrop-blur-sm border-gray-100"
+                  )}
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#E8EDE5] to-[#D5DDD0] flex items-center justify-center">
-                        <span className="text-lg font-light text-[#5C6B52]">
+                      <div className={cn("w-12 h-12 rounded-full flex items-center justify-center",
+                        darkMode ? "bg-gradient-to-br from-gray-700 to-gray-600" : "bg-gradient-to-br from-[#E8EDE5] to-[#D5DDD0]"
+                      )}>
+                        <span className={cn("text-lg font-light", darkMode ? "text-gray-300" : "text-[#5C6B52]")}>
                           {user?.first_name?.charAt(0) || user?.full_name?.charAt(0) || '?'}
                         </span>
                       </div>
                       <div>
-                        <h3 className="font-light text-gray-900">
+                        <h3 className={cn("font-light", darkMode ? "text-gray-100" : "text-gray-900")}>
                           {user?.first_name && user?.last_name 
                             ? `${user.first_name} ${user.last_name}` 
                             : user?.full_name || 'Onbekend'}
                         </h3>
                         {client.company_name && (
-                          <p className="text-sm text-gray-500">{client.company_name}</p>
+                          <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>{client.company_name}</p>
                         )}
                       </div>
                     </div>
@@ -254,26 +274,26 @@ export default function AdminClients() {
 
                   <div className="space-y-2 text-sm">
                     {user?.email && (
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Mail className="w-4 h-4 text-gray-400" />
+                      <div className={cn("flex items-center gap-2", darkMode ? "text-gray-400" : "text-gray-600")}>
+                        <Mail className={cn("w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />
                         <span className="truncate">{user.email}</span>
                       </div>
                     )}
                     {client.phone && (
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Phone className="w-4 h-4 text-gray-400" />
+                      <div className={cn("flex items-center gap-2", darkMode ? "text-gray-400" : "text-gray-600")}>
+                        <Phone className={cn("w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />
                         <span>{client.phone}</span>
                       </div>
                     )}
                     {client.company_name && (
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Building2 className="w-4 h-4 text-gray-400" />
+                      <div className={cn("flex items-center gap-2", darkMode ? "text-gray-400" : "text-gray-600")}>
+                        <Building2 className={cn("w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />
                         <span>{client.company_name}</span>
                       </div>
                     )}
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-gray-50 text-xs text-gray-400">
+                  <div className={cn("mt-4 pt-4 border-t text-xs", darkMode ? "border-gray-700 text-gray-500" : "border-gray-50 text-gray-400")}>
                     Toegevoegd op {client.created_date && format(new Date(client.created_date), 'd MMMM yyyy', { locale: nl })}
                   </div>
                 </div>

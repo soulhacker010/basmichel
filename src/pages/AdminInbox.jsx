@@ -31,6 +31,7 @@ import {
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { useEffect } from 'react';
 
 export default function AdminInbox() {
   const [search, setSearch] = useState('');
@@ -40,8 +41,22 @@ export default function AdminInbox() {
   const [showReply, setShowReply] = useState(false);
   const [replyMessage, setReplyMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
   
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setDarkMode(localStorage.getItem('adminDarkMode') === 'true');
+    };
+    checkDarkMode();
+    window.addEventListener('storage', checkDarkMode);
+    const interval = setInterval(checkDarkMode, 100);
+    return () => {
+      window.removeEventListener('storage', checkDarkMode);
+      clearInterval(interval);
+    };
+  }, []);
 
   const { data: messages = [] } = useQuery({
     queryKey: ['inboxMessages'],
@@ -200,17 +215,18 @@ export default function AdminInbox() {
         description="Bekijk en beheer je berichten"
       />
 
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <div className={cn("rounded-xl overflow-hidden border", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100")}>
         <div className="flex h-[calc(100vh-240px)] min-h-[500px]">
           {/* Message List */}
           <div className={cn(
-            "w-full md:w-96 border-r border-gray-100 flex flex-col",
+            "w-full md:w-96 border-r flex flex-col",
+            darkMode ? "border-gray-700" : "border-gray-100",
             selectedMessage && "hidden md:flex"
           )}>
             {/* Filters */}
-            <div className="p-4 border-b border-gray-50 space-y-3">
+            <div className={cn("p-4 border-b space-y-3", darkMode ? "border-gray-700" : "border-gray-50")}>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />
                 <Input
                   placeholder="Zoeken..."
                   value={search}
@@ -219,7 +235,7 @@ export default function AdminInbox() {
                 />
               </div>
               <Tabs value={filter} onValueChange={setFilter}>
-                <TabsList className="w-full bg-gray-100">
+                <TabsList className={cn("w-full", darkMode ? "bg-gray-700" : "bg-gray-100")}>
                   <TabsTrigger value="inbox" className="flex-1">Inbox</TabsTrigger>
                   <TabsTrigger value="unread" className="flex-1">
                     Ongelezen {unreadCount > 0 && `(${unreadCount})`}
@@ -242,15 +258,16 @@ export default function AdminInbox() {
                   }
                 />
               ) : (
-                <div className="divide-y divide-gray-50">
+                <div className={cn("divide-y", darkMode ? "divide-gray-700" : "divide-gray-50")}>
                   {filteredMessages.map(msg => (
                     <div
                       key={msg.id}
                       onClick={() => handleSelectMessage(msg)}
                       className={cn(
-                        "p-4 cursor-pointer transition-colors hover:bg-gray-50",
-                        selectedMessage?.id === msg.id && "bg-[#E8EDE5]",
-                        !msg.is_read && "bg-blue-50/30"
+                        "p-4 cursor-pointer transition-colors",
+                        darkMode ? "hover:bg-gray-700" : "hover:bg-gray-50",
+                        selectedMessage?.id === msg.id && (darkMode ? "bg-gray-700" : "bg-[#E8EDE5]"),
+                        !msg.is_read && (darkMode ? "bg-gray-700/50" : "bg-blue-50/30")
                       )}
                     >
                       <div className="flex items-start gap-3">
@@ -261,21 +278,25 @@ export default function AdminInbox() {
                           <div className="flex items-center justify-between mb-1">
                             <p className={cn(
                               "text-sm truncate",
-                              !msg.is_read ? "font-semibold text-gray-900" : "font-medium text-gray-700"
+                              !msg.is_read 
+                                ? darkMode ? "font-semibold text-gray-100" : "font-semibold text-gray-900"
+                                : darkMode ? "font-medium text-gray-300" : "font-medium text-gray-700"
                             )}>
                               {msg.sender_name || msg.sender_email || 'Onbekend'}
                             </p>
-                            <span className="text-xs text-gray-400 flex-shrink-0">
+                            <span className={cn("text-xs flex-shrink-0", darkMode ? "text-gray-500" : "text-gray-400")}>
                               {msg.created_date && format(new Date(msg.created_date), 'd MMM', { locale: nl })}
                             </span>
                           </div>
                           <p className={cn(
                             "text-sm truncate",
-                            !msg.is_read ? "font-medium text-gray-800" : "text-gray-600"
+                            !msg.is_read 
+                              ? darkMode ? "font-medium text-gray-200" : "font-medium text-gray-800"
+                              : darkMode ? "text-gray-400" : "text-gray-600"
                           )}>
                             {msg.subject}
                           </p>
-                          <p className="text-xs text-gray-400 truncate mt-1">
+                          <p className={cn("text-xs truncate mt-1", darkMode ? "text-gray-500" : "text-gray-400")}>
                             {msg.message}
                           </p>
                         </div>
@@ -295,7 +316,7 @@ export default function AdminInbox() {
             {selectedMessage ? (
               <>
                 {/* Message Header */}
-                <div className="p-4 border-b border-gray-50 flex items-center justify-between">
+                <div className={cn("p-4 border-b flex items-center justify-between", darkMode ? "border-gray-700" : "border-gray-50")}>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -339,35 +360,35 @@ export default function AdminInbox() {
                 {/* Message Content */}
                 <div className="flex-1 overflow-y-auto p-6">
                   <div className="max-w-2xl">
-                    <h2 className="text-xl font-medium text-gray-900 mb-4">
+                    <h2 className={cn("text-xl font-medium mb-4", darkMode ? "text-gray-100" : "text-gray-900")}>
                       {selectedMessage.subject}
                     </h2>
-                    <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
-                      <div className="w-10 h-10 rounded-full bg-[#E8EDE5] flex items-center justify-center">
-                        <span className="text-sm font-medium text-[#5C6B52]">
+                    <div className={cn("flex items-center gap-3 mb-6 pb-6 border-b", darkMode ? "border-gray-700" : "border-gray-100")}>
+                      <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", darkMode ? "bg-gray-700" : "bg-[#E8EDE5]")}>
+                        <span className={cn("text-sm font-medium", darkMode ? "text-gray-300" : "text-[#5C6B52]")}>
                           {(selectedMessage.sender_name || selectedMessage.sender_email || '?').charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
                           {selectedMessage.sender_name || 'Onbekend'}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
                           {selectedMessage.sender_email}
                         </p>
                       </div>
-                      <span className="ml-auto text-sm text-gray-400">
+                      <span className={cn("ml-auto text-sm", darkMode ? "text-gray-500" : "text-gray-400")}>
                         {selectedMessage.created_date && format(new Date(selectedMessage.created_date), 'd MMMM yyyy, HH:mm', { locale: nl })}
                       </span>
                     </div>
-                    <div className="prose prose-sm max-w-none text-gray-700">
+                    <div className={cn("prose prose-sm max-w-none", darkMode ? "text-gray-300" : "text-gray-700")}>
                       <p className="whitespace-pre-wrap">{selectedMessage.message}</p>
                     </div>
 
                     {/* Reply Section */}
                     {showReply && selectedMessage.sender_email && (
-                      <div className="mt-8 pt-6 border-t border-gray-100">
-                        <h3 className="text-sm font-medium text-gray-700 mb-3">Reageren naar {selectedMessage.sender_email}</h3>
+                      <div className={cn("mt-8 pt-6 border-t", darkMode ? "border-gray-700" : "border-gray-100")}>
+                        <h3 className={cn("text-sm font-medium mb-3", darkMode ? "text-gray-300" : "text-gray-700")}>Reageren naar {selectedMessage.sender_email}</h3>
                         <textarea
                           value={replyMessage}
                           onChange={(e) => setReplyMessage(e.target.value)}
@@ -402,8 +423,8 @@ export default function AdminInbox() {
             ) : (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
-                  <MailOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">Selecteer een bericht om te lezen</p>
+                  <MailOpen className={cn("w-12 h-12 mx-auto mb-3", darkMode ? "text-gray-700" : "text-gray-300")} />
+                  <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Selecteer een bericht om te lezen</p>
                 </div>
               </div>
             )}

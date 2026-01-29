@@ -42,14 +42,29 @@ import {
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { useEffect } from 'react';
 
 export default function AdminDiscounts() {
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
   
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setDarkMode(localStorage.getItem('adminDarkMode') === 'true');
+    };
+    checkDarkMode();
+    window.addEventListener('storage', checkDarkMode);
+    const interval = setInterval(checkDarkMode, 100);
+    return () => {
+      window.removeEventListener('storage', checkDarkMode);
+      clearInterval(interval);
+    };
+  }, []);
 
   const { data: discounts = [] } = useQuery({
     queryKey: ['discounts'],
@@ -138,11 +153,13 @@ export default function AdminDiscounts() {
       />
 
       {/* Info Banner */}
-      <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
-        <Lock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+      <div className={cn("mb-6 p-4 rounded-xl border flex items-start gap-3",
+        darkMode ? "bg-amber-900/20 border-amber-800" : "bg-amber-50 border-amber-200"
+      )}>
+        <Lock className={cn("w-5 h-5 flex-shrink-0 mt-0.5", darkMode ? "text-amber-500" : "text-amber-600")} />
         <div>
-          <p className="text-sm font-medium text-amber-800">Kortingen zijn nog niet toepasbaar</p>
-          <p className="text-sm text-amber-700">
+          <p className={cn("text-sm font-medium", darkMode ? "text-amber-300" : "text-amber-800")}>Kortingen zijn nog niet toepasbaar</p>
+          <p className={cn("text-sm", darkMode ? "text-amber-400" : "text-amber-700")}>
             Je kunt hier alvast kortingscodes aanmaken. Zodra de betalingsmodule is geactiveerd, 
             kunnen klanten deze codes gebruiken.
           </p>
@@ -152,7 +169,7 @@ export default function AdminDiscounts() {
       {/* Search */}
       <div className="mb-6">
         <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />
           <Input
             placeholder="Zoek op code of beschrijving..."
             value={search}
@@ -181,8 +198,8 @@ export default function AdminDiscounts() {
           }
         />
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="divide-y divide-gray-50">
+        <div className={cn("rounded-xl border overflow-hidden", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100")}>
+          <div className={cn("divide-y", darkMode ? "divide-gray-700" : "divide-gray-50")}>
             {filteredDiscounts.map(discount => {
               const expired = isExpired(discount);
               const notStarted = isNotStarted(discount);
@@ -192,30 +209,36 @@ export default function AdminDiscounts() {
                   key={discount.id}
                   className={cn(
                     "p-5 transition-colors",
-                    (expired || !discount.is_active) && "bg-gray-50"
+                    (expired || !discount.is_active) && (darkMode ? "bg-gray-700/50" : "bg-gray-50")
                   )}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4">
                       <div className={cn(
                         "p-3 rounded-lg",
-                        discount.is_active && !expired ? "bg-[#E8EDE5]" : "bg-gray-200"
+                        discount.is_active && !expired 
+                          ? darkMode ? "bg-gray-700" : "bg-[#E8EDE5]" 
+                          : darkMode ? "bg-gray-800" : "bg-gray-200"
                       )}>
                         {discount.discount_type === 'percentage' ? (
                           <Percent className={cn(
                             "w-5 h-5",
-                            discount.is_active && !expired ? "text-[#5C6B52]" : "text-gray-500"
+                            discount.is_active && !expired 
+                              ? darkMode ? "text-gray-300" : "text-[#5C6B52]" 
+                              : darkMode ? "text-gray-600" : "text-gray-500"
                           )} />
                         ) : (
                           <Tag className={cn(
                             "w-5 h-5",
-                            discount.is_active && !expired ? "text-[#5C6B52]" : "text-gray-500"
+                            discount.is_active && !expired 
+                              ? darkMode ? "text-gray-300" : "text-[#5C6B52]" 
+                              : darkMode ? "text-gray-600" : "text-gray-500"
                           )} />
                         )}
                       </div>
                       <div>
                         <div className="flex items-center gap-3 mb-1">
-                          <span className="font-mono font-semibold text-lg text-gray-900">
+                          <span className={cn("font-mono font-semibold text-lg", darkMode ? "text-gray-100" : "text-gray-900")}>
                             {discount.code}
                           </span>
                           <span className={cn(
@@ -246,9 +269,9 @@ export default function AdminDiscounts() {
                           )}
                         </div>
                         {discount.description && (
-                          <p className="text-sm text-gray-600 mb-2">{discount.description}</p>
+                          <p className={cn("text-sm mb-2", darkMode ? "text-gray-400" : "text-gray-600")}>{discount.description}</p>
                         )}
-                        <div className="flex flex-wrap gap-4 text-xs text-gray-500">
+                        <div className={cn("flex flex-wrap gap-4 text-xs", darkMode ? "text-gray-500" : "text-gray-500")}>
                           {discount.valid_from && (
                             <span>Vanaf: {format(new Date(discount.valid_from), 'd MMM yyyy', { locale: nl })}</span>
                           )}

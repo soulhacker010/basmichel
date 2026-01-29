@@ -46,6 +46,7 @@ import {
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { useEffect } from 'react';
 
 const templateTypeConfig = {
   factuur: { icon: Receipt, label: 'Factuur', color: 'bg-blue-100 text-blue-700' },
@@ -61,8 +62,22 @@ export default function AdminTemplates() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
   
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setDarkMode(localStorage.getItem('adminDarkMode') === 'true');
+    };
+    checkDarkMode();
+    window.addEventListener('storage', checkDarkMode);
+    const interval = setInterval(checkDarkMode, 100);
+    return () => {
+      window.removeEventListener('storage', checkDarkMode);
+      clearInterval(interval);
+    };
+  }, []);
 
   const { data: templates = [] } = useQuery({
     queryKey: ['templates'],
@@ -154,7 +169,7 @@ export default function AdminTemplates() {
       {/* Filters */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />
           <Input
             placeholder="Zoek op naam..."
             value={search}
@@ -216,7 +231,9 @@ export default function AdminTemplates() {
             return (
               <div 
                 key={template.id}
-                className="bg-white rounded-xl border border-gray-100 p-5 hover:shadow-sm transition-shadow"
+                className={cn("rounded-xl border p-5 hover:shadow-sm transition-shadow",
+                  darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
+                )}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
@@ -224,8 +241,8 @@ export default function AdminTemplates() {
                       <Icon className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">{template.name}</h3>
-                      <p className="text-xs text-gray-500">{config.label}</p>
+                      <h3 className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>{template.name}</h3>
+                      <p className={cn("text-xs", darkMode ? "text-gray-400" : "text-gray-500")}>{config.label}</p>
                     </div>
                   </div>
                   <DropdownMenu>
@@ -258,12 +275,12 @@ export default function AdminTemplates() {
                 </div>
 
                 {template.content && (
-                  <p className="text-sm text-gray-500 line-clamp-2 mb-3">
+                  <p className={cn("text-sm line-clamp-2 mb-3", darkMode ? "text-gray-400" : "text-gray-500")}>
                     {template.content.replace(/<[^>]*>/g, '').substring(0, 100)}...
                   </p>
                 )}
 
-                <div className="flex items-center justify-between text-xs text-gray-400">
+                <div className={cn("flex items-center justify-between text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
                   <span>
                     {template.created_date && format(new Date(template.created_date), 'd MMM yyyy', { locale: nl })}
                   </span>
