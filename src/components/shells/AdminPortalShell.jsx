@@ -16,7 +16,9 @@ import {
   X,
   LogOut,
   Tag,
-  Inbox
+  Inbox,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -42,7 +44,19 @@ export default function AdminPortalShell({ children, currentPageName }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('adminDarkMode') === 'true';
+  });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    localStorage.setItem('adminDarkMode', darkMode);
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -77,7 +91,7 @@ export default function AdminPortalShell({ children, currentPageName }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FCFCFB] flex items-center justify-center">
+      <div className={cn("min-h-screen flex items-center justify-center", darkMode ? "bg-gray-900" : "bg-[#FCFCFB]")}>
         <div className="animate-pulse text-[#A8B5A0]">Laden...</div>
       </div>
     );
@@ -88,9 +102,10 @@ export default function AdminPortalShell({ children, currentPageName }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#FCFCFB]">
+    <div className={cn("min-h-screen", darkMode ? "bg-gray-900" : "bg-[#FCFCFB]")}>
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-100 z-50 px-4 flex items-center justify-between">
+      <div className={cn("lg:hidden fixed top-0 left-0 right-0 h-16 z-50 px-4 flex items-center justify-between",
+        darkMode ? "bg-gray-800 border-b border-gray-700" : "bg-white border-b border-gray-100")}>
         <button 
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
@@ -98,7 +113,10 @@ export default function AdminPortalShell({ children, currentPageName }) {
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
         <img 
-          src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/9370b8342_BasMichel_K152.png" 
+          src={darkMode 
+            ? "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/fefc16c37_BasMichel_K102.png"
+            : "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/9370b8342_BasMichel_K152.png"
+          }
           alt="Basmichel Logo" 
           className="h-6"
         />
@@ -117,7 +135,8 @@ export default function AdminPortalShell({ children, currentPageName }) {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed top-0 left-0 h-full w-64 bg-white z-50 transition-transform duration-300 ease-out",
+        "fixed top-0 left-0 h-full w-64 z-50 transition-transform duration-300 ease-out",
+        darkMode ? "bg-gray-800" : "bg-white",
         "lg:translate-x-0",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
@@ -126,7 +145,10 @@ export default function AdminPortalShell({ children, currentPageName }) {
           <div className="h-20 flex items-center px-6">
             <Link to={createPageUrl('Home')} className="hover:opacity-80 transition-opacity block py-8">
               <img 
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/9370b8342_BasMichel_K152.png" 
+                src={darkMode 
+                  ? "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/fefc16c37_BasMichel_K102.png"
+                  : "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/9370b8342_BasMichel_K152.png"
+                }
                 alt="Basmichel Logo" 
                 className="h-16"
               />
@@ -135,12 +157,16 @@ export default function AdminPortalShell({ children, currentPageName }) {
 
           {/* Badge & Portal Switcher */}
           <div className="px-6 pb-6 space-y-3">
-            <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-900 text-white">
+            <span className={cn("inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium",
+              darkMode ? "bg-gray-700 text-gray-100" : "bg-gray-900 text-white"
+            )}>
               Studio Manager
             </span>
             <Link 
               to={createPageUrl('EditorDashboard')}
-              className="block text-xs text-gray-500 hover:text-purple-600 transition-colors"
+              className={cn("block text-xs transition-colors",
+                darkMode ? "text-gray-500 hover:text-purple-400" : "text-gray-500 hover:text-purple-600"
+              )}
             >
               Switch to Editor Portal →
             </Link>
@@ -150,7 +176,7 @@ export default function AdminPortalShell({ children, currentPageName }) {
           <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
             {adminPages.map((item, index) => {
               if (item.separator) {
-                return <div key={`separator-${index}`} className="h-px bg-gray-200 my-3 mx-2" />;
+                return <div key={`separator-${index}`} className={cn("h-px my-3 mx-2", darkMode ? "bg-gray-700" : "bg-gray-200")} />;
               }
 
               const isActive = currentPageName === item.page;
@@ -164,11 +190,11 @@ export default function AdminPortalShell({ children, currentPageName }) {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
                     isActive 
-                      ? "bg-[#F8FAF7] text-[#5C6B52]" 
-                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                      ? darkMode ? "bg-gray-700 text-[#A8B5A0]" : "bg-[#F8FAF7] text-[#5C6B52]"
+                      : darkMode ? "text-gray-400 hover:bg-gray-700 hover:text-gray-200" : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
                   )}
                 >
-                  <Icon className={cn("w-5 h-5", isActive && "text-[#5C6B52]")} />
+                  <Icon className={cn("w-5 h-5", isActive && (darkMode ? "text-[#A8B5A0]" : "text-[#5C6B52]"))} />
                   <span className="text-sm font-medium">{item.name}</span>
                 </Link>
               );
@@ -177,36 +203,49 @@ export default function AdminPortalShell({ children, currentPageName }) {
 
           {/* User Section */}
           <div className="p-4 mt-auto">
-            <div className="bg-[#F8FAF7] rounded-xl p-4">
+            <div className={cn("rounded-xl p-4", darkMode ? "bg-gray-700" : "bg-[#F8FAF7]")}>
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-[#E8EDE5] flex items-center justify-center">
-                  <span className="text-sm font-medium text-[#5C6B52]">
+                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center",
+                  darkMode ? "bg-gray-600" : "bg-[#E8EDE5]"
+                )}>
+                  <span className={cn("text-sm font-medium", darkMode ? "text-[#A8B5A0]" : "text-[#5C6B52]")}>
                     {user.first_name?.charAt(0) || user.full_name?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
+                  <p className={cn("text-sm font-medium truncate", darkMode ? "text-gray-200" : "text-gray-900")}>
                     {user.first_name && user.last_name 
                       ? `${user.first_name} ${user.last_name}` 
                       : user.full_name || 'Gebruiker'}
                   </p>
-                  <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                  <p className={cn("text-xs truncate", darkMode ? "text-gray-500" : "text-gray-400")}>{user.email}</p>
                 </div>
                 {user && (
                   <NotificationCenter userId={user.id} isAdmin={true} />
                 )}
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className={cn("flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors",
+                    darkMode ? "text-gray-400 hover:text-gray-200" : "text-gray-500 hover:text-gray-700"
+                  )}
+                >
+                  {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                </button>
                 <Link
                   to={createPageUrl('AdminSettings')}
-                  className="flex items-center gap-2 flex-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 rounded-lg transition-colors"
+                  className={cn("flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors",
+                    darkMode ? "text-gray-400 hover:text-gray-200" : "text-gray-500 hover:text-gray-700"
+                  )}
                 >
                   <Settings className="w-4 h-4" />
-                  <span>Instellingen</span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 rounded-lg transition-colors"
+                  className={cn("flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors",
+                    darkMode ? "text-gray-400 hover:text-gray-200" : "text-gray-500 hover:text-gray-700"
+                  )}
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
