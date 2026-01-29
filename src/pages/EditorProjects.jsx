@@ -111,13 +111,23 @@ export default function EditorProjects() {
 
   const uploadFileMutation = useMutation({
     mutationFn: async ({ file, category }) => {
-      console.log(`Starting upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+      console.log(`Starting upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB), type: ${file.type || 'unknown'}`);
+
+      // Detect MIME type - use octet-stream for RAW formats and unknown types
+      const extension = file.name.split('.').pop().toLowerCase();
+      const rawFormats = ['dng', 'cr2', 'nef', 'arw', 'raw', 'orf', 'rw2'];
+      let fileType = file.type;
+
+      if (!fileType || rawFormats.includes(extension)) {
+        fileType = 'application/octet-stream'; // Faster for binary files
+        console.log(`Detected RAW/binary file (.${extension}), using octet-stream`);
+      }
 
       // 1. Get Presigned URL
       const { data: presignedData } = await base44.functions.invoke('storage', {
         action: 'getPresignedUrl',
         fileName: file.name,
-        fileType: file.type
+        fileType: fileType
       });
 
       if (!presignedData.success) {
@@ -168,7 +178,7 @@ export default function EditorProjects() {
         });
 
         xhr.open('PUT', presignedData.uploadUrl);
-        xhr.setRequestHeader('Content-Type', file.type);
+        xhr.setRequestHeader('Content-Type', fileType);
         xhr.send(file);
       });
 
