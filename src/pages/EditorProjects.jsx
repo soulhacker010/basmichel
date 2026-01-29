@@ -116,7 +116,9 @@ export default function EditorProjects() {
       // Detect MIME type
       const extension = file.name.split('.').pop().toLowerCase();
       const rawFormats = ['dng', 'cr2', 'cr3', 'nef', 'arw', 'raw', 'orf', 'rw2', 'srw', 'raf'];
+      const imageFormats = ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'webp'];
       const videoFormats = ['mp4', 'mov', 'm4v', 'mxf', 'avi', 'prores'];
+      const documentFormats = ['pdf', 'docx', 'xlsx', 'csv', 'fml'];
       const pointCloud = ['e57', 'ply', 'las', 'laz', 'pts', 'xyz', 'pcd', 'obj', 'fbx'];
       const archives = ['zip', 'rar', '7z'];
 
@@ -125,8 +127,16 @@ export default function EditorProjects() {
       if (!fileType || rawFormats.includes(extension) || pointCloud.includes(extension) || archives.includes(extension)) {
         fileType = 'application/octet-stream';
         console.log(`Detected binary file (.${extension}), using octet-stream`);
+      } else if (imageFormats.includes(extension) && !fileType.startsWith('image/')) {
+        fileType = 'image/jpeg';
       } else if (videoFormats.includes(extension) && !fileType.startsWith('video/')) {
-        fileType = 'video/mp4'; // Default video type
+        fileType = 'video/mp4';
+      } else if (documentFormats.includes(extension)) {
+        if (extension === 'pdf') fileType = 'application/pdf';
+        else if (extension === 'docx') fileType = 'application/vnd.openxmlformats-officeddocument.wordprocessingml.document';
+        else if (extension === 'xlsx') fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        else if (extension === 'csv') fileType = 'text/csv';
+        else fileType = 'application/octet-stream';
       }
 
       const MULTIPART_THRESHOLD = 50 * 1024 * 1024; // 50MB
@@ -198,9 +208,16 @@ export default function EditorProjects() {
 
               xhr.addEventListener('load', () => {
                 if (xhr.status >= 200 && xhr.status < 300) {
-                  const etag = xhr.getResponseHeader('ETag');
-                  console.log(`Chunk ${partNumber}/${numChunks} uploaded, ETag: ${etag}`);
-                  resolve({ PartNumber: partNumber, ETag: etag?.replace(/"/g, '') });
+                  // Try to get ETag, but handle CORS blocking
+                  let etag = null;
+                  try {
+                    etag = xhr.getResponseHeader('ETag');
+                  } catch (e) {
+                    console.log(`CORS blocked ETag for chunk ${partNumber}`);
+                  }
+                  console.log(`Chunk ${partNumber}/${numChunks} uploaded${etag ? ', ETag: ' + etag : ''}`);
+                  // Use wildcard if no ETag available (R2 will generate proper ETags server-side)
+                  resolve({ PartNumber: partNumber, ETag: etag ? etag.replace(/"/g, '') : '*' });
                 } else {
                   reject(new Error(`Chunk ${partNumber} failed: ${xhr.status}`));
                 }
