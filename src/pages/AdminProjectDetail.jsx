@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { 
+import {
   ArrowLeft,
   MapPin,
   Calendar,
@@ -82,7 +82,7 @@ export default function AdminProjectDetail() {
     recipient_address: '',
     template_id: '',
   });
-  
+
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -165,7 +165,7 @@ export default function AdminProjectDetail() {
       setSelectedStatus(project.status);
       setNotes(project.notes || '');
       setDeliveryDate(project.delivery_date || '');
-      
+
       // Create Drive folder if not exists
       if (!project.drive_folder_id && project.project_number) {
         base44.functions.invoke('googleDrive', {
@@ -176,7 +176,7 @@ export default function AdminProjectDetail() {
           queryClient.invalidateQueries({ queryKey: ['project', projectId] });
         }).catch(err => console.error('Failed to create Drive folder:', err));
       }
-      
+
       // Load Drive files
       if (project.drive_raw_folder_id) {
         setLoadingDriveFiles(true);
@@ -198,23 +198,23 @@ export default function AdminProjectDetail() {
     mutationFn: ({ id, data }) => base44.entities.Project.update(id, data),
     onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      
+
       // Bij status "Klaar": update factuur met datums
       if (variables.data.status === 'klaar' && project.status !== 'klaar') {
         if (projectInvoice && !projectInvoice.invoice_date) {
           const invoiceDate = format(new Date(), 'yyyy-MM-dd');
           const dueDate = format(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
-          
+
           await base44.entities.ProjectInvoice.update(projectInvoice.id, {
             invoice_date: invoiceDate,
             due_date: dueDate,
             status: 'verzonden',
           });
-          
+
           queryClient.invalidateQueries({ queryKey: ['projectInvoice', projectId] });
           queryClient.invalidateQueries({ queryKey: ['invoices'] });
         }
-        
+
         if (user?.email) {
           await base44.integrations.Core.SendEmail({
             to: user.email,
@@ -254,7 +254,7 @@ export default function AdminProjectDetail() {
           });
         }
       }
-      
+
       toast.success('Project opgeslagen');
     },
   });
@@ -263,18 +263,174 @@ export default function AdminProjectDetail() {
     mutationFn: async ({ category, files }) => {
       const uploadedFiles = [];
       for (const file of files) {
-        // Upload to regular storage
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        // Detect MIME type for proper R2 handling
+        const extension = file.name.split('.').pop().toLowerCase();
+        const rawFormats = ['dng', 'cr2', 'cr3', 'nef', 'arw', 'raw', 'orf', 'rw2', 'srw', 'raf'];
+        const imageFormats = ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'webp'];
+        const videoFormats = ['mp4', 'mov', 'm4v', 'mxf', 'avi', 'prores'];
+        const documentFormats = ['pdf', 'docx', 'xlsx', 'csv', 'fml'];
+        const pointCloud = ['e57', 'ply', 'las', 'laz', 'pts', 'xyz', 'pcd', 'obj', 'fbx'];
+        const archives = ['zip', 'rar', '7z'];
+
+        let fileType = file.type;
+
+        if (!fileType || rawFormats.includes(extension) || pointCloud.includes(extension) || archives.includes(extension)) {
+          fileType = 'application/octet-stream';
+          console.log(`Detected binary file (.${extension}), using octet-stream`);
+        } else if (imageFormats.includes(extension) && !fileType.startsWith('image/')) {
+          fileType = 'image/jpeg';
+        } else if (videoFormats.includes(extension) && !fileType.startsWith('video/')) {
+          fileType = 'video/mp4';
+        } else if (documentFormats.includes(extension)) {
+          if (extension === 'pdf') fileType = 'application/pdf';
+          else if (extension === 'docx') fileType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          else if (extension === 'xlsx') fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+          else if (extension === 'csv') fileType = 'text/csv';
+          else fileType = 'application/octet-stream';
+        }
+
+        const MULTIPART_THRESHOLD = 50 * 1024 * 1024; // 50MB
+        const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks
+
+        let file_url, file_key;
+
+        // Use multipart upload for large files
+        if (file.size > MULTIPART_THRESHOLD) {
+          console.log(`File >50MB, using multipart upload with ${Math.ceil(file.size / CHUNK_SIZE)} chunks`);
+
+          // 1. Create multipart upload
+          const { data: initData } = await base44.functions.invoke('storage', {
+            action: 'createMultipartUpload',
+            fileName: file.name,
+            fileType: fileType
+          });
+
+          if (!initData.success) throw new Error(initData.error || 'Failed to create multipart upload');
+
+          const { uploadId, fileKey } = initData;
+          file_key = fileKey;
+          console.log(`Multipart upload created: ${uploadId}`);
+
+          // 2. Get presigned URLs for all chunks
+          const numChunks = Math.ceil(file.size / CHUNK_SIZE);
+          const { data: urlsData } = await base44.functions.invoke('storage', {
+            action: 'getPartPresignedUrls',
+            fileKey,
+            uploadId,
+            numParts: numChunks
+          });
+
+          if (!urlsData.success) throw new Error(urlsData.error || 'Failed to get presigned URLs');
+          console.log(`Got ${numChunks} presigned URLs for chunks`);
+
+          // 3. Upload chunks in parallel (5 at a time)
+          const uploadedParts = [];
+          const CONCURRENT_CHUNKS = 5;
+
+          for (let i = 0; i < numChunks; i += CONCURRENT_CHUNKS) {
+            const batch = [];
+
+            for (let j = 0; j < CONCURRENT_CHUNKS && (i + j) < numChunks; j++) {
+              const chunkIndex = i + j;
+              const start = chunkIndex * CHUNK_SIZE;
+              const end = Math.min(start + CHUNK_SIZE, file.size);
+              const chunk = file.slice(start, end);
+              const { partNumber, url } = urlsData.presignedUrls[chunkIndex];
+
+              const uploadPromise = new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+
+                xhr.addEventListener('load', () => {
+                  if (xhr.status >= 200 && xhr.status < 300) {
+                    let etag = null;
+                    try {
+                      etag = xhr.getResponseHeader('ETag');
+                    } catch (e) {
+                      console.log(`CORS blocked ETag for chunk ${partNumber}`);
+                    }
+                    console.log(`Chunk ${partNumber}/${numChunks} uploaded${etag ? ', ETag: ' + etag : ''}`);
+                    resolve({ PartNumber: partNumber, ETag: etag ? etag.replace(/"/g, '') : '*' });
+                  } else {
+                    reject(new Error(`Chunk ${partNumber} failed: ${xhr.status}`));
+                  }
+                });
+
+                xhr.addEventListener('error', () => reject(new Error(`Network error on chunk ${partNumber}`)));
+                xhr.addEventListener('abort', () => reject(new Error(`Chunk ${partNumber} aborted`)));
+
+                xhr.open('PUT', url);
+                xhr.send(chunk);
+              });
+
+              batch.push(uploadPromise);
+            }
+
+            const batchResults = await Promise.all(batch);
+            uploadedParts.push(...batchResults);
+          }
+
+          console.log(`All ${numChunks} chunks uploaded, completing multipart upload`);
+
+          // 4. Complete multipart upload
+          const { data: completeData } = await base44.functions.invoke('storage', {
+            action: 'completeMultipartUpload',
+            fileKey,
+            uploadId,
+            parts: uploadedParts
+          });
+
+          if (!completeData.success) throw new Error(completeData.error || 'Failed to complete multipart upload');
+          console.log(`Multipart upload complete for: ${file.name}`);
+
+          file_url = completeData.publicUrl || `${process.env.R2_PUBLIC_URL}/${fileKey}`;
+        } else {
+          // Simple PUT upload for small files
+          console.log(`File <50MB, using simple PUT upload`);
+
+          const { data: presignedData } = await base44.functions.invoke('storage', {
+            action: 'getPresignedUrl',
+            fileName: file.name,
+            fileType: fileType
+          });
+
+          if (!presignedData.success) throw new Error(presignedData.error || 'Failed to get upload URL');
+
+          await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            xhr.addEventListener('load', () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                console.log(`Upload complete for ${file.name}`);
+                resolve();
+              } else {
+                reject(new Error(`Upload failed: ${xhr.status}`));
+              }
+            });
+
+            xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
+            xhr.addEventListener('abort', () => reject(new Error('Upload was aborted')));
+
+            xhr.open('PUT', presignedData.uploadUrl);
+            xhr.setRequestHeader('Content-Type', fileType);
+            xhr.send(file);
+          });
+
+          file_url = presignedData.publicUrl || presignedData.uploadUrl.split('?')[0];
+          file_key = presignedData.fileKey;
+        }
+
+        // Save metadata to database
         await base44.entities.ProjectFile.create({
           project_id: projectId,
           category,
           file_url,
+          file_key,
           filename: file.name,
           file_size: file.size,
-          mime_type: file.type,
+          mime_type: fileType,
         });
         uploadedFiles.push(file_url);
-        
+
         // Upload raw files to Google Drive
         if (category.includes('raw') && project.drive_raw_folder_id) {
           const reader = new FileReader();
@@ -288,7 +444,7 @@ export default function AdminProjectDetail() {
                 fileName: file.name,
                 fileData: base64Data
               });
-              
+
               // Refresh Drive files list
               const response = await base44.functions.invoke('googleDrive', {
                 action: 'listFiles',
@@ -324,12 +480,12 @@ export default function AdminProjectDetail() {
         const itemTotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0);
         return sum + itemTotal;
       }, 0);
-      
+
       const discountAmount = parseFloat(data.discount_amount) || 0;
       const afterDiscount = subtotal - discountAmount;
       const vatAmount = afterDiscount * (data.vat_percentage / 100);
       const totalAmount = afterDiscount + vatAmount;
-      
+
       return await base44.entities.ProjectInvoice.create({
         project_id: projectId,
         invoice_number: project.project_number,
@@ -393,7 +549,7 @@ export default function AdminProjectDetail() {
   const handleFileUpload = async (category, event) => {
     const files = Array.from(event.target.files);
     if (files.length === 0) return;
-    
+
     setUploadingCategory(category);
     uploadMutation.mutate({ category, files });
     event.target.value = '';
@@ -409,7 +565,7 @@ export default function AdminProjectDetail() {
   const selectAllInCategory = (category) => {
     const categoryFiles = projectFiles.filter(f => f.category === category);
     const allSelected = categoryFiles.every(f => selectedFiles[f.id]);
-    
+
     setSelectedFiles(prev => {
       const newSelection = { ...prev };
       categoryFiles.forEach(f => {
@@ -420,10 +576,10 @@ export default function AdminProjectDetail() {
   };
 
   const handleDownloadSelected = async (category) => {
-    const filesToDownload = projectFiles.filter(f => 
+    const filesToDownload = projectFiles.filter(f =>
       f.category === category && selectedFiles[f.id]
     );
-    
+
     if (filesToDownload.length === 0) return;
 
     for (const file of filesToDownload) {
@@ -454,7 +610,7 @@ export default function AdminProjectDetail() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <Link 
+      <Link
         to={createPageUrl('AdminProjects')}
         className={cn("inline-flex items-center gap-2 mb-8 transition-colors text-sm",
           darkMode ? "text-gray-500 hover:text-gray-300" : "text-gray-400 hover:text-gray-600"
@@ -467,10 +623,10 @@ export default function AdminProjectDetail() {
       {/* Status Bar */}
       <div className={cn("rounded-2xl p-8 mb-8", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
         <h1 className={cn("text-2xl font-light mb-8", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h1>
-        
+
         <div className="relative pt-2">
           <div className={cn("absolute top-7 left-6 right-6 h-0.5", darkMode ? "bg-gray-700" : "bg-gray-100")}>
-            <div 
+            <div
               className="h-full bg-[#5C6B52] transition-all duration-700"
               style={{ width: `${(currentStepIndex / (statusSteps.length - 1)) * 100}%` }}
             />
@@ -480,7 +636,7 @@ export default function AdminProjectDetail() {
               const isCompleted = index <= currentStepIndex;
               const isCurrent = index === currentStepIndex;
               const isManual = step.key === 'klaar';
-              
+
               return (
                 <div key={step.key} className="flex flex-col items-center">
                   <button
@@ -489,8 +645,8 @@ export default function AdminProjectDetail() {
                     className={cn(
                       "w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all",
                       darkMode ? "bg-gray-700" : "bg-white",
-                      isCompleted 
-                        ? "bg-[#5C6B52] border-[#5C6B52] text-white" 
+                      isCompleted
+                        ? "bg-[#5C6B52] border-[#5C6B52] text-white"
                         : darkMode ? "border-gray-600 text-gray-500" : "border-gray-200 text-gray-300",
                       isManual && !isCompleted && (darkMode ? "hover:border-gray-500" : "hover:border-gray-300") + " cursor-pointer",
                       !isManual && "cursor-not-allowed"
@@ -504,9 +660,9 @@ export default function AdminProjectDetail() {
                   </button>
                   <p className={cn(
                     "text-sm mt-3 font-medium text-center max-w-[100px]",
-                    isCurrent ? "text-[#5C6B52]" : 
-                    isCompleted ? (darkMode ? "text-gray-300" : "text-gray-700") : 
-                    (darkMode ? "text-gray-600" : "text-gray-300")
+                    isCurrent ? "text-[#5C6B52]" :
+                      isCompleted ? (darkMode ? "text-gray-300" : "text-gray-700") :
+                        (darkMode ? "text-gray-600" : "text-gray-300")
                   )}>
                     {step.label}
                   </p>
@@ -521,7 +677,7 @@ export default function AdminProjectDetail() {
       {/* Project Info */}
       <div className={cn("rounded-2xl p-8 mb-8", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
         <h2 className={cn("text-lg font-medium mb-6", darkMode ? "text-gray-100" : "text-gray-900")}>Projectinformatie</h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
             <p className={cn("text-sm mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Projectnummer</p>
@@ -534,8 +690,8 @@ export default function AdminProjectDetail() {
           <div>
             <p className={cn("text-sm mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Klantnaam</p>
             <p className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
-              {user?.first_name && user?.last_name 
-                ? `${user.first_name} ${user.last_name}` 
+              {user?.first_name && user?.last_name
+                ? `${user.first_name} ${user.last_name}`
                 : user?.full_name || '-'}
             </p>
           </div>
@@ -554,15 +710,15 @@ export default function AdminProjectDetail() {
           <div>
             <p className={cn("text-sm mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Shootdatum</p>
             <p className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
-              {project.shoot_date ? format(new Date(project.shoot_date), 'd MMMM yyyy', { locale: nl }) : 
-               booking?.start_datetime ? format(new Date(booking.start_datetime), 'd MMMM yyyy', { locale: nl }) : '-'}
+              {project.shoot_date ? format(new Date(project.shoot_date), 'd MMMM yyyy', { locale: nl }) :
+                booking?.start_datetime ? format(new Date(booking.start_datetime), 'd MMMM yyyy', { locale: nl }) : '-'}
             </p>
           </div>
           <div>
             <p className={cn("text-sm mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Starttijd</p>
             <p className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
-              {project.shoot_time || 
-               (booking?.start_datetime ? format(new Date(booking.start_datetime), 'HH:mm') : '-')}
+              {project.shoot_time ||
+                (booking?.start_datetime ? format(new Date(booking.start_datetime), 'HH:mm') : '-')}
             </p>
           </div>
         </div>
@@ -593,7 +749,7 @@ export default function AdminProjectDetail() {
         </div>
 
         <div className="flex justify-end mt-6">
-          <Button 
+          <Button
             onClick={handleSave}
             disabled={updateMutation.isPending}
             className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
@@ -604,7 +760,7 @@ export default function AdminProjectDetail() {
       </div>
 
       {/* Gallery Preview */}
-      <Link 
+      <Link
         to={createPageUrl('AdminGalleries')}
         className={cn("block rounded-2xl overflow-hidden hover:shadow-md transition-shadow mb-8",
           darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100"
@@ -617,8 +773,8 @@ export default function AdminProjectDetail() {
               darkMode ? "bg-gray-700" : "bg-gray-100"
             )}>
               {projectFiles.filter(f => f.category === 'bewerkte_fotos' && f.mime_type?.startsWith('image/')).length > 0 ? (
-                <img 
-                  src={projectFiles.filter(f => f.category === 'bewerkte_fotos' && f.mime_type?.startsWith('image/'))[0].file_url} 
+                <img
+                  src={projectFiles.filter(f => f.category === 'bewerkte_fotos' && f.mime_type?.startsWith('image/'))[0].file_url}
                   alt="Gallery preview"
                   className="w-full h-full object-cover"
                 />
@@ -742,7 +898,7 @@ export default function AdminProjectDetail() {
                       ) : (
                         <div className="grid grid-cols-1 gap-2 p-2">
                           {categoryFiles.map(file => (
-                            <div 
+                            <div
                               key={file.id}
                               className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50"
                             >
@@ -797,7 +953,7 @@ export default function AdminProjectDetail() {
         <div className="flex items-center justify-between mb-6">
           <h2 className={cn("text-lg font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>Factuur</h2>
           {!projectInvoice && (
-            <Button 
+            <Button
               onClick={() => setInvoiceDialogOpen(true)}
               className="bg-green-600 hover:bg-green-700 text-white"
             >
@@ -818,16 +974,16 @@ export default function AdminProjectDetail() {
                 <div>
                   <p className="text-sm text-gray-400 mb-1">Factuurdatum</p>
                   <p className="font-medium text-gray-900">
-                    {projectInvoice.invoice_date ? 
-                      format(new Date(projectInvoice.invoice_date), 'd MMMM yyyy', { locale: nl }) : 
+                    {projectInvoice.invoice_date ?
+                      format(new Date(projectInvoice.invoice_date), 'd MMMM yyyy', { locale: nl }) :
                       'Wordt gezet bij status Klaar'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-400 mb-1">Vervaldatum</p>
                   <p className="font-medium text-gray-900">
-                    {projectInvoice.due_date ? 
-                      format(new Date(projectInvoice.due_date), 'd MMMM yyyy', { locale: nl }) : 
+                    {projectInvoice.due_date ?
+                      format(new Date(projectInvoice.due_date), 'd MMMM yyyy', { locale: nl }) :
                       '-'}
                   </p>
                 </div>
@@ -836,11 +992,11 @@ export default function AdminProjectDetail() {
                   <span className={cn(
                     "inline-flex px-3 py-1 rounded-full text-xs font-medium",
                     projectInvoice.status === 'betaald' ? "bg-green-50 text-green-700" :
-                    projectInvoice.status === 'verzonden' ? "bg-blue-50 text-blue-700" :
-                    "bg-gray-100 text-gray-500"
+                      projectInvoice.status === 'verzonden' ? "bg-blue-50 text-blue-700" :
+                        "bg-gray-100 text-gray-500"
                   )}>
-                    {projectInvoice.status === 'betaald' ? 'Betaald' : 
-                     projectInvoice.status === 'verzonden' ? 'Verzonden' : 'Concept'}
+                    {projectInvoice.status === 'betaald' ? 'Betaald' :
+                      projectInvoice.status === 'verzonden' ? 'Verzonden' : 'Concept'}
                   </span>
                 </div>
               </div>
@@ -953,15 +1109,15 @@ export default function AdminProjectDetail() {
                   value={invoiceData.template_id}
                   onChange={(e) => {
                     const templateId = e.target.value;
-                    setInvoiceData({...invoiceData, template_id: templateId});
-                    
+                    setInvoiceData({ ...invoiceData, template_id: templateId });
+
                     if (templateId) {
                       const template = invoiceTemplates.find(t => t.id === templateId);
                       if (template && template.content) {
                         try {
-                          const content = typeof template.content === 'string' ? 
+                          const content = typeof template.content === 'string' ?
                             JSON.parse(template.content) : template.content;
-                          
+
                           if (content.items) {
                             setInvoiceData({
                               ...invoiceData,
@@ -996,20 +1152,20 @@ export default function AdminProjectDetail() {
                   type="checkbox"
                   id="custom_recipient"
                   checked={invoiceData.use_custom_recipient}
-                  onChange={(e) => setInvoiceData({...invoiceData, use_custom_recipient: e.target.checked})}
+                  onChange={(e) => setInvoiceData({ ...invoiceData, use_custom_recipient: e.target.checked })}
                   className="w-4 h-4 rounded border-gray-300"
                 />
                 <Label htmlFor="custom_recipient" className="cursor-pointer">
                   Gebruik afwijkende factuurontvanger
                 </Label>
               </div>
-              
+
               {!invoiceData.use_custom_recipient ? (
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-sm text-gray-600">
                     Factuur wordt verstuurd naar: <span className="font-medium text-gray-900">
-                      {user?.first_name && user?.last_name 
-                        ? `${user.first_name} ${user.last_name}` 
+                      {user?.first_name && user?.last_name
+                        ? `${user.first_name} ${user.last_name}`
                         : user?.full_name || client?.company_name || 'Projectklant'}
                     </span>
                   </p>
@@ -1022,7 +1178,7 @@ export default function AdminProjectDetail() {
                     <Input
                       id="recipient_name"
                       value={invoiceData.recipient_name}
-                      onChange={(e) => setInvoiceData({...invoiceData, recipient_name: e.target.value})}
+                      onChange={(e) => setInvoiceData({ ...invoiceData, recipient_name: e.target.value })}
                       placeholder="Bedrijfsnaam of contactpersoon"
                       className="mt-1.5"
                     />
@@ -1033,7 +1189,7 @@ export default function AdminProjectDetail() {
                       id="recipient_email"
                       type="email"
                       value={invoiceData.recipient_email}
-                      onChange={(e) => setInvoiceData({...invoiceData, recipient_email: e.target.value})}
+                      onChange={(e) => setInvoiceData({ ...invoiceData, recipient_email: e.target.value })}
                       placeholder="facturen@bedrijf.nl"
                       className="mt-1.5"
                     />
@@ -1043,7 +1199,7 @@ export default function AdminProjectDetail() {
                     <Textarea
                       id="recipient_address"
                       value={invoiceData.recipient_address}
-                      onChange={(e) => setInvoiceData({...invoiceData, recipient_address: e.target.value})}
+                      onChange={(e) => setInvoiceData({ ...invoiceData, recipient_address: e.target.value })}
                       placeholder="Straat 1&#10;1234 AB Plaats"
                       className="mt-1.5"
                       rows={2}
@@ -1069,7 +1225,7 @@ export default function AdminProjectDetail() {
                             onChange={(e) => {
                               const newItems = [...invoiceData.items];
                               newItems[index].title = e.target.value;
-                              setInvoiceData({...invoiceData, items: newItems});
+                              setInvoiceData({ ...invoiceData, items: newItems });
                             }}
                             placeholder="Bijvoorbeeld: Vastgoedfotografie"
                             className="mt-1.5"
@@ -1083,7 +1239,7 @@ export default function AdminProjectDetail() {
                             onChange={(e) => {
                               const newItems = [...invoiceData.items];
                               newItems[index].description = e.target.value;
-                              setInvoiceData({...invoiceData, items: newItems});
+                              setInvoiceData({ ...invoiceData, items: newItems });
                             }}
                             placeholder="Optionele details..."
                             className="mt-1.5"
@@ -1102,7 +1258,7 @@ export default function AdminProjectDetail() {
                               onChange={(e) => {
                                 const newItems = [...invoiceData.items];
                                 newItems[index].quantity = e.target.value;
-                                setInvoiceData({...invoiceData, items: newItems});
+                                setInvoiceData({ ...invoiceData, items: newItems });
                               }}
                               className="mt-1.5"
                             />
@@ -1118,7 +1274,7 @@ export default function AdminProjectDetail() {
                               onChange={(e) => {
                                 const newItems = [...invoiceData.items];
                                 newItems[index].unit_price = e.target.value;
-                                setInvoiceData({...invoiceData, items: newItems});
+                                setInvoiceData({ ...invoiceData, items: newItems });
                               }}
                               placeholder="0.00"
                               className="mt-1.5"
@@ -1138,7 +1294,7 @@ export default function AdminProjectDetail() {
                           size="sm"
                           onClick={() => {
                             const newItems = invoiceData.items.filter((_, i) => i !== index);
-                            setInvoiceData({...invoiceData, items: newItems});
+                            setInvoiceData({ ...invoiceData, items: newItems });
                           }}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
@@ -1149,7 +1305,7 @@ export default function AdminProjectDetail() {
                   </div>
                 ))}
               </div>
-              
+
               <Button
                 variant="outline"
                 onClick={() => {
@@ -1184,7 +1340,7 @@ export default function AdminProjectDetail() {
                     step="0.01"
                     min="0"
                     value={invoiceData.discount_amount}
-                    onChange={(e) => setInvoiceData({...invoiceData, discount_amount: parseFloat(e.target.value) || 0})}
+                    onChange={(e) => setInvoiceData({ ...invoiceData, discount_amount: parseFloat(e.target.value) || 0 })}
                     className="w-24 h-8 text-sm text-right"
                   />
                 </div>
@@ -1197,7 +1353,7 @@ export default function AdminProjectDetail() {
                       min="0"
                       max="100"
                       value={invoiceData.vat_percentage}
-                      onChange={(e) => setInvoiceData({...invoiceData, vat_percentage: parseFloat(e.target.value) || 0})}
+                      onChange={(e) => setInvoiceData({ ...invoiceData, vat_percentage: parseFloat(e.target.value) || 0 })}
                       className="w-16 h-7 text-xs"
                     />
                     <span className="text-gray-600">%</span>
@@ -1233,7 +1389,7 @@ export default function AdminProjectDetail() {
               <Button variant="outline" onClick={() => setInvoiceDialogOpen(false)}>
                 Annuleren
               </Button>
-              <Button 
+              <Button
                 onClick={() => createInvoiceMutation.mutate(invoiceData)}
                 disabled={
                   invoiceData.items.some(item => !item.title || !item.unit_price) ||
