@@ -460,9 +460,8 @@ export default function AdminProjectDetail() {
       return uploadedFiles;
     },
     onSuccess: () => {
+      // Just refresh the file list, spinner/toast handled by handleFileUpload for batches
       queryClient.invalidateQueries({ queryKey: ['projectFiles', projectId] });
-      setUploadingCategory(null);
-      toast.success('Bestanden geüpload');
     },
   });
 
