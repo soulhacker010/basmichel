@@ -813,7 +813,7 @@ export default function AdminProjectDetail() {
             <div>
               <h2 className={cn("text-lg font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>Raw Bestanden</h2>
               <p className={cn("text-sm mt-1", darkMode ? "text-gray-500" : "text-gray-400")}>
-                Alleen zichtbaar voor admin • {driveFiles.length} bestanden in Google Drive
+                Alleen zichtbaar voor admin • {projectFiles.filter(f => f.category?.includes('raw') || f.category === 'pointcloud').length} bestanden
               </p>
             </div>
             <ChevronDown className={cn("w-5 h-5 transition-transform", darkMode ? "text-gray-500" : "text-gray-400", rawOpen && "rotate-180")} />
@@ -828,7 +828,7 @@ export default function AdminProjectDetail() {
                 return (
                   <div key={category.key} className="border border-gray-100 rounded-xl p-6">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-base font-medium text-gray-900">{category.label}</h3>
+                      <h3 className="text-base font-medium text-gray-900">{category.label} ({categoryFiles.length})</h3>
                       <div className="flex items-center gap-2">
                         {categoryFiles.length > 0 && (
                           <>
@@ -920,6 +920,7 @@ export default function AdminProjectDetail() {
                                   {file.created_date && (
                                     <span className="ml-2">
                                       • {new Date(file.created_date).toLocaleDateString('nl-NL', {
+                                        timeZone: 'Europe/Amsterdam',
                                         day: '2-digit',
                                         month: '2-digit',
                                         year: 'numeric',
