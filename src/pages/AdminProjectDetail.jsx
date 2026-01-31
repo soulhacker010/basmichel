@@ -66,7 +66,7 @@ export default function AdminProjectDetail() {
   const [notes, setNotes] = useState('');
   const [selectedFiles, setSelectedFiles] = useState({});
   const [uploadingCategory, setUploadingCategory] = useState(null);
-  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
+  const [uploadPercent, setUploadPercent] = useState(0);
   const [deliveryOpen, setDeliveryOpen] = useState(true);
   const [rawOpen, setRawOpen] = useState(false);
   const [driveFiles, setDriveFiles] = useState([]);
@@ -527,7 +527,7 @@ export default function AdminProjectDetail() {
     if (allFiles.length === 0) return;
 
     setUploadingCategory(category);
-    setUploadProgress({ current: 0, total: allFiles.length });
+    setUploadPercent(0);
 
     // Process files in batches of 5 to prevent browser memory crash with large RAW files
     const BATCH_SIZE = 5;
@@ -540,15 +540,16 @@ export default function AdminProjectDetail() {
       const batchNum = Math.floor(i / BATCH_SIZE) + 1;
       const filesDone = Math.min(i + BATCH_SIZE, allFiles.length);
 
-      // Update progress for UI
-      setUploadProgress({ current: i, total: allFiles.length });
+      // Update percentage for UI
+      const percent = Math.round((i / allFiles.length) * 100);
+      setUploadPercent(percent);
 
-      console.log(`Uploading batch ${batchNum}/${totalBatches} (${batch.length} files)`);
+      console.log(`Uploading batch ${batchNum}/${totalBatches} (${batch.length} files) - ${percent}%`);
 
       try {
         await uploadMutation.mutateAsync({ category, files: batch });
         // Update after batch completes
-        setUploadProgress({ current: filesDone, total: allFiles.length });
+        setUploadPercent(Math.round((filesDone / allFiles.length) * 100));
       } catch (error) {
         console.error(`Batch ${batchNum} failed:`, error);
         toast.error(`Upload mislukt bij bestand ${i + 1}: ${error.message}`);
@@ -562,7 +563,7 @@ export default function AdminProjectDetail() {
     }
 
     setUploadingCategory(null);
-    setUploadProgress({ current: 0, total: 0 });
+    setUploadPercent(0);
     toast.success(`${allFiles.length} bestanden geüpload!`);
     event.target.value = '';
   };
@@ -874,9 +875,7 @@ export default function AdminProjectDetail() {
                             {uploadingCategory === category.key ? (
                               <>
                                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                {uploadProgress.total > 0
-                                  ? `${uploadProgress.current}/${uploadProgress.total}`
-                                  : 'Uploaden...'}
+                                {uploadPercent}%
                               </>
                             ) : (
                               <>
