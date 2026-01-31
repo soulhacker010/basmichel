@@ -431,31 +431,7 @@ export default function AdminProjectDetail() {
         });
         uploadedFiles.push(file_url);
 
-        // Upload raw files to Google Drive
-        if (category.includes('raw') && project.drive_raw_folder_id) {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = async () => {
-            const base64Data = reader.result.split(',')[1];
-            try {
-              await base44.functions.invoke('googleDrive', {
-                action: 'uploadFile',
-                folderId: project.drive_raw_folder_id,
-                fileName: file.name,
-                fileData: base64Data
-              });
-
-              // Refresh Drive files list
-              const response = await base44.functions.invoke('googleDrive', {
-                action: 'listFiles',
-                folderId: project.drive_raw_folder_id
-              });
-              setDriveFiles(response.data.files || []);
-            } catch (err) {
-              console.error('Failed to upload to Drive:', err);
-            }
-          };
-        }
+        // R2 only - Google Drive upload removed for stability with large file batches
       }
       return uploadedFiles;
     },
@@ -551,8 +527,8 @@ export default function AdminProjectDetail() {
 
     setUploadingCategory(category);
 
-    // Process files in batches of 10 to prevent browser memory crash
-    const BATCH_SIZE = 10;
+    // Process files in batches of 5 to prevent browser memory crash with large RAW files
+    const BATCH_SIZE = 5;
     const totalBatches = Math.ceil(allFiles.length / BATCH_SIZE);
 
     console.log(`Starting upload of ${allFiles.length} files in ${totalBatches} batches`);
@@ -560,21 +536,22 @@ export default function AdminProjectDetail() {
     for (let i = 0; i < allFiles.length; i += BATCH_SIZE) {
       const batch = allFiles.slice(i, i + BATCH_SIZE);
       const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+      const filesDone = Math.min(i + BATCH_SIZE, allFiles.length);
 
       console.log(`Uploading batch ${batchNum}/${totalBatches} (${batch.length} files)`);
-      toast.info(`Batch ${batchNum}/${totalBatches} uploaden...`);
+      toast.info(`${filesDone}/${allFiles.length} bestanden uploaden...`);
 
       try {
         await uploadMutation.mutateAsync({ category, files: batch });
       } catch (error) {
         console.error(`Batch ${batchNum} failed:`, error);
-        toast.error(`Batch ${batchNum} mislukt: ${error.message}`);
+        toast.error(`Upload mislukt bij bestand ${i + 1}: ${error.message}`);
         break;
       }
 
-      // Small delay between batches to allow garbage collection
+      // Longer delay between batches to allow garbage collection
       if (i + BATCH_SIZE < allFiles.length) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
 
@@ -940,6 +917,17 @@ export default function AdminProjectDetail() {
                                 <p className="text-sm font-medium text-gray-900 truncate">{file.filename}</p>
                                 <p className="text-xs text-gray-400">
                                   {(file.file_size / 1024 / 1024).toFixed(2)} MB
+                                  {file.created_date && (
+                                    <span className="ml-2">
+                                      • {new Date(file.created_date).toLocaleDateString('nl-NL', {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </span>
+                                  )}
                                 </p>
                               </div>
                               <Button
