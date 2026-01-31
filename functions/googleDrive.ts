@@ -72,8 +72,8 @@ Deno.serve(async (req) => {
         drive_edited_folder_id: subfolderIds['Edited Files']
       });
 
-      return Response.json({ 
-        success: true, 
+      return Response.json({
+        success: true,
         folderId: folder.id,
         rawFolderId: subfolderIds['Raw Files'],
         editedFolderId: subfolderIds['Edited Files']
@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
     if (action === 'listFiles') {
       // List files in folder
       const response = await fetch(
-        `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&fields=files(id,name,mimeType,size,webViewLink,webContentLink)`,
+        `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents&pageSize=1000&fields=files(id,name,mimeType,size,webViewLink,webContentLink)`,
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`
@@ -149,6 +149,28 @@ Deno.serve(async (req) => {
 
       const data = await response.json();
       return Response.json({ success: true, files: data.files || [] });
+    }
+
+    if (action === 'deleteFile') {
+      const { fileId } = await req.json();
+
+      const response = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+
+      if (!response.ok && response.status !== 204) {
+        const errorText = await response.text();
+        console.error('Delete file failed:', errorText);
+        throw new Error(`Failed to delete file: ${response.status}`);
+      }
+
+      return Response.json({ success: true });
     }
 
     return Response.json({ error: 'Invalid action' }, { status: 400 });
