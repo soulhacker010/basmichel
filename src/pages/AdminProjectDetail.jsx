@@ -261,9 +261,8 @@ export default function AdminProjectDetail() {
 
   const uploadMutation = useMutation({
     mutationFn: async ({ category, files }) => {
-      const uploadedFiles = [];
-      for (const file of files) {
-        // Detect MIME type for proper R2 handling
+      // Helper function to upload a single file
+      const uploadSingleFile = async (file) => {
         const extension = file.name.split('.').pop().toLowerCase();
         const rawFormats = ['dng', 'cr2', 'cr3', 'nef', 'arw', 'raw', 'orf', 'rw2', 'srw', 'raf'];
         const imageFormats = ['jpg', 'jpeg', 'png', 'tiff', 'tif', 'webp'];
@@ -276,7 +275,6 @@ export default function AdminProjectDetail() {
 
         if (!fileType || rawFormats.includes(extension) || pointCloud.includes(extension) || archives.includes(extension)) {
           fileType = 'application/octet-stream';
-          console.log(`Detected binary file (.${extension}), using octet-stream`);
         } else if (imageFormats.includes(extension) && !fileType.startsWith('image/')) {
           fileType = 'image/jpeg';
         } else if (videoFormats.includes(extension) && !fileType.startsWith('video/')) {
@@ -289,16 +287,12 @@ export default function AdminProjectDetail() {
           else fileType = 'application/octet-stream';
         }
 
-        const MULTIPART_THRESHOLD = 50 * 1024 * 1024; // 50MB
-        const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks
+        const MULTIPART_THRESHOLD = 50 * 1024 * 1024;
+        const CHUNK_SIZE = 10 * 1024 * 1024;
 
         let file_url, file_key;
 
-        // Use multipart upload for large files
         if (file.size > MULTIPART_THRESHOLD) {
-          console.log(`File >50MB, using multipart upload with ${Math.ceil(file.size / CHUNK_SIZE)} chunks`);
-
-          // 1. Create multipart upload
           const { data: initData } = await base44.functions.invoke('storage', {
             action: 'createMultipartUpload',
             fileName: file.name,
@@ -309,9 +303,7 @@ export default function AdminProjectDetail() {
 
           const { uploadId, fileKey } = initData;
           file_key = fileKey;
-          console.log(`Multipart upload created: ${uploadId}`);
 
-          // 2. Get presigned URLs for all chunks
           const numChunks = Math.ceil(file.size / CHUNK_SIZE);
           const { data: urlsData } = await base44.functions.invoke('storage', {
             action: 'getPartPresignedUrls',
@@ -321,9 +313,7 @@ export default function AdminProjectDetail() {
           });
 
           if (!urlsData.success) throw new Error(urlsData.error || 'Failed to get presigned URLs');
-          console.log(`Got ${numChunks} presigned URLs for chunks`);
 
-          // 3. Upload chunks in parallel (5 at a time)
           const uploadedParts = [];
           const CONCURRENT_CHUNKS = 5;
 
@@ -339,25 +329,16 @@ export default function AdminProjectDetail() {
 
               const uploadPromise = new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
-
                 xhr.addEventListener('load', () => {
                   if (xhr.status >= 200 && xhr.status < 300) {
                     let etag = null;
-                    try {
-                      etag = xhr.getResponseHeader('ETag');
-                    } catch (e) {
-                      console.log(`CORS blocked ETag for chunk ${partNumber}`);
-                    }
-                    console.log(`Chunk ${partNumber}/${numChunks} uploaded${etag ? ', ETag: ' + etag : ''}`);
+                    try { etag = xhr.getResponseHeader('ETag'); } catch (e) { }
                     resolve({ PartNumber: partNumber, ETag: etag ? etag.replace(/"/g, '') : '*' });
                   } else {
                     reject(new Error(`Chunk ${partNumber} failed: ${xhr.status}`));
                   }
                 });
-
                 xhr.addEventListener('error', () => reject(new Error(`Network error on chunk ${partNumber}`)));
-                xhr.addEventListener('abort', () => reject(new Error(`Chunk ${partNumber} aborted`)));
-
                 xhr.open('PUT', url);
                 xhr.send(chunk);
               });
@@ -369,9 +350,6 @@ export default function AdminProjectDetail() {
             uploadedParts.push(...batchResults);
           }
 
-          console.log(`All ${numChunks} chunks uploaded, completing multipart upload`);
-
-          // 4. Complete multipart upload
           const { data: completeData } = await base44.functions.invoke('storage', {
             action: 'completeMultipartUpload',
             fileKey,
@@ -380,13 +358,8 @@ export default function AdminProjectDetail() {
           });
 
           if (!completeData.success) throw new Error(completeData.error || 'Failed to complete multipart upload');
-          console.log(`Multipart upload complete for: ${file.name}`);
-
           file_url = completeData.publicUrl || `${process.env.R2_PUBLIC_URL}/${fileKey}`;
         } else {
-          // Simple PUT upload for small files
-          console.log(`File <50MB, using simple PUT upload`);
-
           const { data: presignedData } = await base44.functions.invoke('storage', {
             action: 'getPresignedUrl',
             fileName: file.name,
@@ -397,19 +370,11 @@ export default function AdminProjectDetail() {
 
           await new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
-
             xhr.addEventListener('load', () => {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                console.log(`Upload complete for ${file.name}`);
-                resolve();
-              } else {
-                reject(new Error(`Upload failed: ${xhr.status}`));
-              }
+              if (xhr.status >= 200 && xhr.status < 300) resolve();
+              else reject(new Error(`Upload failed: ${xhr.status}`));
             });
-
             xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
-            xhr.addEventListener('abort', () => reject(new Error('Upload was aborted')));
-
             xhr.open('PUT', presignedData.uploadUrl);
             xhr.setRequestHeader('Content-Type', fileType);
             xhr.send(file);
@@ -419,7 +384,6 @@ export default function AdminProjectDetail() {
           file_key = presignedData.fileKey;
         }
 
-        // Save metadata to database
         await base44.entities.ProjectFile.create({
           project_id: projectId,
           category,
@@ -429,10 +393,13 @@ export default function AdminProjectDetail() {
           file_size: file.size,
           mime_type: fileType,
         });
-        uploadedFiles.push(file_url);
 
-        // R2 only - Google Drive upload removed for stability with large file batches
-      }
+        return file_url;
+      };
+
+      // Upload ALL files in batch simultaneously (PARALLEL, not sequential!)
+      const uploadPromises = files.map(file => uploadSingleFile(file));
+      const uploadedFiles = await Promise.all(uploadPromises);
       return uploadedFiles;
     },
     onSuccess: () => {
@@ -828,7 +795,9 @@ export default function AdminProjectDetail() {
                 return (
                   <div key={category.key} className="border border-gray-100 rounded-xl p-6">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-base font-medium text-gray-900">{category.label}</h3>
+                      <h3 className="text-base font-medium text-gray-900">
+                        {category.label} ({categoryFiles.length})
+                      </h3>
                       <div className="flex items-center gap-2">
                         {categoryFiles.length > 0 && (
                           <>
@@ -920,6 +889,7 @@ export default function AdminProjectDetail() {
                                   {file.created_date && (
                                     <span className="ml-2">
                                       • {new Date(file.created_date).toLocaleDateString('nl-NL', {
+                                        timeZone: 'Europe/Amsterdam',
                                         day: '2-digit',
                                         month: '2-digit',
                                         year: 'numeric',
