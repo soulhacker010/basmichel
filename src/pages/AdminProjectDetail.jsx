@@ -547,11 +547,40 @@ export default function AdminProjectDetail() {
   };
 
   const handleFileUpload = async (category, event) => {
-    const files = Array.from(event.target.files);
-    if (files.length === 0) return;
+    const allFiles = Array.from(event.target.files);
+    if (allFiles.length === 0) return;
 
     setUploadingCategory(category);
-    uploadMutation.mutate({ category, files });
+
+    // Process files in batches of 10 to prevent browser memory crash
+    const BATCH_SIZE = 10;
+    const totalBatches = Math.ceil(allFiles.length / BATCH_SIZE);
+
+    console.log(`Starting upload of ${allFiles.length} files in ${totalBatches} batches`);
+
+    for (let i = 0; i < allFiles.length; i += BATCH_SIZE) {
+      const batch = allFiles.slice(i, i + BATCH_SIZE);
+      const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+
+      console.log(`Uploading batch ${batchNum}/${totalBatches} (${batch.length} files)`);
+      toast.info(`Batch ${batchNum}/${totalBatches} uploaden...`);
+
+      try {
+        await uploadMutation.mutateAsync({ category, files: batch });
+      } catch (error) {
+        console.error(`Batch ${batchNum} failed:`, error);
+        toast.error(`Batch ${batchNum} mislukt: ${error.message}`);
+        break;
+      }
+
+      // Small delay between batches to allow garbage collection
+      if (i + BATCH_SIZE < allFiles.length) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+
+    setUploadingCategory(null);
+    toast.success(`${allFiles.length} bestanden geüpload!`);
     event.target.value = '';
   };
 
