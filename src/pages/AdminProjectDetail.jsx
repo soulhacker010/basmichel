@@ -368,6 +368,11 @@ export default function AdminProjectDetail() {
 
             const batchResults = await Promise.all(batch);
             uploadedParts.push(...batchResults);
+
+            // Update progress after each chunk batch
+            const completedChunks = Math.min(i + CONCURRENT_CHUNKS, numChunks);
+            const percent = Math.round((completedChunks / numChunks) * 100);
+            setUploadPercent(percent);
           }
 
           console.log(`All ${numChunks} chunks uploaded, completing multipart upload`);
@@ -399,9 +404,18 @@ export default function AdminProjectDetail() {
           await new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
 
+            // Track real upload progress
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const percent = Math.round((event.loaded / event.total) * 100);
+                setUploadPercent(percent);
+              }
+            };
+
             xhr.addEventListener('load', () => {
               if (xhr.status >= 200 && xhr.status < 300) {
                 console.log(`Upload complete for ${file.name}`);
+                setUploadPercent(100);
                 resolve();
               } else {
                 reject(new Error(`Upload failed: ${xhr.status}`));
@@ -835,8 +849,19 @@ export default function AdminProjectDetail() {
 
                 return (
                   <div key={category.key} className="border border-gray-100 rounded-xl p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-base font-medium text-gray-900">{category.label} ({categoryFiles.length})</h3>
+                    <div className="flex items-center justify-between mb-4 gap-4">
+                      <h3 className="text-base font-medium text-gray-900 whitespace-nowrap">{category.label} ({categoryFiles.length})</h3>
+
+                      {/* Visual Progress Bar */}
+                      {uploadingCategory === category.key && (
+                        <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-green-500 transition-all duration-300 ease-out"
+                            style={{ width: `${uploadPercent}%` }}
+                          />
+                        </div>
+                      )}
+
                       <div className="flex items-center gap-2">
                         {categoryFiles.length > 0 && (
                           <>
