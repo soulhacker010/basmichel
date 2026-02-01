@@ -853,7 +853,7 @@ export default function AdminProjectDetail() {
                       <h3 className="text-base font-medium text-gray-900 whitespace-nowrap">{category.label} ({categoryFiles.length})</h3>
 
                       {/* Visual Progress Bar */}
-                      {uploadingCategory === category.key && (
+                      {uploadingCategory === category.key && uploadPercent > 0 && uploadPercent < 100 && (
                         <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-green-500 transition-all duration-300 ease-out"

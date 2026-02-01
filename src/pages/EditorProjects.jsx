@@ -50,6 +50,7 @@ export default function EditorProjects() {
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [uploadingCategory, setUploadingCategory] = useState(null);
   const [uploadProgress, setUploadProgress] = useState({ total: 0, completed: 0, failed: 0, current: [], bytesUploaded: 0, bytesTotal: 0 });
+  const [selectedFiles, setSelectedFiles] = useState({});
   const [showClientNotes, setShowClientNotes] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('editorDarkMode') === 'true';
@@ -541,6 +542,44 @@ export default function EditorProjects() {
     setUploadingNote(false);
   };
 
+  // File selection and download helpers (matching AdminProjectDetail)
+  const toggleFileSelection = (fileId) => {
+    setSelectedFiles(prev => ({
+      ...prev,
+      [fileId]: !prev[fileId]
+    }));
+  };
+
+  const selectAllInCategory = (category) => {
+    const categoryFiles = projectFiles.filter(f => f.category === category);
+    const allSelected = categoryFiles.every(f => selectedFiles[f.id]);
+
+    setSelectedFiles(prev => {
+      const newSelection = { ...prev };
+      categoryFiles.forEach(f => {
+        newSelection[f.id] = !allSelected;
+      });
+      return newSelection;
+    });
+  };
+
+  const handleDownloadSelected = async (category) => {
+    const filesToDownload = projectFiles.filter(f =>
+      f.category === category && selectedFiles[f.id]
+    );
+
+    for (const file of filesToDownload) {
+      const link = document.createElement('a');
+      link.href = file.file_url;
+      link.download = file.filename;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+  };
+
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.title?.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
@@ -693,23 +732,46 @@ export default function EditorProjects() {
               const categoryFiles = projectFiles.filter(f => f.category === category.key);
               return (
                 <div key={category.key} className={cn("border rounded-xl p-4", darkMode ? "border-gray-700" : "border-gray-200")}>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className={cn("font-medium text-sm", darkMode ? "text-gray-100" : "text-gray-900")}>{category.label}</h3>
-                    <input
-                      type="file"
-                      multiple
-                      onChange={(e) => handleFileUpload(e, category.key)}
-                      className="hidden"
-                      id={`upload-${category.key}`}
-                    />
-                    <label htmlFor={`upload-${category.key}`}>
-                      <Button size="sm" variant="outline" asChild disabled={uploadingCategory === category.key}>
-                        <span className="cursor-pointer flex items-center gap-1">
-                          <Upload className="w-3 h-3" />
-                          {uploadingCategory === category.key ? 'Uploading...' : 'Upload'}
-                        </span>
-                      </Button>
-                    </label>
+                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                    <h3 className={cn("font-medium text-sm", darkMode ? "text-gray-100" : "text-gray-900")}>{category.label} ({categoryFiles.length})</h3>
+                    <div className="flex items-center gap-2">
+                      {categoryFiles.length > 0 && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => selectAllInCategory(category.key)}
+                          >
+                            {categoryFiles.every(f => selectedFiles[f.id]) ? 'Deselecteer' : 'Selecteer alles'}
+                          </Button>
+                          {categoryFiles.some(f => selectedFiles[f.id]) && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleDownloadSelected(category.key)}
+                              className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
+                            >
+                              <Download className="w-3 h-3 mr-1" />
+                              Download ({categoryFiles.filter(f => selectedFiles[f.id]).length})
+                            </Button>
+                          )}
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        multiple
+                        onChange={(e) => handleFileUpload(e, category.key)}
+                        className="hidden"
+                        id={`upload-${category.key}`}
+                      />
+                      <label htmlFor={`upload-${category.key}`}>
+                        <Button size="sm" variant="outline" asChild disabled={uploadingCategory === category.key}>
+                          <span className="cursor-pointer flex items-center gap-1">
+                            <Upload className="w-3 h-3" />
+                            {uploadingCategory === category.key ? 'Uploading...' : 'Upload'}
+                          </span>
+                        </Button>
+                      </label>
+                    </div>
                   </div>
                   {categoryFiles.length === 0 ? (
                     <p className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>Geen bestanden</p>
@@ -718,6 +780,12 @@ export default function EditorProjects() {
                       {categoryFiles.map(file => (
                         <div key={file.id} className={cn("flex items-center justify-between p-2 rounded-lg", darkMode ? "bg-gray-700" : "bg-gray-50")}>
                           <div className="flex items-center gap-2 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={!!selectedFiles[file.id]}
+                              onChange={() => toggleFileSelection(file.id)}
+                              className="w-4 h-4 rounded border-gray-300 flex-shrink-0"
+                            />
                             {file.mime_type?.startsWith('image/') ? (
                               <img src={file.file_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
                             ) : (
@@ -763,23 +831,46 @@ export default function EditorProjects() {
               const categoryFiles = projectFiles.filter(f => f.category === category.key);
               return (
                 <div key={category.key} className={cn("border rounded-xl p-4", darkMode ? "border-gray-700" : "border-gray-200")}>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className={cn("font-medium text-sm", darkMode ? "text-gray-100" : "text-gray-900")}>{category.label}</h3>
-                    <input
-                      type="file"
-                      multiple
-                      onChange={(e) => handleFileUpload(e, category.key)}
-                      className="hidden"
-                      id={`upload-raw-${category.key}`}
-                    />
-                    <label htmlFor={`upload-raw-${category.key}`}>
-                      <Button size="sm" variant="outline" asChild disabled={uploadingCategory === category.key}>
-                        <span className="cursor-pointer flex items-center gap-1">
-                          <Upload className="w-3 h-3" />
-                          {uploadingCategory === category.key ? 'Uploading...' : 'Upload'}
-                        </span>
-                      </Button>
-                    </label>
+                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                    <h3 className={cn("font-medium text-sm", darkMode ? "text-gray-100" : "text-gray-900")}>{category.label} ({categoryFiles.length})</h3>
+                    <div className="flex items-center gap-2">
+                      {categoryFiles.length > 0 && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => selectAllInCategory(category.key)}
+                          >
+                            {categoryFiles.every(f => selectedFiles[f.id]) ? 'Deselecteer' : 'Selecteer alles'}
+                          </Button>
+                          {categoryFiles.some(f => selectedFiles[f.id]) && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleDownloadSelected(category.key)}
+                              className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
+                            >
+                              <Download className="w-3 h-3 mr-1" />
+                              Download ({categoryFiles.filter(f => selectedFiles[f.id]).length})
+                            </Button>
+                          )}
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        multiple
+                        onChange={(e) => handleFileUpload(e, category.key)}
+                        className="hidden"
+                        id={`upload-raw-${category.key}`}
+                      />
+                      <label htmlFor={`upload-raw-${category.key}`}>
+                        <Button size="sm" variant="outline" asChild disabled={uploadingCategory === category.key}>
+                          <span className="cursor-pointer flex items-center gap-1">
+                            <Upload className="w-3 h-3" />
+                            {uploadingCategory === category.key ? 'Uploading...' : 'Upload'}
+                          </span>
+                        </Button>
+                      </label>
+                    </div>
                   </div>
                   {categoryFiles.length === 0 ? (
                     <p className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>Geen bestanden</p>
@@ -788,6 +879,12 @@ export default function EditorProjects() {
                       {categoryFiles.map(file => (
                         <div key={file.id} className={cn("flex items-center justify-between p-2 rounded-lg", darkMode ? "bg-gray-700" : "bg-gray-50")}>
                           <div className="flex items-center gap-2 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={!!selectedFiles[file.id]}
+                              onChange={() => toggleFileSelection(file.id)}
+                              className="w-4 h-4 rounded border-gray-300 flex-shrink-0"
+                            />
                             {file.mime_type?.startsWith('image/') ? (
                               <img src={file.file_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
                             ) : (
