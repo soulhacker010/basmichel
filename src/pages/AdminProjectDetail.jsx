@@ -73,6 +73,7 @@ export default function AdminProjectDetail() {
   const [loadingDriveFiles, setLoadingDriveFiles] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [matterportLink, setMatterportLink] = useState('');
   const [invoiceData, setInvoiceData] = useState({
     items: [{ title: '', description: '', quantity: 1, unit_price: '' }],
     vat_percentage: 21,
@@ -616,6 +617,49 @@ export default function AdminProjectDetail() {
     }
   };
 
+  const handleDeleteSelected = async (category) => {
+    const filesToDelete = projectFiles.filter(f =>
+      f.category === category && selectedFiles[f.id]
+    );
+
+    if (filesToDelete.length === 0) return;
+
+    if (!confirm(`Weet je zeker dat je ${filesToDelete.length} bestand(en) wilt verwijderen?`)) {
+      return;
+    }
+
+    for (const file of filesToDelete) {
+      await deleteMutation.mutateAsync(file.id);
+    }
+
+    setSelectedFiles({});
+    toast.success(`${filesToDelete.length} bestanden verwijderd`);
+  };
+
+  const saveMatterportLink = async () => {
+    if (!matterportLink.trim()) {
+      toast.error('Voer een geldige link in');
+      return;
+    }
+
+    try {
+      await base44.entities.ProjectFile.create({
+        project_id: projectId,
+        category: '360_matterport',
+        file_url: matterportLink.trim(),
+        filename: 'Matterport Link',
+        file_size: 0,
+        mime_type: 'text/url',
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['projectFiles', projectId] });
+      setMatterportLink('');
+      toast.success('Matterport link opgeslagen');
+    } catch (error) {
+      toast.error('Fout bij opslaan link');
+    }
+  };
+
   if (isLoading || !project) {
     return (
       <div className="max-w-7xl mx-auto py-16 text-center">
@@ -872,14 +916,24 @@ export default function AdminProjectDetail() {
                               {allSelected ? 'Deselecteer alles' : 'Alles selecteren'}
                             </Button>
                             {selectedCount > 0 && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleDownloadSelected(category.key)}
-                                className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
-                              >
-                                <Download className="w-4 h-4 mr-2" />
-                                Download ({selectedCount})
-                              </Button>
+                              <>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleDownloadSelected(category.key)}
+                                  className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
+                                >
+                                  <Download className="w-4 h-4 mr-2" />
+                                  Download ({selectedCount})
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleDeleteSelected(category.key)}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Verwijderen ({selectedCount})
+                                </Button>
+                              </>
                             )}
                           </>
                         )}
@@ -911,6 +965,26 @@ export default function AdminProjectDetail() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Link input for 360/Matterport */}
+                    {category.key === '360_matterport' && (
+                      <div className="mb-4 flex gap-2">
+                        <Input
+                          type="url"
+                          placeholder="Plak hier je Matterport of 360° link..."
+                          value={matterportLink}
+                          onChange={(e) => setMatterportLink(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button
+                          onClick={saveMatterportLink}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Link toevoegen
+                        </Button>
+                      </div>
+                    )}
 
                     <div
                       onDrop={(e) => {
@@ -946,7 +1020,18 @@ export default function AdminProjectDetail() {
                                 className="w-4 h-4 rounded border-gray-300"
                               />
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">{file.filename}</p>
+                                {file.mime_type === 'text/url' ? (
+                                  <a
+                                    href={file.file_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate block"
+                                  >
+                                    🔗 {file.file_url}
+                                  </a>
+                                ) : (
+                                  <p className="text-sm font-medium text-gray-900 truncate">{file.filename}</p>
+                                )}
                                 <p className="text-xs text-gray-400">
                                   {(file.file_size / 1024 / 1024).toFixed(2)} MB
                                   {file.created_date && (

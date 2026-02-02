@@ -580,6 +580,25 @@ export default function EditorProjects() {
     }
   };
 
+  const handleDeleteSelected = async (category) => {
+    const filesToDelete = projectFiles.filter(f =>
+      f.category === category && selectedFiles[f.id]
+    );
+
+    if (filesToDelete.length === 0) return;
+
+    if (!confirm(`Weet je zeker dat je ${filesToDelete.length} bestand(en) wilt verwijderen?`)) {
+      return;
+    }
+
+    for (const file of filesToDelete) {
+      await deleteFileMutation.mutateAsync(file);
+    }
+
+    setSelectedFiles({});
+    toast.success(`${filesToDelete.length} bestanden verwijderd`);
+  };
+
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.title?.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
@@ -745,14 +764,24 @@ export default function EditorProjects() {
                             {categoryFiles.every(f => selectedFiles[f.id]) ? 'Deselecteer' : 'Selecteer alles'}
                           </Button>
                           {categoryFiles.some(f => selectedFiles[f.id]) && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleDownloadSelected(category.key)}
-                              className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
-                            >
-                              <Download className="w-3 h-3 mr-1" />
-                              Download ({categoryFiles.filter(f => selectedFiles[f.id]).length})
-                            </Button>
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => handleDownloadSelected(category.key)}
+                                className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
+                              >
+                                <Download className="w-3 h-3 mr-1" />
+                                Download ({categoryFiles.filter(f => selectedFiles[f.id]).length})
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteSelected(category.key)}
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                Verwijderen ({categoryFiles.filter(f => selectedFiles[f.id]).length})
+                              </Button>
+                            </>
                           )}
                         </>
                       )}
@@ -844,14 +873,24 @@ export default function EditorProjects() {
                             {categoryFiles.every(f => selectedFiles[f.id]) ? 'Deselecteer' : 'Selecteer alles'}
                           </Button>
                           {categoryFiles.some(f => selectedFiles[f.id]) && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleDownloadSelected(category.key)}
-                              className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
-                            >
-                              <Download className="w-3 h-3 mr-1" />
-                              Download ({categoryFiles.filter(f => selectedFiles[f.id]).length})
-                            </Button>
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => handleDownloadSelected(category.key)}
+                                className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
+                              >
+                                <Download className="w-3 h-3 mr-1" />
+                                Download ({categoryFiles.filter(f => selectedFiles[f.id]).length})
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteSelected(category.key)}
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                Verwijderen ({categoryFiles.filter(f => selectedFiles[f.id]).length})
+                              </Button>
+                            </>
                           )}
                         </>
                       )}
