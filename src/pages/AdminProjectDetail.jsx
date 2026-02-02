@@ -415,7 +415,6 @@ export default function AdminProjectDetail() {
             xhr.addEventListener('load', () => {
               if (xhr.status >= 200 && xhr.status < 300) {
                 console.log(`Upload complete for ${file.name}`);
-                setUploadPercent(100);
                 resolve();
               } else {
                 reject(new Error(`Upload failed: ${xhr.status}`));
@@ -952,7 +951,7 @@ export default function AdminProjectDetail() {
                                   {(file.file_size / 1024 / 1024).toFixed(2)} MB
                                   {file.created_date && (
                                     <span className="ml-2">
-                                      • {new Date(file.created_date).toLocaleDateString('nl-NL', {
+                                      • {new Date(new Date(file.created_date).getTime() + 60 * 60 * 1000).toLocaleDateString('nl-NL', {
                                         timeZone: 'Europe/Amsterdam',
                                         day: '2-digit',
                                         month: '2-digit',
