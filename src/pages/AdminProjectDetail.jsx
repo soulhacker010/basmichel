@@ -831,7 +831,7 @@ export default function AdminProjectDetail() {
 
       {/* Gallery Preview */}
       <Link
-        to={createPageUrl('AdminGalleries')}
+        to={createPageUrl('ProjectGalleryView') + `?id=${projectId}`}
         className={cn("block rounded-2xl overflow-hidden hover:shadow-md transition-shadow mb-8",
           darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100"
         )}
