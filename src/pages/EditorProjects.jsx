@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Search, Download, Upload, ArrowLeft, FileText, ChevronDown, Info, Trash2, Calendar } from 'lucide-react';
+import { Search, Download, Upload, ArrowLeft, FileText, ChevronDown, Info, Trash2, Calendar, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -51,6 +51,7 @@ export default function EditorProjects() {
   const [uploadingCategory, setUploadingCategory] = useState(null);
   const [uploadProgress, setUploadProgress] = useState({ total: 0, completed: 0, failed: 0, current: [], bytesUploaded: 0, bytesTotal: 0 });
   const [selectedFiles, setSelectedFiles] = useState({});
+  const [matterportLink, setMatterportLink] = useState('');
   const [showClientNotes, setShowClientNotes] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('editorDarkMode') === 'true';
@@ -596,7 +597,31 @@ export default function EditorProjects() {
     }
 
     setSelectedFiles({});
-    toast.success(`${filesToDelete.length} bestanden verwijderd`);
+    toast.success(`${filesToDelete.length} files deleted`);
+  };
+
+  const saveMatterportLink = async () => {
+    if (!matterportLink.trim()) {
+      toast.error('Please enter a valid link');
+      return;
+    }
+
+    try {
+      await base44.entities.ProjectFile.create({
+        project_id: selectedProject.id,
+        category: '360_matterport',
+        file_url: matterportLink.trim(),
+        filename: 'Matterport Link',
+        file_size: 0,
+        mime_type: 'text/url',
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['project_files'] });
+      setMatterportLink('');
+      toast.success('Matterport link saved');
+    } catch (error) {
+      toast.error('Error saving link');
+    }
   };
 
   const filteredProjects = projects.filter(project => {
@@ -761,7 +786,7 @@ export default function EditorProjects() {
                             size="sm"
                             onClick={() => selectAllInCategory(category.key)}
                           >
-                            {categoryFiles.every(f => selectedFiles[f.id]) ? 'Deselecteer' : 'Selecteer alles'}
+                            {categoryFiles.every(f => selectedFiles[f.id]) ? 'Deselect' : 'Select all'}
                           </Button>
                           {categoryFiles.some(f => selectedFiles[f.id]) && (
                             <>
@@ -779,7 +804,7 @@ export default function EditorProjects() {
                                 onClick={() => handleDeleteSelected(category.key)}
                               >
                                 <Trash2 className="w-3 h-3 mr-1" />
-                                Verwijderen ({categoryFiles.filter(f => selectedFiles[f.id]).length})
+                                Delete ({categoryFiles.filter(f => selectedFiles[f.id]).length})
                               </Button>
                             </>
                           )}
@@ -802,6 +827,27 @@ export default function EditorProjects() {
                       </label>
                     </div>
                   </div>
+
+                  {/* Link input for 360/Matterport */}
+                  {category.key === '360_matterport' && (
+                    <div className="mb-3 flex gap-2">
+                      <Input
+                        type="url"
+                        placeholder="Paste Matterport or 360° link here..."
+                        value={matterportLink}
+                        onChange={(e) => setMatterportLink(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={saveMatterportLink}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Link
+                      </Button>
+                    </div>
+                  )}
+
                   {categoryFiles.length === 0 ? (
                     <p className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>Geen bestanden</p>
                   ) : (
@@ -870,7 +916,7 @@ export default function EditorProjects() {
                             size="sm"
                             onClick={() => selectAllInCategory(category.key)}
                           >
-                            {categoryFiles.every(f => selectedFiles[f.id]) ? 'Deselecteer' : 'Selecteer alles'}
+                            {categoryFiles.every(f => selectedFiles[f.id]) ? 'Deselect' : 'Select all'}
                           </Button>
                           {categoryFiles.some(f => selectedFiles[f.id]) && (
                             <>
@@ -888,7 +934,7 @@ export default function EditorProjects() {
                                 onClick={() => handleDeleteSelected(category.key)}
                               >
                                 <Trash2 className="w-3 h-3 mr-1" />
-                                Verwijderen ({categoryFiles.filter(f => selectedFiles[f.id]).length})
+                                Delete ({categoryFiles.filter(f => selectedFiles[f.id]).length})
                               </Button>
                             </>
                           )}
