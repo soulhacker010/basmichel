@@ -838,7 +838,7 @@ export default function AdminBookings() {
                         {client && (
                           <div className={cn("flex items-center gap-1.5 text-sm", darkMode ? "text-gray-400" : "text-gray-600")}>
                             <User className="w-3.5 h-3.5" />
-                            <span>{user?.full_name || client.company_name || 'Onbekend'}</span>
+                            <span>{client.contact_name || user?.full_name || client.company_name || 'Onbekend'}</span>
                           </div>
                         )}
                         {session.notes && (
