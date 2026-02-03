@@ -672,7 +672,7 @@ export default function AdminProjectDetail() {
 
     setSyncingCalendar(true);
     try {
-      const response = await base44.functions.calendar({
+      const { data: response } = await base44.functions.invoke('calendar', {
         action: 'syncEvent',
         projectId: project.id,
         projectTitle: project.title,
