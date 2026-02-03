@@ -177,10 +177,23 @@ export default function AdminBookings() {
         }
       }
       
+      // Delete related booking if exists
+      if (session.project_id) {
+        try {
+          const bookings = await base44.entities.Booking.filter({ project_id: session.project_id });
+          for (const booking of bookings) {
+            await base44.entities.Booking.delete(booking.id);
+          }
+        } catch (error) {
+          console.error('Failed to delete related booking:', error);
+        }
+      }
+      
       return await base44.entities.Session.delete(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
       setDeleteSessionId(null);
     },
   });
