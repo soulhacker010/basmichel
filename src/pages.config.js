@@ -82,6 +82,7 @@ import EditorUpcoming from './pages/EditorUpcoming';
 import GalleryView from './pages/GalleryView';
 import Home from './pages/Home';
 import ProjectGalleryView from './pages/ProjectGalleryView';
+import ClientBookings from './pages/ClientBookings';
 import __Layout from './Layout.jsx';
 
 
@@ -121,6 +122,7 @@ export const PAGES = {
     "GalleryView": GalleryView,
     "Home": Home,
     "ProjectGalleryView": ProjectGalleryView,
+    "ClientBookings": ClientBookings,
 }
 
 export const pagesConfig = {

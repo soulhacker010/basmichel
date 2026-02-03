@@ -11,7 +11,8 @@ const clientPages = [
   'ClientProjects', 
   'ClientProjectDetail',
   'ClientProjectDetail2',
-  'ClientBooking', 
+  'ClientBooking',
+  'ClientBookings',
   'ClientGalleries',
   'ClientInvoices',
   'ClientProfile'

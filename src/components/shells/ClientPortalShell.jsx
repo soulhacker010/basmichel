@@ -11,7 +11,8 @@ import {
   Menu,
   X,
   LogOut,
-  Images
+  Images,
+  Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -20,6 +21,7 @@ import NotificationCenter from '@/components/notifications/NotificationCenter';
 const clientPages = [
   { name: 'Dashboard', page: 'ClientDashboard', path: '/client/dashboard', icon: LayoutDashboard },
   { name: 'Projecten', page: 'ClientProjects', path: '/client/projecten', icon: FolderKanban },
+  { name: 'Agenda', page: 'ClientBookings', path: '/client/agenda', icon: Calendar },
   { name: 'Galerijen', page: 'ClientGalleries', path: '/client/galerijen', icon: Images },
   { name: 'Facturen', page: 'ClientInvoices', path: '/client/facturen', icon: CreditCard },
   { name: 'Profiel', page: 'ClientProfile', path: '/client/profiel', icon: User },
