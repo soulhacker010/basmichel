@@ -108,7 +108,27 @@ export default function AdminBookings() {
   });
 
   const createSessionMutation = useMutation({
-    mutationFn: (data) => base44.entities.Session.create(data),
+    mutationFn: async (data) => {
+      const session = await base44.entities.Session.create(data);
+      
+      // Sync to Google Calendar
+      try {
+        const calendarResponse = await base44.functions.invoke('calendarSession', {
+          action: 'syncSessionEvent',
+          sessionData: { ...data, session_type_id: data.session_type_id }
+        });
+        
+        if (calendarResponse.data.success && calendarResponse.data.calendarEventId) {
+          await base44.entities.Session.update(session.id, {
+            google_calendar_event_id: calendarResponse.data.calendarEventId
+          });
+        }
+      } catch (error) {
+        console.error('Failed to sync to calendar:', error);
+      }
+      
+      return session;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       setIsSessionDialogOpen(false);
@@ -117,7 +137,23 @@ export default function AdminBookings() {
   });
 
   const updateSessionMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Session.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      const session = await base44.entities.Session.get(id);
+      const updatedSession = await base44.entities.Session.update(id, data);
+      
+      // Sync to Google Calendar
+      try {
+        await base44.functions.invoke('calendarSession', {
+          action: 'syncSessionEvent',
+          sessionData: { ...data, session_type_id: data.session_type_id },
+          calendarEventId: session.google_calendar_event_id
+        });
+      } catch (error) {
+        console.error('Failed to sync to calendar:', error);
+      }
+      
+      return updatedSession;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       setIsSessionDialogOpen(false);
@@ -126,7 +162,23 @@ export default function AdminBookings() {
   });
 
   const deleteSessionMutation = useMutation({
-    mutationFn: (id) => base44.entities.Session.delete(id),
+    mutationFn: async (id) => {
+      const session = await base44.entities.Session.get(id);
+      
+      // Delete from Google Calendar first
+      if (session.google_calendar_event_id) {
+        try {
+          await base44.functions.invoke('calendarSession', {
+            action: 'deleteSessionEvent',
+            calendarEventId: session.google_calendar_event_id
+          });
+        } catch (error) {
+          console.error('Failed to delete from calendar:', error);
+        }
+      }
+      
+      return await base44.entities.Session.delete(id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       setDeleteSessionId(null);
