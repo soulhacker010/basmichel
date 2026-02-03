@@ -125,6 +125,30 @@ export default function AdminProjects() {
           status: 'bevestigd',
           address: data.address,
         });
+
+        // Auto-sync to Google Calendar
+        try {
+          const { data: calendarResponse } = await base44.functions.invoke('calendar', {
+            action: 'syncEvent',
+            projectId: project.id,
+            projectTitle: projectData.title,
+            shootDate: data.shoot_date,
+            shootTime: data.shoot_time,
+            clientName: 'N/A', // Client name will be fetched later if needed
+            location: projectData.title, // Address as location
+            calendarEventId: null,
+          });
+
+          // Save the calendar event ID to the project
+          if (calendarResponse?.calendarEventId) {
+            await base44.entities.Project.update(project.id, {
+              calendar_event_id: calendarResponse.calendarEventId,
+            });
+          }
+        } catch (calendarError) {
+          console.error('Auto calendar sync failed:', calendarError);
+          // Don't fail project creation if calendar sync fails
+        }
       }
 
       return project;
