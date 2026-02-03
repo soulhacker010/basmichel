@@ -82,27 +82,38 @@ export default function ClientBooking() {
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
   };
 
+  // Check if a day is available for bookings
+  const isDayAvailable = (date) => {
+    const dayOfWeek = date.getDay();
+    return availability.some(a => a.type === 'werkdag' && a.day_of_week === dayOfWeek && a.is_active);
+  };
+
   // Generate available time slots for a date
   const getTimeSlots = (date) => {
     if (!date || !selectedService) return [];
     
     const dayOfWeek = date.getDay();
-    const workdayConfig = availability.find(a => a.type === 'werkdag' && a.day_of_week === dayOfWeek);
+    const workdayConfig = availability.find(a => a.type === 'werkdag' && a.day_of_week === dayOfWeek && a.is_active);
     
-    // Default to 9-17 if no config
-    const startHour = workdayConfig?.start_time ? parseInt(workdayConfig.start_time.split(':')[0]) : 9;
-    const endHour = workdayConfig?.end_time ? parseInt(workdayConfig.end_time.split(':')[0]) : 17;
+    // If no working hours configured for this day, return empty
+    if (!workdayConfig) return [];
+    
+    const [startHour, startMinute] = workdayConfig.start_time.split(':').map(Number);
+    const [endHour, endMinute] = workdayConfig.end_time.split(':').map(Number);
     
     const slots = [];
     const duration = selectedService.duration_minutes || 60;
-    const buffer = 30; // Buffer between sessions
     
-    let currentTime = setMinutes(setHours(date, startHour), 0);
-    const endTime = setMinutes(setHours(date, endHour), 0);
+    let currentTime = setMinutes(setHours(date, startHour), startMinute);
+    const endTime = setMinutes(setHours(date, endHour), endMinute);
     
-    while (isBefore(addMinutes(currentTime, duration), endTime) || isSameDay(addMinutes(currentTime, duration), endTime)) {
-      // Check if slot conflicts with existing sessions
+    while (isBefore(currentTime, endTime)) {
       const slotEnd = addMinutes(currentTime, duration);
+      
+      // Check if the entire slot fits within working hours
+      if (isAfter(slotEnd, endTime)) break;
+      
+      // Check if slot conflicts with existing sessions
       const hasConflict = existingSessions.some(session => {
         const sessionStart = new Date(session.start_datetime);
         const sessionEnd = new Date(session.end_datetime);
@@ -114,6 +125,7 @@ export default function ClientBooking() {
         );
       });
       
+      // Only show future slots that don't conflict
       if (!hasConflict && isAfter(currentTime, new Date())) {
         slots.push(new Date(currentTime));
       }
@@ -383,18 +395,22 @@ Basmichel
                 const isToday = isSameDay(day, new Date());
                 const isPast = isBefore(day, new Date()) && !isToday;
                 const isSelected = selectedDate && isSameDay(day, selectedDate);
+                const isAvailable = isDayAvailable(day);
+                const isDisabled = isPast || !isAvailable;
 
                 return (
                   <button
                     key={day.toISOString()}
                     onClick={() => {
-                      setSelectedDate(day);
-                      setSelectedTime(null);
+                      if (!isDisabled) {
+                        setSelectedDate(day);
+                        setSelectedTime(null);
+                      }
                     }}
-                    disabled={isPast}
+                    disabled={isDisabled}
                     className={cn(
                       "py-4 px-2 rounded-xl text-center transition-all",
-                      isPast ? "opacity-30 cursor-not-allowed" :
+                      isDisabled ? "opacity-30 cursor-not-allowed" :
                       isSelected ? "bg-[#5C6B52] text-white shadow-sm" :
                       isToday ? "bg-[#F8FAF7] text-[#5C6B52] ring-1 ring-[#A8B5A0]" :
                       "hover:bg-gray-50"
