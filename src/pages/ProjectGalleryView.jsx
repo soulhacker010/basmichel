@@ -236,7 +236,7 @@ export default function ProjectGalleryView() {
                     )}
                     <Button
                         onClick={() => setSelectMode(true)}
-                        className="mt-6 bg-[#5C6B52] hover:bg-[#4A5641] text-white"
+                        className="mt-6 bg-white hover:bg-gray-100 text-gray-900 font-medium"
                     >
                         <Images className="w-4 h-4 mr-2" />
                         View Gallery
