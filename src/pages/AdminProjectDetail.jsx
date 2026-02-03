@@ -660,6 +660,49 @@ export default function AdminProjectDetail() {
     }
   };
 
+  const [syncingCalendar, setSyncingCalendar] = useState(false);
+
+  const syncToCalendar = async () => {
+    const shootDate = project.shoot_date || booking?.start_datetime;
+
+    if (!shootDate) {
+      toast.error('Geen shootdatum ingesteld');
+      return;
+    }
+
+    setSyncingCalendar(true);
+    try {
+      const response = await base44.functions.calendar({
+        action: 'syncEvent',
+        projectId: project.id,
+        projectTitle: project.title,
+        shootDate: shootDate,
+        calendarEventId: project.calendar_event_id || null,
+      });
+
+      if (response.calendarEventId && !project.calendar_event_id) {
+        // Save the calendar event ID to the project
+        await base44.entities.Project.update(project.id, {
+          calendar_event_id: response.calendarEventId,
+        });
+        queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      }
+
+      toast.success('Gesynchroniseerd met Google Calendar!');
+    } catch (error) {
+      console.error('Calendar sync error:', error);
+      if (error.message?.includes('not connected')) {
+        toast.error('Google Calendar niet verbonden. Ga naar Instellingen om te verbinden.');
+      } else if (error.message?.includes('Conflict')) {
+        toast.error('Conflict: Kalender is bezet op dit tijdstip.');
+      } else {
+        toast.error('Synchronisatie mislukt: ' + (error.message || 'Onbekende fout'));
+      }
+    } finally {
+      setSyncingCalendar(false);
+    }
+  };
+
   if (isLoading || !project) {
     return (
       <div className="max-w-7xl mx-auto py-16 text-center">
@@ -783,6 +826,22 @@ export default function AdminProjectDetail() {
               {project.shoot_date ? format(new Date(project.shoot_date), 'd MMMM yyyy', { locale: nl }) :
                 booking?.start_datetime ? format(new Date(booking.start_datetime), 'd MMMM yyyy', { locale: nl }) : '-'}
             </p>
+            {(project.shoot_date || booking?.start_datetime) && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={syncToCalendar}
+                disabled={syncingCalendar}
+                className={cn("mt-2", darkMode ? "border-gray-600 text-gray-300 hover:bg-gray-700" : "")}
+              >
+                {syncingCalendar ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Calendar className="w-4 h-4 mr-2" />
+                )}
+                Sync to Calendar
+              </Button>
+            )}
           </div>
           <div>
             <p className={cn("text-sm mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Starttijd</p>
