@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { 
-  Plus, 
-  FolderKanban, 
+import {
+  Plus,
+  FolderKanban,
   Search,
   MapPin,
   Calendar as CalendarIcon,
@@ -55,7 +55,7 @@ export default function AdminProjects() {
   const [editingProject, setEditingProject] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
-  
+
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -93,27 +93,27 @@ export default function AdminProjects() {
       const counters = await base44.entities.ProjectCounter.list();
       let nextNumber = 202700;
       let counterId = null;
-      
+
       if (counters.length > 0) {
         nextNumber = counters[0].last_number + 1;
         counterId = counters[0].id;
       }
-      
+
       // Update or create counter
       if (counterId) {
         await base44.entities.ProjectCounter.update(counterId, { last_number: nextNumber });
       } else {
         await base44.entities.ProjectCounter.create({ last_number: nextNumber });
       }
-      
+
       const projectData = {
         ...data,
         project_number: nextNumber.toString(),
         title: `${data.address}${data.city ? ', ' + data.city : ''}`, // Title = Full Address (street + city)
       };
-      
+
       const project = await base44.entities.Project.create(projectData);
-      
+
       // Create booking/agenda item
       if (data.shoot_date && data.shoot_time) {
         const shootDateTime = new Date(`${data.shoot_date}T${data.shoot_time}`);
@@ -126,7 +126,7 @@ export default function AdminProjects() {
           address: data.address,
         });
       }
-      
+
       return project;
     },
     onSuccess: () => {
@@ -153,24 +153,40 @@ export default function AdminProjects() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
+      // First get the project to check for calendar event ID
+      const project = projects.find(p => p.id === id);
+
+      // Delete calendar event if it exists
+      if (project?.calendar_event_id) {
+        try {
+          await base44.functions.invoke('calendar', {
+            action: 'deleteEvent',
+            calendarEventId: project.calendar_event_id,
+          });
+        } catch (calendarError) {
+          console.error('Failed to delete calendar event:', calendarError);
+          // Continue with project deletion even if calendar delete fails
+        }
+      }
+
       // Delete related bookings first
       const relatedBookings = await base44.entities.Booking.filter({ project_id: id });
       for (const booking of relatedBookings) {
         await base44.entities.Booking.delete(booking.id);
       }
-      
+
       // Delete related invoices
       const relatedInvoices = await base44.entities.ProjectInvoice.filter({ project_id: id });
       for (const invoice of relatedInvoices) {
         await base44.entities.ProjectInvoice.delete(invoice.id);
       }
-      
+
       // Delete related files
       const relatedFiles = await base44.entities.ProjectFile.filter({ project_id: id });
       for (const file of relatedFiles) {
         await base44.entities.ProjectFile.delete(file.id);
       }
-      
+
       // Finally delete the project itself
       await base44.entities.Project.delete(id);
     },
@@ -196,13 +212,13 @@ export default function AdminProjects() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    
+
     const address = formData.get('address');
     const city = formData.get('city');
     const shoot_date = formData.get('shoot_date');
     const shoot_time = formData.get('shoot_time');
     const client_id = formData.get('client_id');
-    
+
     // Validation for create
     if (!editingProject) {
       if (!address || !city || !shoot_date || !shoot_time || !client_id) {
@@ -210,7 +226,7 @@ export default function AdminProjects() {
         return;
       }
     }
-    
+
     const data = {
       address,
       city,
@@ -233,8 +249,8 @@ export default function AdminProjects() {
     const client = clients.find(c => c.id === clientId);
     if (!client) return '-';
     const user = users.find(u => u.id === client.user_id);
-    const fullName = user?.first_name && user?.last_name 
-      ? `${user.first_name} ${user.last_name}` 
+    const fullName = user?.first_name && user?.last_name
+      ? `${user.first_name} ${user.last_name}`
       : user?.full_name;
     return fullName || client.company_name || '-';
   };
@@ -252,7 +268,7 @@ export default function AdminProjects() {
       {/* Header - Pixieset style */}
       <div className="flex items-center justify-between mb-8">
         <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>Projecten</h1>
-        <Button 
+        <Button
           onClick={() => {
             setEditingProject(null);
             setIsDialogOpen(true);
@@ -316,9 +332,9 @@ export default function AdminProjects() {
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={(e) => e.preventDefault()}
                     >
@@ -334,7 +350,7 @@ export default function AdminProjects() {
                       <Pencil className="w-4 h-4 mr-2" />
                       Bewerken
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={(e) => {
                         e.preventDefault();
                         setDeleteId(project.id);
@@ -453,8 +469,8 @@ export default function AdminProjects() {
                 <option value="">Selecteer klant</option>
                 {clients.map(client => {
                   const user = users.find(u => u.id === client.user_id);
-                  const fullName = user?.first_name && user?.last_name 
-                    ? `${user.first_name} ${user.last_name}` 
+                  const fullName = user?.first_name && user?.last_name
+                    ? `${user.first_name} ${user.last_name}`
                     : user?.full_name;
                   return (
                     <option key={client.id} value={client.id}>

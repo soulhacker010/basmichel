@@ -268,6 +268,7 @@ export default function AdminProjectDetail() {
             shootDate: shootDate,
             shootTime: project.shoot_time || null,
             clientName: user?.full_name || client?.company_name || 'N/A',
+            location: project.title, // Address is typically the project title
             calendarEventId: project.calendar_event_id || null,
           });
 
@@ -704,6 +705,7 @@ export default function AdminProjectDetail() {
         shootDate: shootDate,
         shootTime: project.shoot_time || (booking?.start_datetime ? new Date(booking.start_datetime).toTimeString().slice(0, 5) : null),
         clientName: user?.full_name || client?.company_name || 'N/A',
+        location: project.title, // Address is typically the project title
         calendarEventId: project.calendar_event_id || null,
       });
 

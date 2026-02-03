@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { action, projectId, projectTitle, shootDate, shootTime, clientName, calendarEventId } = await req.json();
+        const { action, projectId, projectTitle, shootDate, shootTime, clientName, location, calendarEventId } = await req.json();
 
         // 1. Get Access Token for Google Calendar
         // Assuming the connector key is 'googlecalendar' based on standard naming
@@ -51,7 +51,8 @@ Deno.serve(async (req) => {
             const endDateTime = endDate.toISOString().replace('Z', '').split('.')[0];
 
             const eventData = {
-                summary: projectTitle, // Just the project title, no prefix
+                summary: projectTitle, // Just the project title
+                location: location || '', // Address/location for the shoot
                 description: `Client: ${clientName || 'N/A'}\nProject ID: ${projectId}\nDirect link: ${req.headers.get('origin')}/AdminProjectDetail?id=${projectId}`,
                 start: {
                     dateTime: startDateTime,
