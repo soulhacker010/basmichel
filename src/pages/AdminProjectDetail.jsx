@@ -266,6 +266,8 @@ export default function AdminProjectDetail() {
             projectId: project.id,
             projectTitle: project.title,
             shootDate: shootDate,
+            shootTime: project.shoot_time || null,
+            clientName: user?.full_name || client?.company_name || 'N/A',
             calendarEventId: project.calendar_event_id || null,
           });
 
@@ -700,6 +702,8 @@ export default function AdminProjectDetail() {
         projectId: project.id,
         projectTitle: project.title,
         shootDate: shootDate,
+        shootTime: project.shoot_time || (booking?.start_datetime ? new Date(booking.start_datetime).toTimeString().slice(0, 5) : null),
+        clientName: user?.full_name || client?.company_name || 'N/A',
         calendarEventId: project.calendar_event_id || null,
       });
 

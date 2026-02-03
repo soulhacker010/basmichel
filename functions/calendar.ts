@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { action, projectId, projectTitle, shootDate, calendarEventId } = await req.json();
+        const { action, projectId, projectTitle, shootDate, shootTime, clientName, calendarEventId } = await req.json();
 
         // 1. Get Access Token for Google Calendar
         // Assuming the connector key is 'googlecalendar' based on standard naming
@@ -35,15 +35,31 @@ Deno.serve(async (req) => {
                 return Response.json({ error: 'Shoot date is required' }, { status: 400 });
             }
 
+            // Parse the date and time properly for Europe/Amsterdam timezone
+            // shootDate format: "2026-02-03" or "2026-02-03T22:22:00"
+            // shootTime format: "22:22" (optional)
+            let startDateTime = shootDate;
+            if (shootTime && !shootDate.includes('T')) {
+                startDateTime = `${shootDate}T${shootTime}:00`;
+            } else if (!shootDate.includes('T')) {
+                startDateTime = `${shootDate}T09:00:00`; // Default to 9am if no time
+            }
+
+            // Calculate end time (4 hours later)
+            const startDate = new Date(startDateTime);
+            const endDate = new Date(startDate.getTime() + (4 * 60 * 60 * 1000));
+            const endDateTime = endDate.toISOString().replace('Z', '').split('.')[0];
+
             const eventData = {
-                summary: `Shoot: ${projectTitle}`,
-                description: `Project ID: ${projectId}\nDirect link: ${req.headers.get('origin')}/EditorProjects?id=${projectId}`,
+                summary: projectTitle, // Just the project title, no prefix
+                description: `Client: ${clientName || 'N/A'}\nProject ID: ${projectId}\nDirect link: ${req.headers.get('origin')}/AdminProjectDetail?id=${projectId}`,
                 start: {
-                    dateTime: new Date(shootDate).toISOString(), // Ensure ISO format
+                    dateTime: startDateTime,
+                    timeZone: 'Europe/Amsterdam', // Netherlands timezone
                 },
                 end: {
-                    // Default to 4 hours duration if not specified
-                    dateTime: new Date(new Date(shootDate).getTime() + (4 * 60 * 60 * 1000)).toISOString(),
+                    dateTime: endDateTime,
+                    timeZone: 'Europe/Amsterdam',
                 }
             };
 
