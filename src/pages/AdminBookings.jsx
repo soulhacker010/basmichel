@@ -55,6 +55,7 @@ export default function AdminBookings() {
   const [isSessionDialogOpen, setIsSessionDialogOpen] = useState(false);
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false);
   const [isBlockedDialogOpen, setIsBlockedDialogOpen] = useState(false);
+  const [isDayOverviewOpen, setIsDayOverviewOpen] = useState(false);
   const [editingSession, setEditingSession] = useState(null);
   const [editingType, setEditingType] = useState(null);
   const [deleteSessionId, setDeleteSessionId] = useState(null);
@@ -343,8 +344,7 @@ export default function AdminBookings() {
                   key={day.toISOString()}
                   onClick={() => {
                     setSelectedDate(day);
-                    setEditingSession(null);
-                    setIsSessionDialogOpen(true);
+                    setIsDayOverviewOpen(true);
                   }}
                   className={cn(
                     "min-h-24 p-1.5 rounded-lg border cursor-pointer transition-colors",
@@ -787,6 +787,110 @@ export default function AdminBookings() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Day Overview Dialog */}
+      <Dialog open={isDayOverviewOpen} onOpenChange={setIsDayOverviewOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedDate && format(selectedDate, 'EEEE d MMMM yyyy', { locale: nl })}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 max-h-[500px] overflow-y-auto">
+            {selectedDate && getSessionsForDay(selectedDate)
+              .sort((a, b) => new Date(a.start_datetime) - new Date(b.start_datetime))
+              .map(session => {
+                const type = sessionTypes.find(t => t.id === session.session_type_id);
+                const client = clients.find(c => c.id === session.client_id);
+                const user = users.find(u => u.id === client?.user_id);
+                return (
+                  <div 
+                    key={session.id}
+                    className={cn("p-4 rounded-lg border",
+                      darkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-200"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div 
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: type?.color || '#A8B5A0' }}
+                          />
+                          <span className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
+                            {format(new Date(session.start_datetime), 'HH:mm')} - {format(new Date(session.end_datetime), 'HH:mm')}
+                          </span>
+                          <span className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
+                            ({type?.duration_minutes || 60} min)
+                          </span>
+                        </div>
+                        <p className={cn("text-sm font-medium mb-1", darkMode ? "text-gray-200" : "text-gray-700")}>
+                          {type?.name || 'Onbekend type'}
+                        </p>
+                        {session.location && (
+                          <div className={cn("flex items-center gap-1.5 text-sm mb-1", darkMode ? "text-gray-400" : "text-gray-600")}>
+                            <MapPin className="w-3.5 h-3.5" />
+                            <span>{session.location}</span>
+                          </div>
+                        )}
+                        {client && (
+                          <div className={cn("flex items-center gap-1.5 text-sm", darkMode ? "text-gray-400" : "text-gray-600")}>
+                            <User className="w-3.5 h-3.5" />
+                            <span>{user?.full_name || client.company_name || 'Onbekend'}</span>
+                          </div>
+                        )}
+                        {session.notes && (
+                          <p className={cn("text-sm mt-2", darkMode ? "text-gray-400" : "text-gray-500")}>
+                            {session.notes}
+                          </p>
+                        )}
+                      </div>
+                      <StatusBadge status={session.status} />
+                    </div>
+                  </div>
+                );
+              })}
+            {selectedDate && getBlockedForDay(selectedDate).map(blocked => (
+              <div 
+                key={blocked.id}
+                className={cn("p-4 rounded-lg border",
+                  darkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-200"
+                )}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock className="w-4 h-4 text-gray-400" />
+                  <span className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
+                    {format(new Date(blocked.start_datetime), 'HH:mm')} - {format(new Date(blocked.end_datetime), 'HH:mm')}
+                  </span>
+                  <span className={cn("text-sm px-2 py-0.5 rounded",
+                    darkMode ? "bg-gray-600 text-gray-300" : "bg-gray-200 text-gray-600"
+                  )}>
+                    Geblokkeerd
+                  </span>
+                </div>
+                {blocked.reason && (
+                  <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
+                    {blocked.reason}
+                  </p>
+                )}
+              </div>
+            ))}
+            {selectedDate && getSessionsForDay(selectedDate).length === 0 && getBlockedForDay(selectedDate).length === 0 && (
+              <div className="text-center py-8">
+                <CalendarIcon className={cn("w-12 h-12 mx-auto mb-3", darkMode ? "text-gray-600" : "text-gray-300")} />
+                <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
+                  Geen sessies of blokkades op deze dag
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end pt-4 border-t">
+            <Button variant="outline" onClick={() => setIsDayOverviewOpen(false)}>
+              Sluiten
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
