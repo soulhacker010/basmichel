@@ -847,7 +847,21 @@ export default function AdminBookings() {
                           </p>
                         )}
                       </div>
-                      <StatusBadge status={session.status} />
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={session.status} />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setEditingSession(session);
+                            setIsDayOverviewOpen(false);
+                            setIsSessionDialogOpen(true);
+                          }}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 );
