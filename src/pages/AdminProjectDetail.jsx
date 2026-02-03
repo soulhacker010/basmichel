@@ -257,6 +257,29 @@ export default function AdminProjectDetail() {
         }
       }
 
+      // Auto-sync to Google Calendar if shoot date exists
+      const shootDate = variables.data.shoot_date || project.shoot_date;
+      if (shootDate) {
+        try {
+          const { data: calendarResponse } = await base44.functions.invoke('calendar', {
+            action: 'syncEvent',
+            projectId: project.id,
+            projectTitle: project.title,
+            shootDate: shootDate,
+            calendarEventId: project.calendar_event_id || null,
+          });
+
+          if (calendarResponse?.calendarEventId && !project.calendar_event_id) {
+            await base44.entities.Project.update(project.id, {
+              calendar_event_id: calendarResponse.calendarEventId,
+            });
+          }
+        } catch (calendarError) {
+          console.error('Auto calendar sync failed:', calendarError);
+          // Don't show error toast for auto-sync, just log it
+        }
+      }
+
       toast.success('Project opgeslagen');
     },
   });
