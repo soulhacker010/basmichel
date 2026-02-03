@@ -373,11 +373,6 @@ export default function AdminBookings() {
                       return (
                         <div
                           key={session.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingSession(session);
-                            setIsSessionDialogOpen(true);
-                          }}
                           className="text-xs px-1.5 py-0.5 rounded truncate"
                           style={{ backgroundColor: type?.color || '#E8EDE5', color: '#5C6B52' }}
                         >
