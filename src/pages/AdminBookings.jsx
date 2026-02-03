@@ -478,12 +478,7 @@ export default function AdminBookings() {
                     {dayBlocked.map(blocked => (
                       <div
                         key={blocked.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingBlocked(blocked);
-                          setIsBlockedDialogOpen(true);
-                        }}
-                        className={cn("text-xs px-1.5 py-0.5 rounded truncate cursor-pointer hover:opacity-80", 
+                        className={cn("text-xs px-1.5 py-0.5 rounded truncate", 
                           darkMode ? "bg-gray-600 text-gray-300" : "bg-gray-200 text-gray-600"
                         )}
                       >
