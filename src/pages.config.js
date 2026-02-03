@@ -80,8 +80,8 @@ import EditorRevisions from './pages/EditorRevisions';
 import EditorSettings from './pages/EditorSettings';
 import EditorUpcoming from './pages/EditorUpcoming';
 import GalleryView from './pages/GalleryView';
-import ProjectGalleryView from './pages/ProjectGalleryView';
 import Home from './pages/Home';
+import ProjectGalleryView from './pages/ProjectGalleryView';
 import __Layout from './Layout.jsx';
 
 
@@ -119,8 +119,8 @@ export const PAGES = {
     "EditorSettings": EditorSettings,
     "EditorUpcoming": EditorUpcoming,
     "GalleryView": GalleryView,
-    "ProjectGalleryView": ProjectGalleryView,
     "Home": Home,
+    "ProjectGalleryView": ProjectGalleryView,
 }
 
 export const pagesConfig = {

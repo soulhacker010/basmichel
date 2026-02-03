@@ -9,9 +9,7 @@ import {
   Shield,
   Palette,
   Save,
-  Clock,
-  Plus,
-  Trash2
+  Clock
 } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -84,19 +82,56 @@ export default function AdminSettings() {
     }
   };
 
-  const handleAddWorkingHours = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    createAvailabilityMutation.mutate({
-      type: 'werkdag',
-      day_of_week: parseInt(formData.get('day_of_week')),
-      start_time: formData.get('start_time'),
-      end_time: formData.get('end_time'),
-      break_start: formData.get('break_start') || null,
-      break_end: formData.get('break_end') || null,
-      is_active: true,
-    });
-    e.target.reset();
+  const [workingHours, setWorkingHours] = useState({
+    1: { start_time: '09:00', end_time: '17:00', enabled: false },
+    2: { start_time: '09:00', end_time: '17:00', enabled: false },
+    3: { start_time: '09:00', end_time: '17:00', enabled: false },
+    4: { start_time: '09:00', end_time: '17:00', enabled: false },
+    5: { start_time: '09:00', end_time: '17:00', enabled: false },
+    6: { start_time: '09:00', end_time: '17:00', enabled: false },
+    0: { start_time: '09:00', end_time: '17:00', enabled: false },
+  });
+
+  useEffect(() => {
+    if (availabilities.length > 0) {
+      const newWorkingHours = { ...workingHours };
+      availabilities.filter(a => a.type === 'werkdag').forEach(a => {
+        newWorkingHours[a.day_of_week] = {
+          start_time: a.start_time || '09:00',
+          end_time: a.end_time || '17:00',
+          enabled: true,
+          id: a.id
+        };
+      });
+      setWorkingHours(newWorkingHours);
+    }
+  }, [availabilities]);
+
+  const handleSaveWorkingHours = async () => {
+    try {
+      // Delete all existing working hours
+      const existingWorkDays = availabilities.filter(a => a.type === 'werkdag');
+      await Promise.all(existingWorkDays.map(a => base44.entities.Availability.delete(a.id)));
+
+      // Create new working hours for enabled days
+      const promises = Object.entries(workingHours)
+        .filter(([_, config]) => config.enabled)
+        .map(([day, config]) => 
+          base44.entities.Availability.create({
+            type: 'werkdag',
+            day_of_week: parseInt(day),
+            start_time: config.start_time,
+            end_time: config.end_time,
+            is_active: true,
+          })
+        );
+      
+      await Promise.all(promises);
+      queryClient.invalidateQueries({ queryKey: ['availabilities'] });
+      toast.success('Werktijden opgeslagen');
+    } catch (error) {
+      toast.error('Er ging iets mis bij het opslaan');
+    }
   };
 
   const daysOfWeek = [
@@ -271,117 +306,88 @@ export default function AdminSettings() {
 
           <TabsContent value="hours" className="p-6 space-y-6">
             <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Beschikbare Tijden voor Boekingen</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Beschikbare Tijden voor Boekingen</h3>
               <p className="text-sm text-gray-500 mb-6">
-                Stel je werktijden in. Deze tijden worden weergegeven in het boekingssysteem voor klanten.
+                Stel je werktijden in. Klanten kunnen alleen binnen deze tijden boeken.
               </p>
 
-              <form onSubmit={handleAddWorkingHours} className="bg-gray-50 rounded-lg p-4 mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <Label htmlFor="day_of_week">Dag</Label>
-                    <select
-                      id="day_of_week"
-                      name="day_of_week"
-                      className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
-                      required
-                    >
-                      {daysOfWeek.map(day => (
-                        <option key={day.value} value={day.value}>{day.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <Label htmlFor="start_time">Van</Label>
-                    <Input
-                      id="start_time"
-                      name="start_time"
-                      type="time"
-                      className="mt-1.5"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="end_time">Tot</Label>
-                    <Input
-                      id="end_time"
-                      name="end_time"
-                      type="time"
-                      className="mt-1.5"
-                      required
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <Button type="submit" className="w-full bg-[#5C6B52] hover:bg-[#4A5641] text-white">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Toevoegen
-                    </Button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div>
-                    <Label htmlFor="break_start">Pauze Van (optioneel)</Label>
-                    <Input
-                      id="break_start"
-                      name="break_start"
-                      type="time"
-                      className="mt-1.5"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="break_end">Pauze Tot (optioneel)</Label>
-                    <Input
-                      id="break_end"
-                      name="break_end"
-                      type="time"
-                      className="mt-1.5"
-                    />
-                  </div>
-                </div>
-              </form>
-
-              <div className="space-y-2">
-                {availabilities
-                  .filter(a => a.type === 'werkdag')
-                  .sort((a, b) => a.day_of_week - b.day_of_week)
-                  .map(availability => {
-                    const day = daysOfWeek.find(d => d.value === availability.day_of_week);
-                    return (
-                      <div 
-                        key={availability.id}
-                        className="flex items-center justify-between bg-white border border-gray-100 rounded-lg p-4"
-                      >
-                        <div className="flex items-center gap-4">
-                          <Clock className="w-4 h-4 text-gray-400" />
-                          <div>
-                            <p className="font-medium text-gray-900">{day?.label}</p>
-                            <p className="text-sm text-gray-500">
-                              {availability.start_time} - {availability.end_time}
-                              {availability.break_start && availability.break_end && (
-                                <span className="ml-2 text-xs">
-                                  (Pauze: {availability.break_start} - {availability.break_end})
-                                </span>
-                              )}
-                            </p>
-                          </div>
+              <div className="space-y-3">
+                {daysOfWeek.map(day => (
+                  <div key={day.value} className="bg-white border border-gray-100 rounded-lg p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="w-32">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={workingHours[day.value]?.enabled || false}
+                              onChange={(e) => {
+                                setWorkingHours({
+                                  ...workingHours,
+                                  [day.value]: {
+                                    ...workingHours[day.value],
+                                    enabled: e.target.checked
+                                  }
+                                });
+                              }}
+                              className="rounded border-gray-300"
+                            />
+                            <span className="font-medium text-gray-900">{day.label}</span>
+                          </label>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteAvailabilityMutation.mutate(availability.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        
+                        {workingHours[day.value]?.enabled && (
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className="flex-1 max-w-[140px]">
+                              <Label className="text-xs text-gray-500">Van</Label>
+                              <Input
+                                type="time"
+                                value={workingHours[day.value]?.start_time || '09:00'}
+                                onChange={(e) => {
+                                  setWorkingHours({
+                                    ...workingHours,
+                                    [day.value]: {
+                                      ...workingHours[day.value],
+                                      start_time: e.target.value
+                                    }
+                                  });
+                                }}
+                                className="mt-1 h-9"
+                              />
+                            </div>
+                            <div className="flex-1 max-w-[140px]">
+                              <Label className="text-xs text-gray-500">Tot</Label>
+                              <Input
+                                type="time"
+                                value={workingHours[day.value]?.end_time || '17:00'}
+                                onChange={(e) => {
+                                  setWorkingHours({
+                                    ...workingHours,
+                                    [day.value]: {
+                                      ...workingHours[day.value],
+                                      end_time: e.target.value
+                                    }
+                                  });
+                                }}
+                                className="mt-1 h-9"
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    );
-                  })}
-                {availabilities.filter(a => a.type === 'werkdag').length === 0 && (
-                  <div className="text-center py-8 text-gray-400">
-                    <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p>Nog geen werktijden ingesteld</p>
+                    </div>
                   </div>
-                )}
+                ))}
+              </div>
+
+              <div className="flex justify-end pt-4 border-t border-gray-100 mt-6">
+                <Button 
+                  onClick={handleSaveWorkingHours}
+                  className="bg-[#A8B5A0] hover:bg-[#97A690] text-white"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Werktijden opslaan
+                </Button>
               </div>
             </div>
           </TabsContent>
