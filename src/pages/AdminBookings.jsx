@@ -58,7 +58,9 @@ export default function AdminBookings() {
   const [isDayOverviewOpen, setIsDayOverviewOpen] = useState(false);
   const [editingSession, setEditingSession] = useState(null);
   const [editingType, setEditingType] = useState(null);
+  const [editingBlocked, setEditingBlocked] = useState(null);
   const [deleteSessionId, setDeleteSessionId] = useState(null);
+  const [deleteBlockedId, setDeleteBlockedId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
   
@@ -221,6 +223,24 @@ export default function AdminBookings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blockedTimes'] });
       setIsBlockedDialogOpen(false);
+      setEditingBlocked(null);
+    },
+  });
+
+  const updateBlockedMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.BlockedTime.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['blockedTimes'] });
+      setIsBlockedDialogOpen(false);
+      setEditingBlocked(null);
+    },
+  });
+
+  const deleteBlockedMutation = useMutation({
+    mutationFn: (id) => base44.entities.BlockedTime.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['blockedTimes'] });
+      setDeleteBlockedId(null);
     },
   });
 
@@ -308,7 +328,12 @@ export default function AdminBookings() {
       end_datetime: `${formData.get('date')}T${formData.get('end_time')}:00`,
       reason: formData.get('reason'),
     };
-    createBlockedMutation.mutate(data);
+    
+    if (editingBlocked) {
+      updateBlockedMutation.mutate({ id: editingBlocked.id, data });
+    } else {
+      createBlockedMutation.mutate(data);
+    }
   };
 
   return (
@@ -453,7 +478,12 @@ export default function AdminBookings() {
                     {dayBlocked.map(blocked => (
                       <div
                         key={blocked.id}
-                        className={cn("text-xs px-1.5 py-0.5 rounded truncate", 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingBlocked(blocked);
+                          setIsBlockedDialogOpen(true);
+                        }}
+                        className={cn("text-xs px-1.5 py-0.5 rounded truncate cursor-pointer hover:opacity-80", 
                           darkMode ? "bg-gray-600 text-gray-300" : "bg-gray-200 text-gray-600"
                         )}
                       >
@@ -790,10 +820,13 @@ export default function AdminBookings() {
       </Dialog>
 
       {/* Blocked Time Dialog */}
-      <Dialog open={isBlockedDialogOpen} onOpenChange={setIsBlockedDialogOpen}>
+      <Dialog open={isBlockedDialogOpen} onOpenChange={(open) => {
+        setIsBlockedDialogOpen(open);
+        if (!open) setEditingBlocked(null);
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Tijd Blokkeren</DialogTitle>
+            <DialogTitle>{editingBlocked ? 'Geblokkeerde Tijd Bewerken' : 'Tijd Blokkeren'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleBlockedSubmit} className="space-y-4">
             <div>
@@ -802,6 +835,7 @@ export default function AdminBookings() {
                 id="date"
                 name="date"
                 type="date"
+                defaultValue={editingBlocked ? format(new Date(editingBlocked.start_datetime), 'yyyy-MM-dd') : ''}
                 className="mt-1.5"
                 required
               />
@@ -813,7 +847,7 @@ export default function AdminBookings() {
                   id="start_time"
                   name="start_time"
                   type="time"
-                  defaultValue="09:00"
+                  defaultValue={editingBlocked ? format(new Date(editingBlocked.start_datetime), 'HH:mm') : '09:00'}
                   className="mt-1.5"
                   required
                 />
@@ -824,7 +858,7 @@ export default function AdminBookings() {
                   id="end_time"
                   name="end_time"
                   type="time"
-                  defaultValue="17:00"
+                  defaultValue={editingBlocked ? format(new Date(editingBlocked.end_datetime), 'HH:mm') : '17:00'}
                   className="mt-1.5"
                   required
                 />
@@ -835,16 +869,36 @@ export default function AdminBookings() {
               <Input
                 id="reason"
                 name="reason"
+                defaultValue={editingBlocked?.reason || ''}
                 className="mt-1.5"
               />
             </div>
-            <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsBlockedDialogOpen(false)}>
-                Annuleren
-              </Button>
-              <Button type="submit" className="bg-[#A8B5A0] hover:bg-[#97A690] text-white">
-                Blokkeren
-              </Button>
+            <div className="flex justify-between pt-4">
+              <div>
+                {editingBlocked && (
+                  <Button 
+                    type="button" 
+                    variant="destructive"
+                    onClick={() => {
+                      setDeleteBlockedId(editingBlocked.id);
+                      setIsBlockedDialogOpen(false);
+                    }}
+                  >
+                    Verwijderen
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <Button type="button" variant="outline" onClick={() => {
+                  setIsBlockedDialogOpen(false);
+                  setEditingBlocked(null);
+                }}>
+                  Annuleren
+                </Button>
+                <Button type="submit" className="bg-[#A8B5A0] hover:bg-[#97A690] text-white">
+                  {editingBlocked ? 'Opslaan' : 'Blokkeren'}
+                </Button>
+              </div>
             </div>
           </form>
         </DialogContent>
@@ -933,22 +987,38 @@ export default function AdminBookings() {
                   darkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-200"
                 )}
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <Clock className="w-4 h-4 text-gray-400" />
-                  <span className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
-                    {format(new Date(blocked.start_datetime), 'HH:mm')} - {format(new Date(blocked.end_datetime), 'HH:mm')}
-                  </span>
-                  <span className={cn("text-sm px-2 py-0.5 rounded",
-                    darkMode ? "bg-gray-600 text-gray-300" : "bg-gray-200 text-gray-600"
-                  )}>
-                    Geblokkeerd
-                  </span>
+                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="w-4 h-4 text-gray-400" />
+                      <span className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
+                        {format(new Date(blocked.start_datetime), 'HH:mm')} - {format(new Date(blocked.end_datetime), 'HH:mm')}
+                      </span>
+                      <span className={cn("text-sm px-2 py-0.5 rounded",
+                        darkMode ? "bg-gray-600 text-gray-300" : "bg-gray-200 text-gray-600"
+                      )}>
+                        Geblokkeerd
+                      </span>
+                    </div>
+                    {blocked.reason && (
+                      <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
+                        {blocked.reason}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => {
+                      setEditingBlocked(blocked);
+                      setIsDayOverviewOpen(false);
+                      setIsBlockedDialogOpen(true);
+                    }}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
                 </div>
-                {blocked.reason && (
-                  <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
-                    {blocked.reason}
-                  </p>
-                )}
               </div>
             ))}
             {selectedDate && getSessionsForDay(selectedDate).length === 0 && getBlockedForDay(selectedDate).length === 0 && (
@@ -981,6 +1051,27 @@ export default function AdminBookings() {
             <AlertDialogCancel>Annuleren</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteSessionMutation.mutate(deleteSessionId)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Verwijderen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Blocked Time Confirmation */}
+      <AlertDialog open={!!deleteBlockedId} onOpenChange={() => setDeleteBlockedId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Geblokkeerde Tijd Verwijderen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Weet je zeker dat je deze geblokkeerde tijd wilt verwijderen?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteBlockedMutation.mutate(deleteBlockedId)}
               className="bg-red-600 hover:bg-red-700"
             >
               Verwijderen
