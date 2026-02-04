@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { 
+import {
   ArrowLeft,
   MapPin,
   Download,
@@ -176,7 +176,7 @@ export default function ClientProjectDetail2() {
   const selectAllInCategory = (category) => {
     const categoryFiles = projectFiles.filter(f => f.category === category);
     const allSelected = categoryFiles.every(f => selectedFiles[f.id]);
-    
+
     setSelectedFiles(prev => {
       const newSelection = { ...prev };
       categoryFiles.forEach(f => {
@@ -187,10 +187,10 @@ export default function ClientProjectDetail2() {
   };
 
   const handleDownloadSelected = async (category) => {
-    const filesToDownload = projectFiles.filter(f => 
+    const filesToDownload = projectFiles.filter(f =>
       f.category === category && selectedFiles[f.id]
     );
-    
+
     if (filesToDownload.length === 0) return;
 
     for (const file of filesToDownload) {
@@ -201,7 +201,7 @@ export default function ClientProjectDetail2() {
     }
   };
 
-  const deliveryFiles = projectFiles.filter(f => 
+  const deliveryFiles = projectFiles.filter(f =>
     ['bewerkte_fotos', 'bewerkte_videos', '360_matterport', 'meetrapport'].includes(f.category)
   );
 
@@ -210,6 +210,17 @@ export default function ClientProjectDetail2() {
       // Delete associated sessions to free calendar slot
       const sessions = await base44.entities.Session.filter({ project_id: projectId });
       for (const session of sessions) {
+        // Delete from Google Calendar first
+        if (session.google_calendar_event_id) {
+          try {
+            await base44.functions.invoke('calendarSession', {
+              action: 'deleteSessionEvent',
+              calendarEventId: session.google_calendar_event_id
+            });
+          } catch (error) {
+            console.error('Failed to delete calendar event:', error);
+          }
+        }
         await base44.entities.Session.delete(session.id);
       }
 
@@ -263,19 +274,19 @@ export default function ClientProjectDetail2() {
 
   const getTimeSlots = (date) => {
     if (!date) return [];
-    
+
     const dayOfWeek = date.getDay();
     const workdayConfig = availability.find(a => a.type === 'werkdag' && a.day_of_week === dayOfWeek);
-    
+
     const startHour = workdayConfig?.start_time ? parseInt(workdayConfig.start_time.split(':')[0]) : 9;
     const endHour = workdayConfig?.end_time ? parseInt(workdayConfig.end_time.split(':')[0]) : 17;
-    
+
     const slots = [];
     const duration = 60;
-    
+
     let currentTime = setMinutes(setHours(date, startHour), 0);
     const endTime = setMinutes(setHours(date, endHour), 0);
-    
+
     while (isBefore(addMinutes(currentTime, duration), endTime) || isSameDay(addMinutes(currentTime, duration), endTime)) {
       const slotEnd = addMinutes(currentTime, duration);
       const hasConflict = existingSessions.some(session => {
@@ -288,14 +299,14 @@ export default function ClientProjectDetail2() {
           isSameDay(currentTime, sessionStart) && format(currentTime, 'HH:mm') === format(sessionStart, 'HH:mm')
         );
       });
-      
+
       if (!hasConflict && isAfter(currentTime, new Date())) {
         slots.push(new Date(currentTime));
       }
-      
+
       currentTime = addMinutes(currentTime, 30);
     }
-    
+
     return slots;
   };
 
@@ -309,6 +320,17 @@ export default function ClientProjectDetail2() {
       // Delete old sessions to free the old calendar slot
       const oldSessions = await base44.entities.Session.filter({ project_id: projectId });
       for (const session of oldSessions) {
+        // Delete from Google Calendar first
+        if (session.google_calendar_event_id) {
+          try {
+            await base44.functions.invoke('calendarSession', {
+              action: 'deleteSessionEvent',
+              calendarEventId: session.google_calendar_event_id
+            });
+          } catch (error) {
+            console.error('Failed to delete calendar event:', error);
+          }
+        }
         await base44.entities.Session.delete(session.id);
       }
 
@@ -321,7 +343,7 @@ export default function ClientProjectDetail2() {
       // Create new session to block the new time slot
       const sessionTypes = await base44.entities.SessionType.filter({ is_active: true });
       const defaultSessionType = sessionTypes[0];
-      
+
       if (defaultSessionType) {
         await base44.entities.Session.create({
           session_type_id: defaultSessionType.id,
@@ -357,7 +379,7 @@ export default function ClientProjectDetail2() {
         queryClient.invalidateQueries(['existingSessions']),
       ]);
 
-      toast.success('Opgeslagen', { 
+      toast.success('Opgeslagen', {
         icon: '✓',
         duration: 2000
       });
@@ -377,7 +399,7 @@ export default function ClientProjectDetail2() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <Link 
+      <Link
         to={createPageUrl('ClientProjects')}
         className="inline-flex items-center gap-2 text-gray-400 hover:text-gray-600 mb-8 transition-colors text-sm"
       >
@@ -409,7 +431,7 @@ export default function ClientProjectDetail2() {
 
         <div className="relative pt-2">
           <div className="absolute top-7 left-6 right-6 h-0.5 bg-gray-100">
-            <div 
+            <div
               className="h-full bg-[#5C6B52] transition-all duration-700"
               style={{ width: `${(currentStepIndex / (statusSteps.length - 1)) * 100}%` }}
             />
@@ -422,8 +444,8 @@ export default function ClientProjectDetail2() {
                 <div key={step.key} className="flex flex-col items-center">
                   <div className={cn(
                     "w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all bg-white",
-                    isCompleted 
-                      ? "bg-[#5C6B52] border-[#5C6B52] text-white" 
+                    isCompleted
+                      ? "bg-[#5C6B52] border-[#5C6B52] text-white"
                       : "border-gray-200 text-gray-300"
                   )}>
                     {isCompleted ? (
@@ -542,9 +564,9 @@ export default function ClientProjectDetail2() {
                     className={cn(
                       "py-3 px-2 rounded-lg text-center transition-all text-sm",
                       isPast ? "opacity-30 cursor-not-allowed" :
-                      isSelected ? "bg-[#5C6B52] text-white" :
-                      isToday ? "bg-[#F8FAF7] text-[#5C6B52] ring-1 ring-[#A8B5A0]" :
-                      "hover:bg-gray-50"
+                        isSelected ? "bg-[#5C6B52] text-white" :
+                          isToday ? "bg-[#F8FAF7] text-[#5C6B52] ring-1 ring-[#A8B5A0]" :
+                            "hover:bg-gray-50"
                     )}
                   >
                     <p className="text-xs uppercase opacity-70 mb-1">{format(day, 'EEE', { locale: nl })}</p>
@@ -604,7 +626,7 @@ export default function ClientProjectDetail2() {
       {/* Project Info */}
       <div className="bg-white rounded-2xl border border-gray-100 p-8 mb-8">
         <h2 className="text-lg font-medium text-gray-900 mb-6">Projectinformatie</h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <p className="text-sm text-gray-400 mb-1">Projectnummer</p>
@@ -621,15 +643,15 @@ export default function ClientProjectDetail2() {
           <div>
             <p className="text-sm text-gray-400 mb-1">Shootdatum</p>
             <p className="font-medium text-gray-900">
-              {project.shoot_date ? format(new Date(project.shoot_date), 'd MMMM yyyy', { locale: nl }) : 
-               booking?.start_datetime ? format(new Date(booking.start_datetime), 'd MMMM yyyy', { locale: nl }) : '-'}
+              {project.shoot_date ? format(new Date(project.shoot_date), 'd MMMM yyyy', { locale: nl }) :
+                booking?.start_datetime ? format(new Date(booking.start_datetime), 'd MMMM yyyy', { locale: nl }) : '-'}
             </p>
           </div>
           <div>
             <p className="text-sm text-gray-400 mb-1">Starttijd</p>
             <p className="font-medium text-gray-900">
-              {project.shoot_time || 
-               (booking?.start_datetime ? format(new Date(booking.start_datetime), 'HH:mm') : '-')}
+              {project.shoot_time ||
+                (booking?.start_datetime ? format(new Date(booking.start_datetime), 'HH:mm') : '-')}
             </p>
           </div>
           {project.delivery_date && (
@@ -654,8 +676,8 @@ export default function ClientProjectDetail2() {
             <div className="flex items-center gap-6">
               <div className="w-32 h-32 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                 {galleries[0].cover_image_url ? (
-                  <img 
-                    src={galleries[0].cover_image_url} 
+                  <img
+                    src={galleries[0].cover_image_url}
                     alt="Gallery preview"
                     className="w-full h-full object-cover"
                   />
@@ -719,7 +741,7 @@ export default function ClientProjectDetail2() {
 
                       <div className="grid grid-cols-1 gap-2">
                         {categoryFiles.map(file => (
-                          <div 
+                          <div
                             key={file.id}
                             className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50"
                           >
@@ -735,7 +757,7 @@ export default function ClientProjectDetail2() {
                                 {(file.file_size / 1024 / 1024).toFixed(2)} MB
                               </p>
                             </div>
-                            <a 
+                            <a
                               href={file.file_url}
                               download={file.filename}
                               className="text-[#5C6B52] hover:text-[#4A5641]"

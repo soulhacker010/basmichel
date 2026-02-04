@@ -48,7 +48,11 @@ Deno.serve(async (req) => {
                 if (client) {
                     if (client.user_id) {
                         const user = await base44.asServiceRole.entities.User.get(client.user_id);
-                        clientName = user?.full_name || client.company_name || 'Onbekend';
+                        // Try full_name first, then first_name + last_name, then company_name
+                        const fullName = user?.full_name ||
+                            (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : null) ||
+                            user?.first_name || user?.last_name;
+                        clientName = fullName || client.company_name || 'Onbekend';
                     } else {
                         clientName = client.company_name || 'Onbekend';
                     }

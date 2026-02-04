@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { action, projectId, projectTitle, shootDate, shootTime, clientName, location, calendarEventId } = await req.json();
+        const { action, projectId, projectTitle, shootDate, shootTime, durationMinutes, clientName, location, calendarEventId } = await req.json();
 
         // 1. Get Access Token for Google Calendar
         // Assuming the connector key is 'googlecalendar' based on standard naming
@@ -45,9 +45,10 @@ Deno.serve(async (req) => {
                 startDateTime = `${shootDate}T09:00:00`; // Default to 9am if no time
             }
 
-            // Calculate end time (4 hours later)
+            // Calculate end time based on duration (default 60 minutes if not specified)
+            const duration = durationMinutes || 60;
             const startDate = new Date(startDateTime);
-            const endDate = new Date(startDate.getTime() + (4 * 60 * 60 * 1000));
+            const endDate = new Date(startDate.getTime() + (duration * 60 * 1000));
             const endDateTime = endDate.toISOString().replace('Z', '').split('.')[0];
 
             const eventData = {

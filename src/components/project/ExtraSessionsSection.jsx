@@ -65,7 +65,24 @@ export default function ExtraSessionsSection({ projectId }) {
   });
 
   const deleteSessionMutation = useMutation({
-    mutationFn: (id) => base44.entities.Session.delete(id),
+    mutationFn: async (id) => {
+      // Get session to check for calendar event ID
+      const session = await base44.entities.Session.get(id);
+
+      // Delete from Google Calendar first
+      if (session?.google_calendar_event_id) {
+        try {
+          await base44.functions.invoke('calendarSession', {
+            action: 'deleteSessionEvent',
+            calendarEventId: session.google_calendar_event_id
+          });
+        } catch (error) {
+          console.error('Failed to delete from calendar:', error);
+        }
+      }
+
+      return await base44.entities.Session.delete(id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['extraSessions', projectId] });
       toast.success('Sessie verwijderd');
@@ -159,7 +176,7 @@ export default function ExtraSessionsSection({ projectId }) {
                 id="start_datetime"
                 type="datetime-local"
                 value={formData.start_datetime}
-                onChange={(e) => setFormData({...formData, start_datetime: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, start_datetime: e.target.value })}
                 className="mt-1.5"
                 required
               />
@@ -170,7 +187,7 @@ export default function ExtraSessionsSection({ projectId }) {
                 id="end_datetime"
                 type="datetime-local"
                 value={formData.end_datetime}
-                onChange={(e) => setFormData({...formData, end_datetime: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, end_datetime: e.target.value })}
                 className="mt-1.5"
               />
             </div>
@@ -179,7 +196,7 @@ export default function ExtraSessionsSection({ projectId }) {
               <Input
                 id="location"
                 value={formData.location}
-                onChange={(e) => setFormData({...formData, location: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="Adres of locatie"
                 className="mt-1.5"
               />
@@ -189,7 +206,7 @@ export default function ExtraSessionsSection({ projectId }) {
               <select
                 id="status"
                 value={formData.status}
-                onChange={(e) => setFormData({...formData, status: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
               >
                 {Object.entries(statusConfig).map(([key, { label }]) => (
@@ -202,7 +219,7 @@ export default function ExtraSessionsSection({ projectId }) {
               <Textarea
                 id="notes"
                 value={formData.notes}
-                onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 placeholder="Extra informatie..."
                 className="mt-1.5"
                 rows={3}
