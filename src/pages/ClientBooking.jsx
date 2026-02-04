@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { 
+import {
   Calendar,
   Clock,
   MapPin,
@@ -76,6 +76,44 @@ export default function ClientBooking() {
     queryFn: () => base44.entities.Availability.filter({ is_active: true }),
   });
 
+  // Fetch Google Calendar busy times for the selected week
+  const [calendarBusyTimes, setCalendarBusyTimes] = useState([]);
+  const [loadingBusyTimes, setLoadingBusyTimes] = useState(false);
+
+  useEffect(() => {
+    const fetchBusyTimes = async () => {
+      if (!selectedDate) return;
+
+      setLoadingBusyTimes(true);
+      try {
+        // Get busy times for the entire day
+        const dayStart = new Date(selectedDate);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(selectedDate);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        const response = await base44.functions.invoke('calendarSession', {
+          action: 'checkAvailability',
+          timeMin: dayStart.toISOString(),
+          timeMax: dayEnd.toISOString(),
+        });
+
+        if (response.data?.success && response.data?.busyTimes) {
+          setCalendarBusyTimes(response.data.busyTimes);
+        } else {
+          setCalendarBusyTimes([]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch calendar busy times:', error);
+        setCalendarBusyTimes([]);
+      } finally {
+        setLoadingBusyTimes(false);
+      }
+    };
+
+    fetchBusyTimes();
+  }, [selectedDate]);
+
   // Generate week days
   const getWeekDays = () => {
     const start = addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), weekOffset);
@@ -91,30 +129,30 @@ export default function ClientBooking() {
   // Generate available time slots for a date
   const getTimeSlots = (date) => {
     if (!date || !selectedService) return [];
-    
+
     const dayOfWeek = date.getDay();
     const workdayConfig = availability.find(a => a.type === 'werkdag' && a.day_of_week === dayOfWeek && a.is_active);
-    
+
     // If no working hours configured for this day, return empty
     if (!workdayConfig) return [];
-    
+
     const [startHour, startMinute] = workdayConfig.start_time.split(':').map(Number);
     const [endHour, endMinute] = workdayConfig.end_time.split(':').map(Number);
-    
+
     const slots = [];
     const duration = selectedService.duration_minutes || 60;
-    
+
     let currentTime = setMinutes(setHours(date, startHour), startMinute);
     const endTime = setMinutes(setHours(date, endHour), endMinute);
-    
+
     while (isBefore(currentTime, endTime)) {
       const slotEnd = addMinutes(currentTime, duration);
-      
+
       // Check if the entire slot fits within working hours
       if (isAfter(slotEnd, endTime)) break;
-      
+
       // Check if slot conflicts with existing sessions
-      const hasConflict = existingSessions.some(session => {
+      const hasSessionConflict = existingSessions.some(session => {
         const sessionStart = new Date(session.start_datetime);
         const sessionEnd = new Date(session.end_datetime);
         return (
@@ -124,15 +162,29 @@ export default function ClientBooking() {
           isSameDay(currentTime, sessionStart) && format(currentTime, 'HH:mm') === format(sessionStart, 'HH:mm')
         );
       });
-      
+
+      // Check if slot conflicts with Google Calendar busy times
+      const hasCalendarConflict = calendarBusyTimes.some(busy => {
+        const busyStart = new Date(busy.start);
+        const busyEnd = new Date(busy.end);
+        return (
+          (isAfter(currentTime, busyStart) && isBefore(currentTime, busyEnd)) ||
+          (isAfter(slotEnd, busyStart) && isBefore(slotEnd, busyEnd)) ||
+          (isBefore(currentTime, busyStart) && isAfter(slotEnd, busyEnd)) ||
+          (currentTime.getTime() >= busyStart.getTime() && currentTime.getTime() < busyEnd.getTime())
+        );
+      });
+
+      const hasConflict = hasSessionConflict || hasCalendarConflict;
+
       // Only show future slots that don't conflict
       if (!hasConflict && isAfter(currentTime, new Date())) {
         slots.push(new Date(currentTime));
       }
-      
+
       currentTime = addMinutes(currentTime, 30);
     }
-    
+
     return slots;
   };
 
@@ -152,12 +204,12 @@ export default function ClientBooking() {
       const counters = await base44.entities.ProjectCounter.list();
       let nextNumber = 202700;
       let counterId = null;
-      
+
       if (counters.length > 0) {
         nextNumber = counters[0].last_number + 1;
         counterId = counters[0].id;
       }
-      
+
       // Update or create counter
       if (counterId) {
         await base44.entities.ProjectCounter.update(counterId, { last_number: nextNumber });
@@ -269,8 +321,8 @@ Basmichel
                   <div className={cn(
                     "w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all",
                     step > index + 1 ? "bg-[#5C6B52] text-white" :
-                    step === index + 1 ? "bg-[#5C6B52] text-white ring-4 ring-[#E8EDE5]" :
-                    "bg-gray-100 text-gray-400"
+                      step === index + 1 ? "bg-[#5C6B52] text-white ring-4 ring-[#E8EDE5]" :
+                        "bg-gray-100 text-gray-400"
                   )}>
                     {step > index + 1 ? <CheckCircle2 className="w-5 h-5" /> : index + 1}
                   </div>
@@ -315,8 +367,8 @@ Basmichel
                   }}
                   className={cn(
                     "bg-white rounded-2xl border p-6 cursor-pointer transition-all hover:shadow-sm",
-                    selectedService?.id === service.id 
-                      ? "border-[#5C6B52] bg-[#F8FAF7]" 
+                    selectedService?.id === service.id
+                      ? "border-[#5C6B52] bg-[#F8FAF7]"
                       : "border-gray-100 hover:border-gray-200"
                   )}
                 >
@@ -355,7 +407,7 @@ Basmichel
       {step === 2 && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <button 
+            <button
               onClick={() => setStep(1)}
               className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1.5"
             >
@@ -411,9 +463,9 @@ Basmichel
                     className={cn(
                       "py-4 px-2 rounded-xl text-center transition-all",
                       isDisabled ? "opacity-30 cursor-not-allowed" :
-                      isSelected ? "bg-[#5C6B52] text-white shadow-sm" :
-                      isToday ? "bg-[#F8FAF7] text-[#5C6B52] ring-1 ring-[#A8B5A0]" :
-                      "hover:bg-gray-50"
+                        isSelected ? "bg-[#5C6B52] text-white shadow-sm" :
+                          isToday ? "bg-[#F8FAF7] text-[#5C6B52] ring-1 ring-[#A8B5A0]" :
+                            "hover:bg-gray-50"
                     )}
                   >
                     <p className="text-xs uppercase text-opacity-70 mb-1">{format(day, 'EEE', { locale: nl })}</p>
@@ -465,7 +517,7 @@ Basmichel
       {step === 3 && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <button 
+            <button
               onClick={() => setStep(2)}
               className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1.5"
             >
@@ -537,7 +589,7 @@ Basmichel
             </div>
           </div>
 
-          <Button 
+          <Button
             onClick={handleSubmit}
             disabled={isSubmitting || !selectedService || !selectedDate || !selectedTime || !formData.address || !formData.city}
             className="w-full bg-[#5C6B52] hover:bg-[#4A5A42] text-white h-14 rounded-full text-base"

@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { action, sessionId, sessionData, calendarEventId } = await req.json();
+        const { action, sessionId, sessionData, calendarEventId, timeMin, timeMax } = await req.json();
 
         const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
 
@@ -130,6 +130,40 @@ Deno.serve(async (req) => {
             }
 
             return Response.json({ success: true });
+        }
+
+        // Check Calendar Availability (freeBusy API)
+        if (action === 'checkAvailability') {
+            if (!timeMin || !timeMax) {
+                return Response.json({ error: 'timeMin and timeMax are required' }, { status: 400 });
+            }
+
+            const response = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    timeMin: timeMin,
+                    timeMax: timeMax,
+                    items: [{ id: 'primary' }]
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('FreeBusy API Error:', errorText);
+                throw new Error(`FreeBusy API Error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const busyTimes = data.calendars?.primary?.busy || [];
+
+            return Response.json({
+                success: true,
+                busyTimes: busyTimes
+            });
         }
 
         return Response.json({ error: 'Invalid action' }, { status: 400 });
