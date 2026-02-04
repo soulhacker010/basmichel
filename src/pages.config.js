@@ -63,6 +63,7 @@ import AdminSettings from './pages/AdminSettings';
 import AdminTemplates from './pages/AdminTemplates';
 import BookingPage from './pages/BookingPage';
 import ClientBooking from './pages/ClientBooking';
+import ClientBookings from './pages/ClientBookings';
 import ClientDashboard from './pages/ClientDashboard';
 import ClientGalleries from './pages/ClientGalleries';
 import ClientInvoices from './pages/ClientInvoices';
@@ -82,7 +83,6 @@ import EditorUpcoming from './pages/EditorUpcoming';
 import GalleryView from './pages/GalleryView';
 import Home from './pages/Home';
 import ProjectGalleryView from './pages/ProjectGalleryView';
-import ClientBookings from './pages/ClientBookings';
 import __Layout from './Layout.jsx';
 
 
@@ -103,6 +103,7 @@ export const PAGES = {
     "AdminTemplates": AdminTemplates,
     "BookingPage": BookingPage,
     "ClientBooking": ClientBooking,
+    "ClientBookings": ClientBookings,
     "ClientDashboard": ClientDashboard,
     "ClientGalleries": ClientGalleries,
     "ClientInvoices": ClientInvoices,
@@ -122,7 +123,6 @@ export const PAGES = {
     "GalleryView": GalleryView,
     "Home": Home,
     "ProjectGalleryView": ProjectGalleryView,
-    "ClientBookings": ClientBookings,
 }
 
 export const pagesConfig = {

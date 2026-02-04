@@ -87,6 +87,11 @@ export default function AdminProjects() {
     queryFn: () => base44.entities.User.list(),
   });
 
+  const { data: sessionTypes = [] } = useQuery({
+    queryKey: ['sessionTypes'],
+    queryFn: () => base44.entities.SessionType.filter({ is_active: true }),
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data) => {
       // Get or create counter
@@ -114,35 +119,42 @@ export default function AdminProjects() {
 
       const project = await base44.entities.Project.create(projectData);
 
-      // Create booking/agenda item
-      if (data.shoot_date && data.shoot_time) {
-        const shootDateTime = new Date(`${data.shoot_date}T${data.shoot_time}`);
-        await base44.entities.Booking.create({
-          project_id: project.id,
+      // Create session with session type
+      if (data.shoot_date && data.shoot_time && data.session_type_id) {
+        const sessionType = await base44.entities.SessionType.get(data.session_type_id);
+        const duration = sessionType?.duration_minutes || 60;
+        
+        const startDateTime = new Date(`${data.shoot_date}T${data.shoot_time}`);
+        const endDateTime = new Date(startDateTime.getTime() + duration * 60000);
+        
+        const session = await base44.entities.Session.create({
+          session_type_id: data.session_type_id,
           client_id: data.client_id,
-          service_type: 'woningfotografie',
-          start_datetime: shootDateTime.toISOString(),
+          project_id: project.id,
+          start_datetime: startDateTime.toISOString(),
+          end_datetime: endDateTime.toISOString(),
           status: 'bevestigd',
-          address: data.address,
+          location: projectData.title,
+          notes: data.notes,
         });
 
         // Auto-sync to Google Calendar
         try {
-          const { data: calendarResponse } = await base44.functions.invoke('calendar', {
-            action: 'syncEvent',
-            projectId: project.id,
-            projectTitle: projectData.title,
-            shootDate: data.shoot_date,
-            shootTime: data.shoot_time,
-            clientName: 'N/A', // Client name will be fetched later if needed
-            location: projectData.title, // Address as location
+          const { data: calendarResponse } = await base44.functions.invoke('calendarSession', {
+            action: 'syncSessionEvent',
+            sessionData: {
+              session_type_id: data.session_type_id,
+              start_datetime: startDateTime.toISOString(),
+              end_datetime: endDateTime.toISOString(),
+              location: projectData.title,
+            },
             calendarEventId: null,
           });
 
-          // Save the calendar event ID to the project
+          // Save the calendar event ID to the session
           if (calendarResponse?.calendarEventId) {
-            await base44.entities.Project.update(project.id, {
-              calendar_event_id: calendarResponse.calendarEventId,
+            await base44.entities.Session.update(session.id, {
+              google_calendar_event_id: calendarResponse.calendarEventId,
             });
           }
         } catch (calendarError) {
@@ -242,10 +254,11 @@ export default function AdminProjects() {
     const shoot_date = formData.get('shoot_date');
     const shoot_time = formData.get('shoot_time');
     const client_id = formData.get('client_id');
+    const session_type_id = formData.get('session_type_id');
 
     // Validation for create
     if (!editingProject) {
-      if (!address || !city || !shoot_date || !shoot_time || !client_id) {
+      if (!address || !city || !shoot_date || !shoot_time || !client_id || !session_type_id) {
         toast.error('Vul alle verplichte velden in');
         return;
       }
@@ -257,6 +270,7 @@ export default function AdminProjects() {
       shoot_date,
       shoot_time,
       client_id,
+      session_type_id,
       status: formData.get('status'),
       notes: formData.get('notes'),
     };
@@ -451,6 +465,26 @@ export default function AdminProjects() {
                   className="mt-1.5"
                   required
                 />
+              </div>
+            )}
+
+            {/* Session Type - Only for new projects */}
+            {!editingProject && (
+              <div>
+                <Label htmlFor="session_type_id">Sessietype *</Label>
+                <select
+                  id="session_type_id"
+                  name="session_type_id"
+                  className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
+                  required
+                >
+                  <option value="">Selecteer sessietype</option>
+                  {sessionTypes.map(type => (
+                    <option key={type.id} value={type.id}>
+                      {type.name} ({type.duration_minutes || 60} min)
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
 
