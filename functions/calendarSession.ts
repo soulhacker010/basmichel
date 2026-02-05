@@ -158,7 +158,24 @@ Deno.serve(async (req) => {
             }
 
             const data = await response.json();
-            const busyTimes = data.calendars?.primary?.busy || [];
+            console.log('FreeBusy API response:', JSON.stringify(data));
+
+            // Get busy times - the key might be 'primary' or the actual email address
+            let busyTimes = [];
+            if (data.calendars) {
+                // Get the first calendar's busy times (usually there's only one)
+                const calendarKeys = Object.keys(data.calendars);
+                console.log('Calendar keys in response:', calendarKeys);
+
+                for (const key of calendarKeys) {
+                    const calendarData = data.calendars[key];
+                    if (calendarData.busy && calendarData.busy.length > 0) {
+                        busyTimes = [...busyTimes, ...calendarData.busy];
+                    }
+                }
+            }
+
+            console.log('Busy times found:', busyTimes);
 
             return Response.json({
                 success: true,

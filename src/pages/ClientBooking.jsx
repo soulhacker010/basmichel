@@ -98,9 +98,16 @@ export default function ClientBooking() {
           timeMax: dayEnd.toISOString(),
         });
 
-        if (response.data?.success && response.data?.busyTimes) {
-          setCalendarBusyTimes(response.data.busyTimes);
+        console.log('FreeBusy response:', response);
+
+        // Handle both response formats (response.data or response directly)
+        const data = response?.data || response;
+
+        if (data?.success && data?.busyTimes) {
+          console.log('Busy times found:', data.busyTimes);
+          setCalendarBusyTimes(data.busyTimes);
         } else {
+          console.log('No busy times in response:', data);
           setCalendarBusyTimes([]);
         }
       } catch (error) {
@@ -257,9 +264,10 @@ export default function ClientBooking() {
           }
         });
 
-        if (calendarResponse.data?.success && calendarResponse.data?.calendarEventId) {
+        const calendarData = calendarResponse?.data || calendarResponse;
+        if (calendarData?.success && calendarData?.calendarEventId) {
           await base44.entities.Session.update(session.id, {
-            google_calendar_event_id: calendarResponse.data.calendarEventId
+            google_calendar_event_id: calendarData.calendarEventId
           });
         }
       } catch (calendarError) {
