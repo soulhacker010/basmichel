@@ -46,7 +46,23 @@ Deno.serve(async (req) => {
             }
 
             // Calculate end time based on duration (default 60 minutes if not specified)
-            const duration = durationMinutes || 60;
+            // If durationMinutes not passed, try to get from project's linked session
+            let duration = durationMinutes;
+            if (!duration && projectId) {
+                try {
+                    const sessions = await base44.asServiceRole.entities.Session.filter({ project_id: projectId });
+                    if (sessions.length > 0) {
+                        const sessionTypeId = sessions[0].session_type_id;
+                        if (sessionTypeId) {
+                            const sessionType = await base44.asServiceRole.entities.SessionType.get(sessionTypeId);
+                            duration = sessionType?.duration_minutes;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch session duration:', e);
+                }
+            }
+            duration = duration || 60;
             const startDate = new Date(startDateTime);
             const endDate = new Date(startDate.getTime() + (duration * 60 * 1000));
             const endDateTime = endDate.toISOString().replace('Z', '').split('.')[0];

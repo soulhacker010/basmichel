@@ -233,7 +233,7 @@ export default function ClientBooking() {
       });
 
       // Create session
-      await base44.entities.Session.create({
+      const session = await base44.entities.Session.create({
         session_type_id: selectedService.id,
         client_id: clientId,
         project_id: project.id,
@@ -243,6 +243,29 @@ export default function ClientBooking() {
         location: `${formData.address}${formData.city ? `, ${formData.city}` : ''}`,
         notes: formData.notes || '',
       });
+
+      // Sync session to Google Calendar
+      try {
+        const calendarResponse = await base44.functions.invoke('calendarSession', {
+          action: 'syncSessionEvent',
+          sessionData: {
+            session_type_id: selectedService.id,
+            client_id: clientId,
+            start_datetime: startDatetime.toISOString(),
+            location: `${formData.address}${formData.city ? `, ${formData.city}` : ''}`,
+            notes: formData.notes || '',
+          }
+        });
+
+        if (calendarResponse.data?.success && calendarResponse.data?.calendarEventId) {
+          await base44.entities.Session.update(session.id, {
+            google_calendar_event_id: calendarResponse.data.calendarEventId
+          });
+        }
+      } catch (calendarError) {
+        console.error('Failed to sync session to calendar:', calendarError);
+        // Don't fail the booking if calendar sync fails
+      }
 
       // Create client notification
       await base44.entities.Notification.create({
