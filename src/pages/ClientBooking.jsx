@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
@@ -332,7 +332,13 @@ Basmichel
   };
 
   const weekDays = getWeekDays();
-  const timeSlots = selectedDate ? getTimeSlots(selectedDate) : [];
+
+  // Use useMemo to ensure timeSlots re-computes when calendarBusyTimes updates
+  const timeSlots = useMemo(() => {
+    if (!selectedDate) return [];
+    console.log('Computing timeSlots, busyTimes count:', calendarBusyTimes.length);
+    return getTimeSlots(selectedDate);
+  }, [selectedDate, selectedService, calendarBusyTimes, existingSessions, availability]);
 
   return (
     <div className="max-w-3xl mx-auto">
