@@ -76,6 +76,12 @@ export default function ClientBooking() {
     queryFn: () => base44.entities.Availability.filter({ is_active: true }),
   });
 
+  // Fetch internal blocked times from the website's booking system
+  const { data: blockedTimes = [] } = useQuery({
+    queryKey: ['blockedTimes'],
+    queryFn: () => base44.entities.BlockedTime.list(),
+  });
+
   // Fetch Google Calendar busy times for the selected week
   const [calendarBusyTimes, setCalendarBusyTimes] = useState([]);
   const [loadingBusyTimes, setLoadingBusyTimes] = useState(false);
@@ -182,7 +188,20 @@ export default function ClientBooking() {
         );
       });
 
-      const hasConflict = hasSessionConflict || hasCalendarConflict;
+      // Check if slot conflicts with internal blocked times (from Boekingen page)
+      const hasBlockedTimeConflict = blockedTimes.some(blocked => {
+        if (!blocked.start_datetime || !blocked.end_datetime) return false;
+        const blockedStart = new Date(blocked.start_datetime);
+        const blockedEnd = new Date(blocked.end_datetime);
+        return (
+          (isAfter(currentTime, blockedStart) && isBefore(currentTime, blockedEnd)) ||
+          (isAfter(slotEnd, blockedStart) && isBefore(slotEnd, blockedEnd)) ||
+          (isBefore(currentTime, blockedStart) && isAfter(slotEnd, blockedEnd)) ||
+          (currentTime.getTime() >= blockedStart.getTime() && currentTime.getTime() < blockedEnd.getTime())
+        );
+      });
+
+      const hasConflict = hasSessionConflict || hasCalendarConflict || hasBlockedTimeConflict;
 
       // Only show future slots that don't conflict
       if (!hasConflict && isAfter(currentTime, new Date())) {
@@ -333,12 +352,12 @@ Basmichel
 
   const weekDays = getWeekDays();
 
-  // Use useMemo to ensure timeSlots re-computes when calendarBusyTimes updates
+  // Use useMemo to ensure timeSlots re-computes when any blocking source updates
   const timeSlots = useMemo(() => {
     if (!selectedDate) return [];
-    console.log('Computing timeSlots, busyTimes count:', calendarBusyTimes.length);
+    console.log('Computing timeSlots - blockedTimes:', blockedTimes.length, 'calendarBusyTimes:', calendarBusyTimes.length);
     return getTimeSlots(selectedDate);
-  }, [selectedDate, selectedService, calendarBusyTimes, existingSessions, availability]);
+  }, [selectedDate, selectedService, calendarBusyTimes, existingSessions, availability, blockedTimes]);
 
   return (
     <div className="max-w-3xl mx-auto">
