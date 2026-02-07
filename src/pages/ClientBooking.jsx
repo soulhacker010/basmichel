@@ -85,6 +85,7 @@ export default function ClientBooking() {
   // Fetch Google Calendar busy times for the selected week
   const [calendarBusyTimes, setCalendarBusyTimes] = useState([]);
   const [loadingBusyTimes, setLoadingBusyTimes] = useState(false);
+  const [calendarError, setCalendarError] = useState(null);
 
   useEffect(() => {
     const fetchBusyTimes = async () => {
@@ -109,15 +110,23 @@ export default function ClientBooking() {
         // Handle both response formats (response.data or response directly)
         const data = response?.data || response;
 
-        if (data?.success && data?.busyTimes) {
+        // Check for errors returned from the API
+        if (data?.error) {
+          console.error('FreeBusy API returned error:', data.error);
+          setCalendarError(data.error);
+          setCalendarBusyTimes([]);
+        } else if (data?.success && data?.busyTimes) {
           console.log('Busy times found:', data.busyTimes);
           setCalendarBusyTimes(data.busyTimes);
+          setCalendarError(null);
         } else {
           console.log('No busy times in response:', data);
           setCalendarBusyTimes([]);
+          setCalendarError(null);
         }
       } catch (error) {
         console.error('Failed to fetch calendar busy times:', error);
+        setCalendarError('Kon Google Calendar niet bereiken');
         setCalendarBusyTimes([]);
       } finally {
         setLoadingBusyTimes(false);
@@ -538,6 +547,17 @@ Basmichel
               <h3 className="font-medium text-gray-900 mb-5">
                 Beschikbare tijden op {format(selectedDate, 'd MMMM', { locale: nl })}
               </h3>
+              {/* Calendar Error Warning */}
+              {calendarError && (
+                <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
+                  <strong>⚠️ Let op:</strong> {calendarError}
+                </div>
+              )}
+              {loadingBusyTimes && (
+                <div className="mb-4 text-sm text-gray-400">
+                  Beschikbaarheid controleren...
+                </div>
+              )}
               {timeSlots.length === 0 ? (
                 <div className="py-8 text-center">
                   <p className="text-gray-400">Geen beschikbare tijden op deze dag</p>
