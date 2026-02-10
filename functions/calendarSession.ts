@@ -132,41 +132,41 @@ Deno.serve(async (req) => {
             return Response.json({ success: true });
         }
 
-        // Check Calendar Availability (freeBusy API)
+        // Check Calendar Availability using Events List API
+        // (FreeBusy API requires extra scopes that Base44 connector doesn't provide)
         if (action === 'checkAvailability') {
             if (!timeMin || !timeMax) {
                 return Response.json({ error: 'timeMin and timeMax are required' }, { status: 400 });
             }
 
-            // Step 1: Log the token status
-            console.log('AccessToken exists:', !!accessToken);
-            console.log('AccessToken length:', accessToken ? accessToken.length : 0);
-            console.log('AccessToken first 10 chars:', accessToken ? accessToken.substring(0, 10) + '...' : 'NONE');
-
             try {
-                // Step 2: Make the API call
-                const requestBody = {
+                // Use Events List API instead of FreeBusy (same permissions as event creation)
+                const params = new URLSearchParams({
                     timeMin: timeMin,
                     timeMax: timeMax,
-                    items: [{ id: 'primary' }]
-                };
-                console.log('FreeBusy request:', JSON.stringify(requestBody));
-
-                const response = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(requestBody)
+                    singleEvents: 'true',
+                    orderBy: 'startTime',
+                    fields: 'items(summary,start,end,status,transparency)'
                 });
 
-                console.log('FreeBusy response status:', response.status);
+                console.log('Fetching calendar events for:', timeMin, 'to', timeMax);
 
-                // Step 3: Handle non-OK response
+                const response = await fetch(
+                    `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params.toString()}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                console.log('Events List response status:', response.status);
+
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error('FreeBusy API Error Response:', errorText);
+                    console.error('Events List API Error:', errorText);
                     return Response.json({
                         success: false,
                         busyTimes: [],
@@ -174,40 +174,33 @@ Deno.serve(async (req) => {
                     });
                 }
 
-                // Step 4: Parse response
                 const data = await response.json();
-                console.log('FreeBusy API full response:', JSON.stringify(data));
+                const events = data.items || [];
+                console.log('Calendar events found:', events.length);
 
-                // Step 5: Extract busy times from all calendars
-                let busyTimes = [];
-                if (data.calendars) {
-                    const calendarKeys = Object.keys(data.calendars);
-                    console.log('Calendar keys in response:', calendarKeys);
+                // Convert events to busy time ranges
+                // Skip transparent events (events that don't block time) and cancelled events
+                const busyTimes = events
+                    .filter((event: any) => event.status !== 'cancelled' && event.transparency !== 'transparent')
+                    .map((event: any) => ({
+                        start: event.start?.dateTime || event.start?.date,
+                        end: event.end?.dateTime || event.end?.date
+                    }))
+                    .filter((busy: any) => busy.start && busy.end);
 
-                    for (const key of calendarKeys) {
-                        const calendarData = data.calendars[key];
-                        if (calendarData.errors && calendarData.errors.length > 0) {
-                            console.error('Calendar errors for', key, ':', JSON.stringify(calendarData.errors));
-                        }
-                        if (calendarData.busy && calendarData.busy.length > 0) {
-                            busyTimes = [...busyTimes, ...calendarData.busy];
-                        }
-                    }
-                }
-
-                console.log('Busy times found:', JSON.stringify(busyTimes));
+                console.log('Busy times from events:', JSON.stringify(busyTimes));
 
                 return Response.json({
                     success: true,
                     busyTimes: busyTimes
                 });
 
-            } catch (freeBusyError) {
-                console.error('FreeBusy internal error:', freeBusyError);
+            } catch (eventsError) {
+                console.error('Events List internal error:', eventsError);
                 return Response.json({
                     success: false,
                     busyTimes: [],
-                    error: `FreeBusy fout: ${String(freeBusyError)}`
+                    error: `Calendar fout: ${String(eventsError)}`
                 });
             }
         }
