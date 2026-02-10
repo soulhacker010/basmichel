@@ -138,55 +138,85 @@ Deno.serve(async (req) => {
                 return Response.json({ error: 'timeMin and timeMax are required' }, { status: 400 });
             }
 
-            const response = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
+            // Step 1: Log the token status
+            console.log('AccessToken exists:', !!accessToken);
+            console.log('AccessToken length:', accessToken ? accessToken.length : 0);
+            console.log('AccessToken first 10 chars:', accessToken ? accessToken.substring(0, 10) + '...' : 'NONE');
+
+            try {
+                // Step 2: Make the API call
+                const requestBody = {
                     timeMin: timeMin,
                     timeMax: timeMax,
                     items: [{ id: 'primary' }]
-                })
-            });
+                };
+                console.log('FreeBusy request:', JSON.stringify(requestBody));
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('FreeBusy API Error:', errorText);
-                throw new Error(`FreeBusy API Error: ${response.status}`);
-            }
+                const response = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
 
-            const data = await response.json();
-            console.log('FreeBusy API response:', JSON.stringify(data));
+                console.log('FreeBusy response status:', response.status);
 
-            // Get busy times - the key might be 'primary' or the actual email address
-            let busyTimes = [];
-            if (data.calendars) {
-                // Get the first calendar's busy times (usually there's only one)
-                const calendarKeys = Object.keys(data.calendars);
-                console.log('Calendar keys in response:', calendarKeys);
+                // Step 3: Handle non-OK response
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('FreeBusy API Error Response:', errorText);
+                    return Response.json({
+                        success: false,
+                        busyTimes: [],
+                        error: `Google Calendar API fout (${response.status}): ${errorText.substring(0, 200)}`
+                    });
+                }
 
-                for (const key of calendarKeys) {
-                    const calendarData = data.calendars[key];
-                    if (calendarData.busy && calendarData.busy.length > 0) {
-                        busyTimes = [...busyTimes, ...calendarData.busy];
+                // Step 4: Parse response
+                const data = await response.json();
+                console.log('FreeBusy API full response:', JSON.stringify(data));
+
+                // Step 5: Extract busy times from all calendars
+                let busyTimes = [];
+                if (data.calendars) {
+                    const calendarKeys = Object.keys(data.calendars);
+                    console.log('Calendar keys in response:', calendarKeys);
+
+                    for (const key of calendarKeys) {
+                        const calendarData = data.calendars[key];
+                        if (calendarData.errors && calendarData.errors.length > 0) {
+                            console.error('Calendar errors for', key, ':', JSON.stringify(calendarData.errors));
+                        }
+                        if (calendarData.busy && calendarData.busy.length > 0) {
+                            busyTimes = [...busyTimes, ...calendarData.busy];
+                        }
                     }
                 }
+
+                console.log('Busy times found:', JSON.stringify(busyTimes));
+
+                return Response.json({
+                    success: true,
+                    busyTimes: busyTimes
+                });
+
+            } catch (freeBusyError) {
+                console.error('FreeBusy internal error:', freeBusyError);
+                return Response.json({
+                    success: false,
+                    busyTimes: [],
+                    error: `FreeBusy fout: ${String(freeBusyError)}`
+                });
             }
-
-            console.log('Busy times found:', busyTimes);
-
-            return Response.json({
-                success: true,
-                busyTimes: busyTimes
-            });
         }
 
         return Response.json({ error: 'Invalid action' }, { status: 400 });
 
     } catch (error) {
         console.error('Calendar Session Sync Error:', error);
-        return Response.json({ error: error.message }, { status: 500 });
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        return Response.json({ error: `Server fout: ${errorMsg}` }, { status: 500 });
     }
 });
