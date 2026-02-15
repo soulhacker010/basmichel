@@ -52,6 +52,7 @@ export default function ClientProjectDetail2() {
   const [selectedTime, setSelectedTime] = useState(null);
   const [weekOffset, setWeekOffset] = useState(0);
   const [isRescheduling, setIsRescheduling] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -820,10 +821,62 @@ export default function ClientProjectDetail2() {
                 <p className="text-sm text-gray-900">{projectInvoice.description}</p>
               </div>
             )}
-            {projectInvoice.status !== 'betaald' && (
+            {projectInvoice.status === 'betaald' ? (
               <div className="mt-6 pt-6 border-t border-gray-100">
-                <Button className="w-full bg-[#5C6B52] hover:bg-[#4A5641] text-white">
-                  Factuur Betalen
+                <div className="flex items-center gap-2 justify-center py-3 bg-green-50 rounded-lg">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  <span className="text-green-700 font-medium">Betaald</span>
+                </div>
+              </div>
+            ) : projectInvoice.mollie_payment_link_url ? (
+              <div className="mt-6 pt-6 border-t border-gray-100 space-y-3">
+                <a
+                  href={projectInvoice.mollie_payment_link_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full block text-center py-3 bg-[#5C6B52] hover:bg-[#4A5641] text-white rounded-lg font-medium transition-colors"
+                >
+                  Factuur Betalen via iDEAL
+                </a>
+                <p className="text-xs text-center text-gray-400">Je wordt doorgestuurd naar een veilige betaalpagina van Mollie</p>
+              </div>
+            ) : (
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <Button
+                  className="w-full bg-[#5C6B52] hover:bg-[#4A5641] text-white"
+                  disabled={paymentLoading}
+                  onClick={async () => {
+                    try {
+                      setPaymentLoading(true);
+                      const response = await base44.functions.invoke('molliePayment', {
+                        action: 'createPaymentLink',
+                        invoiceId: projectInvoice.id,
+                        amount: projectInvoice.total_amount,
+                        description: `Factuur ${projectInvoice.invoice_number || project.project_number}`,
+                        redirectUrl: window.location.href,
+                      });
+                      const data = response?.data || response;
+                      if (data?.paymentLinkUrl) {
+                        // Refresh invoice data to show the payment link
+                        queryClient.invalidateQueries({ queryKey: ['projectInvoice'] });
+                        // Redirect to Mollie payment page
+                        window.open(data.paymentLinkUrl, '_blank');
+                      } else if (data?.error) {
+                        alert(`Fout bij betaling: ${data.error}`);
+                      }
+                    } catch (err) {
+                      console.error('Payment error:', err);
+                      alert('Er ging iets mis bij het aanmaken van de betaallink. Probeer het opnieuw.');
+                    } finally {
+                      setPaymentLoading(false);
+                    }
+                  }}
+                >
+                  {paymentLoading ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Betaallink aanmaken...</>
+                  ) : (
+                    'Factuur Betalen'
+                  )}
                 </Button>
               </div>
             )}

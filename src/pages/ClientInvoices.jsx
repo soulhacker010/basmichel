@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { 
-  FileText, 
+import {
+  FileText,
   Download,
   CreditCard,
   CheckCircle2,
@@ -72,7 +72,7 @@ export default function ClientInvoices() {
   const totalOpen = openInvoices.reduce((sum, i) => sum + (i.total_amount || 0), 0);
 
   const toggleInvoiceSelection = (id) => {
-    setSelectedInvoices(prev => 
+    setSelectedInvoices(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
@@ -101,7 +101,7 @@ export default function ClientInvoices() {
               <p className="text-2xl font-light text-amber-900">€{totalOpen.toFixed(2)}</p>
             </div>
           </div>
-          <Button 
+          <Button
             className="bg-amber-600 hover:bg-amber-700 text-white rounded-full px-6 h-11"
             onClick={() => setSelectedInvoices(openInvoices.map(i => i.id))}
           >
@@ -124,8 +124,8 @@ export default function ClientInvoices() {
               onClick={() => setFilter(tab.value)}
               className={cn(
                 "px-5 py-2.5 rounded-full text-sm font-medium transition-all",
-                filter === tab.value 
-                  ? "bg-[#5C6B52] text-white" 
+                filter === tab.value
+                  ? "bg-[#5C6B52] text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               )}
             >
@@ -149,13 +149,13 @@ export default function ClientInvoices() {
       ) : (
         <div className="space-y-3">
           {filteredInvoices.map(invoice => (
-            <div 
+            <div
               key={invoice.id}
               className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-sm transition-shadow"
             >
               <div className="flex items-center gap-4">
                 {invoice.status === 'verzonden' && (
-                  <div 
+                  <div
                     className="cursor-pointer"
                     onClick={() => toggleInvoiceSelection(invoice.id)}
                   >
@@ -204,8 +204,8 @@ export default function ClientInvoices() {
                   <Button variant="outline" size="sm" className="rounded-full w-9 h-9 p-0">
                     <Download className="w-4 h-4" />
                   </Button>
-                  {invoice.status === 'verzonden' && invoice.payment_link && (
-                    <a href={invoice.payment_link} target="_blank" rel="noopener noreferrer">
+                  {invoice.status === 'verzonden' && (invoice.payment_link || invoice.mollie_payment_link_url) && (
+                    <a href={invoice.payment_link || invoice.mollie_payment_link_url} target="_blank" rel="noopener noreferrer">
                       <Button size="sm" className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full px-5">
                         Betalen
                       </Button>
@@ -227,8 +227,8 @@ export default function ClientInvoices() {
               <p className="text-2xl font-light text-gray-900">€{selectedTotal.toFixed(2)}</p>
             </div>
             <div className="flex gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setSelectedInvoices([])}
                 className="rounded-full px-6"
               >

@@ -31,3 +31,4 @@ dist-ssr
 .agent/
 install-skills.ps1
 brain/
+PROJECT_NOTES.md

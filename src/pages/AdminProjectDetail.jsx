@@ -14,7 +14,8 @@ import {
   Loader2,
   ChevronDown,
   FileText,
-  Plus
+  Plus,
+  Pencil
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -72,6 +73,7 @@ export default function AdminProjectDetail() {
   const [driveFiles, setDriveFiles] = useState([]);
   const [loadingDriveFiles, setLoadingDriveFiles] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [isEditingInvoice, setIsEditingInvoice] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [matterportLink, setMatterportLink] = useState('');
   const [invoiceData, setInvoiceData] = useState({
@@ -83,6 +85,7 @@ export default function AdminProjectDetail() {
     recipient_email: '',
     recipient_address: '',
     template_id: '',
+    cc_emails: '',
   });
 
   const queryClient = useQueryClient();
@@ -516,6 +519,7 @@ export default function AdminProjectDetail() {
         total_amount: totalAmount,
         status: 'concept',
         template_id: data.template_id || null,
+        cc_emails: data.cc_emails || '',
       });
     },
     onSuccess: () => {
@@ -531,8 +535,55 @@ export default function AdminProjectDetail() {
         recipient_email: '',
         recipient_address: '',
         template_id: '',
+        cc_emails: '',
       });
       toast.success('Factuur aangemaakt');
+    },
+  });
+
+  const updateInvoiceMutation = useMutation({
+    mutationFn: async (data) => {
+      const subtotal = data.items.reduce((sum, item) => {
+        const itemTotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0);
+        return sum + itemTotal;
+      }, 0);
+
+      const discountAmount = parseFloat(data.discount_amount) || 0;
+      const afterDiscount = subtotal - discountAmount;
+      const vatAmount = afterDiscount * (data.vat_percentage / 100);
+      const totalAmount = afterDiscount + vatAmount;
+
+      return await base44.entities.ProjectInvoice.update(projectInvoice.id, {
+        client_name: data.use_custom_recipient ? data.recipient_name : (user?.full_name || client?.company_name || ''),
+        client_email: data.use_custom_recipient ? data.recipient_email : (user?.email || ''),
+        client_address: data.use_custom_recipient ? data.recipient_address : (project.address || ''),
+        items: data.items.filter(item => item.title && item.unit_price),
+        subtotal: subtotal,
+        discount_amount: discountAmount,
+        vat_percentage: data.vat_percentage,
+        vat_amount: vatAmount,
+        total_amount: totalAmount,
+        template_id: data.template_id || null,
+        cc_emails: data.cc_emails || '',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projectInvoice', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      setInvoiceDialogOpen(false);
+      setIsEditingInvoice(false);
+      setInvoiceData({
+        items: [{ title: '', description: '', quantity: 1, unit_price: '' }],
+        vat_percentage: 21,
+        discount_amount: 0,
+        use_custom_recipient: false,
+        recipient_name: '',
+        recipient_email: '',
+        recipient_address: '',
+        template_id: '',
+        cc_emails: '',
+      });
+      toast.success('Factuur bijgewerkt');
     },
   });
 
@@ -1176,7 +1227,21 @@ export default function AdminProjectDetail() {
           <h2 className={cn("text-lg font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>Factuur</h2>
           {!projectInvoice && (
             <Button
-              onClick={() => setInvoiceDialogOpen(true)}
+              onClick={() => {
+                setIsEditingInvoice(false);
+                setInvoiceData({
+                  items: [{ title: '', description: '', quantity: 1, unit_price: '' }],
+                  vat_percentage: 21,
+                  discount_amount: 0,
+                  use_custom_recipient: false,
+                  recipient_name: '',
+                  recipient_email: '',
+                  recipient_address: '',
+                  template_id: '',
+                  cc_emails: '',
+                });
+                setInvoiceDialogOpen(true);
+              }}
               className="bg-green-600 hover:bg-green-700 text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -1223,18 +1288,49 @@ export default function AdminProjectDetail() {
                 </div>
               </div>
               {projectInvoice.status !== 'betaald' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    if (confirm('Weet je zeker dat je deze factuur wilt verwijderen?')) {
-                      deleteInvoiceMutation.mutate(projectInvoice.id);
-                    }
-                  }}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setIsEditingInvoice(true);
+                      setInvoiceData({
+                        items: projectInvoice.items && projectInvoice.items.length > 0
+                          ? projectInvoice.items.map(item => ({
+                            title: item.title || '',
+                            description: item.description || '',
+                            quantity: item.quantity || 1,
+                            unit_price: item.unit_price || '',
+                          }))
+                          : [{ title: '', description: '', quantity: 1, unit_price: '' }],
+                        vat_percentage: projectInvoice.vat_percentage || 21,
+                        discount_amount: projectInvoice.discount_amount || 0,
+                        use_custom_recipient: !!projectInvoice.client_name && projectInvoice.client_name !== (user?.full_name || client?.company_name || ''),
+                        recipient_name: projectInvoice.client_name || '',
+                        recipient_email: projectInvoice.client_email || '',
+                        recipient_address: projectInvoice.client_address || '',
+                        template_id: projectInvoice.template_id || '',
+                        cc_emails: projectInvoice.cc_emails || '',
+                      });
+                      setInvoiceDialogOpen(true);
+                    }}
+                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (confirm('Weet je zeker dat je deze factuur wilt verwijderen?')) {
+                        deleteInvoiceMutation.mutate(projectInvoice.id);
+                      }
+                    }}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               )}
             </div>
 
@@ -1286,6 +1382,112 @@ export default function AdminProjectDetail() {
                 <span className="font-semibold text-gray-900 text-lg">€ {projectInvoice.total_amount?.toFixed(2)}</span>
               </div>
             </div>
+
+            {/* Payment Link Section */}
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              {projectInvoice.status === 'betaald' ? (
+                <div className="flex items-center gap-2 py-2">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  <span className="text-green-700 font-medium text-sm">Betaald</span>
+                  {projectInvoice.paid_date && (
+                    <span className="text-xs text-gray-400 ml-2">
+                      op {format(new Date(projectInvoice.paid_date), 'd MMMM yyyy', { locale: nl })}
+                    </span>
+                  )}
+                </div>
+              ) : projectInvoice.mollie_payment_link_url ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Betaallink:</span>
+                    <a
+                      href={projectInvoice.mollie_payment_link_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:text-blue-700 underline truncate flex-1"
+                    >
+                      {projectInvoice.mollie_payment_link_url}
+                    </a>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          const response = await base44.functions.invoke('molliePayment', {
+                            action: 'checkPaymentStatus',
+                            paymentLinkId: projectInvoice.mollie_payment_link_id,
+                            invoiceId: projectInvoice.id,
+                          });
+                          const data = response?.data || response;
+                          if (data?.status === 'paid') {
+                            queryClient.invalidateQueries({ queryKey: ['projectInvoice', projectId] });
+                            toast.success('Betaling ontvangen!');
+                          } else {
+                            toast.info('Nog niet betaald');
+                          }
+                        } catch (err) {
+                          console.error('Check payment error:', err);
+                          toast.error('Kon betalingsstatus niet controleren');
+                        }
+                      }}
+                    >
+                      Status controleren
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        if (confirm('Wil je deze factuur handmatig als betaald markeren?')) {
+                          try {
+                            await base44.entities.ProjectInvoice.update(projectInvoice.id, {
+                              status: 'betaald',
+                              paid_date: new Date().toISOString(),
+                            });
+                            queryClient.invalidateQueries({ queryKey: ['projectInvoice', projectId] });
+                            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+                            toast.success('Factuur als betaald gemarkeerd');
+                          } catch (err) {
+                            toast.error('Kon status niet bijwerken');
+                          }
+                        }
+                      }}
+                      className="text-green-600 hover:text-green-700"
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-1" /> Betaald markeren
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      const response = await base44.functions.invoke('molliePayment', {
+                        action: 'createPaymentLink',
+                        invoiceId: projectInvoice.id,
+                        amount: projectInvoice.total_amount,
+                        description: `Factuur ${projectInvoice.invoice_number || project.project_number}`,
+                      });
+                      const data = response?.data || response;
+                      if (data?.paymentLinkUrl) {
+                        queryClient.invalidateQueries({ queryKey: ['projectInvoice', projectId] });
+                        toast.success('Betaallink aangemaakt');
+                      } else if (data?.error) {
+                        toast.error(`Fout: ${data.error}`);
+                      }
+                    } catch (err) {
+                      console.error('Create payment link error:', err);
+                      toast.error('Kon betaallink niet aanmaken');
+                    }
+                  }}
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  Betaallink genereren
+                </Button>
+              )}
+            </div>
           </div>
         ) : (
           <div className={cn("text-center py-12", darkMode ? "text-gray-500" : "text-gray-400")}>
@@ -1298,7 +1500,7 @@ export default function AdminProjectDetail() {
       <Dialog open={invoiceDialogOpen} onOpenChange={setInvoiceDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Factuur Aanmaken</DialogTitle>
+            <DialogTitle>{isEditingInvoice ? 'Factuur Bewerken' : 'Factuur Aanmaken'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-6">
             {/* A. FACTUURGEGEVENS */}
@@ -1429,6 +1631,22 @@ export default function AdminProjectDetail() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* CC / Extra ontvangers */}
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="text-sm font-medium text-gray-900">Extra ontvangers (CC)</h3>
+              <p className="text-xs text-gray-500">Voeg extra e-mailadressen toe die een kopie van de factuur ontvangen. Scheid meerdere adressen met een komma. Bas zijn administratie (basmichelsite@gmail.com) ontvangt altijd automatisch een kopie.</p>
+              <div>
+                <Label htmlFor="cc_emails">CC E-mailadressen</Label>
+                <Input
+                  id="cc_emails"
+                  value={invoiceData.cc_emails}
+                  onChange={(e) => setInvoiceData({ ...invoiceData, cc_emails: e.target.value })}
+                  placeholder="admin@makelaar.nl, boekhouding@bedrijf.nl"
+                  className="mt-1.5"
+                />
+              </div>
             </div>
 
             {/* C. FACTUURITEMS */}
@@ -1612,14 +1830,20 @@ export default function AdminProjectDetail() {
                 Annuleren
               </Button>
               <Button
-                onClick={() => createInvoiceMutation.mutate(invoiceData)}
+                onClick={() => {
+                  if (isEditingInvoice) {
+                    updateInvoiceMutation.mutate(invoiceData);
+                  } else {
+                    createInvoiceMutation.mutate(invoiceData);
+                  }
+                }}
                 disabled={
                   invoiceData.items.some(item => !item.title || !item.unit_price) ||
                   (invoiceData.use_custom_recipient && (!invoiceData.recipient_name || !invoiceData.recipient_email))
                 }
                 className="bg-green-600 hover:bg-green-700 text-white"
               >
-                Factuur Opslaan
+                {isEditingInvoice ? 'Factuur Bijwerken' : 'Factuur Opslaan'}
               </Button>
             </div>
           </div>
