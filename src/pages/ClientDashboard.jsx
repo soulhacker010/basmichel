@@ -44,14 +44,14 @@ export default function ClientDashboard() {
   }, [userData]);
 
   const { data: clients = [] } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => base44.entities.Client.list(),
+    queryKey: ['clients', user?.id],
+    queryFn: () => base44.entities.Client.filter({ user_id: user?.id }),
     enabled: !!user,
   });
 
   useEffect(() => {
     if (user && clients.length > 0) {
-      const client = clients.find(c => c.user_id === user.id);
+      const client = clients[0];
       if (client) setClientId(client.id);
     }
   }, [user, clients]);
@@ -83,7 +83,18 @@ export default function ClientDashboard() {
 
   const { data: invoices = [] } = useQuery({
     queryKey: ['clientInvoices', clientId],
-    queryFn: () => base44.entities.Invoice.filter({ client_id: clientId }, '-created_date'),
+    queryFn: async () => {
+      if (!clientId) return [];
+      const primary = await base44.entities.ProjectInvoice.filter({ client_id: clientId }, '-created_date');
+      const shared = await base44.entities.ProjectInvoice.filter({ recipient_client_ids: clientId }, '-created_date');
+      const combined = [...(primary || []), ...(shared || [])];
+      const seen = new Set();
+      return combined.filter(inv => {
+        if (seen.has(inv.id)) return false;
+        seen.add(inv.id);
+        return true;
+      });
+    },
     enabled: !!clientId,
   });
 

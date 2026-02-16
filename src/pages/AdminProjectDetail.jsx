@@ -86,6 +86,7 @@ export default function AdminProjectDetail() {
     recipient_address: '',
     template_id: '',
     cc_emails: '',
+    recipient_client_ids: [],
   });
 
   const queryClient = useQueryClient();
@@ -163,6 +164,11 @@ export default function AdminProjectDetail() {
       const templates = await base44.entities.Template.filter({ type: 'factuur' });
       return templates || [];
     },
+  });
+
+  const { data: allClients = [] } = useQuery({
+    queryKey: ['allClients'],
+    queryFn: () => base44.entities.Client.list(),
   });
 
   useEffect(() => {
@@ -507,6 +513,7 @@ export default function AdminProjectDetail() {
 
       return await base44.entities.ProjectInvoice.create({
         project_id: projectId,
+        client_id: project?.client_id || null,
         invoice_number: project.project_number,
         client_name: data.use_custom_recipient ? data.recipient_name : (user?.full_name || client?.company_name || ''),
         client_email: data.use_custom_recipient ? data.recipient_email : (user?.email || ''),
@@ -520,6 +527,7 @@ export default function AdminProjectDetail() {
         status: 'concept',
         template_id: data.template_id || null,
         cc_emails: data.cc_emails || '',
+        recipient_client_ids: Array.from(new Set([...(data.recipient_client_ids || []), project?.client_id].filter(Boolean))),
       });
     },
     onSuccess: () => {
@@ -536,6 +544,7 @@ export default function AdminProjectDetail() {
         recipient_address: '',
         template_id: '',
         cc_emails: '',
+        recipient_client_ids: [],
       });
       toast.success('Factuur aangemaakt');
     },
@@ -554,6 +563,7 @@ export default function AdminProjectDetail() {
       const totalAmount = afterDiscount + vatAmount;
 
       return await base44.entities.ProjectInvoice.update(projectInvoice.id, {
+        client_id: project?.client_id || null,
         client_name: data.use_custom_recipient ? data.recipient_name : (user?.full_name || client?.company_name || ''),
         client_email: data.use_custom_recipient ? data.recipient_email : (user?.email || ''),
         client_address: data.use_custom_recipient ? data.recipient_address : (project.address || ''),
@@ -565,6 +575,7 @@ export default function AdminProjectDetail() {
         total_amount: totalAmount,
         template_id: data.template_id || null,
         cc_emails: data.cc_emails || '',
+        recipient_client_ids: Array.from(new Set([...(data.recipient_client_ids || []), project?.client_id].filter(Boolean))),
       });
     },
     onSuccess: () => {
@@ -582,6 +593,7 @@ export default function AdminProjectDetail() {
         recipient_address: '',
         template_id: '',
         cc_emails: '',
+        recipient_client_ids: [],
       });
       toast.success('Factuur bijgewerkt');
     },
@@ -1239,6 +1251,7 @@ export default function AdminProjectDetail() {
                   recipient_address: '',
                   template_id: '',
                   cc_emails: '',
+                  recipient_client_ids: [],
                 });
                 setInvoiceDialogOpen(true);
               }}
@@ -1311,6 +1324,7 @@ export default function AdminProjectDetail() {
                         recipient_address: projectInvoice.client_address || '',
                         template_id: projectInvoice.template_id || '',
                         cc_emails: projectInvoice.cc_emails || '',
+                        recipient_client_ids: projectInvoice.recipient_client_ids || [],
                       });
                       setInvoiceDialogOpen(true);
                     }}
@@ -1631,6 +1645,38 @@ export default function AdminProjectDetail() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Extra client accounts */}
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="text-sm font-medium text-gray-900">Extra client accounts (portal toegang)</h3>
+              <p className="text-xs text-gray-500">Selecteer extra klanten die deze factuur in hun portal mogen zien en betalen. De hoofdklant van het project is altijd geselecteerd.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                {allClients.map((c) => {
+                  const isPrimary = c.id === project?.client_id;
+                  const isChecked = isPrimary || invoiceData.recipient_client_ids.includes(c.id);
+                  const label = c.company_name || c.contact_name || c.id;
+                  return (
+                    <label key={c.id} className="flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        disabled={isPrimary}
+                        onChange={(e) => {
+                          const next = new Set(invoiceData.recipient_client_ids);
+                          if (e.target.checked) next.add(c.id);
+                          else next.delete(c.id);
+                          setInvoiceData({ ...invoiceData, recipient_client_ids: Array.from(next) });
+                        }}
+                      />
+                      <span>{label}</span>
+                    </label>
+                  );
+                })}
+                {allClients.length === 0 && (
+                  <p className="text-xs text-gray-500">Geen klanten gevonden.</p>
+                )}
+              </div>
             </div>
 
             {/* CC / Extra ontvangers */}

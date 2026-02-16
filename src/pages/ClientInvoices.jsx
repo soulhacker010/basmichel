@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -22,6 +22,8 @@ export default function ClientInvoices() {
   const [clientId, setClientId] = useState(null);
   const [filter, setFilter] = useState('all');
   const [selectedInvoices, setSelectedInvoices] = useState([]);
+  const [paymentLoadingId, setPaymentLoadingId] = useState(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const loadUser = async () => {
@@ -32,27 +34,41 @@ export default function ClientInvoices() {
   }, []);
 
   const { data: clients = [] } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => base44.entities.Client.list(),
+    queryKey: ['clients', user?.id],
+    queryFn: () => base44.entities.Client.filter({ user_id: user?.id }),
     enabled: !!user,
   });
 
   useEffect(() => {
     if (user && clients.length > 0) {
-      const client = clients.find(c => c.user_id === user.id);
+      const client = clients[0];
       if (client) setClientId(client.id);
     }
   }, [user, clients]);
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ['clientInvoices', clientId],
-    queryFn: () => base44.entities.Invoice.filter({ client_id: clientId }, '-created_date'),
+    queryFn: async () => {
+      if (!clientId) return [];
+      const primary = await base44.entities.ProjectInvoice.filter({ client_id: clientId }, '-created_date');
+      const shared = await base44.entities.ProjectInvoice.filter({ recipient_client_ids: clientId }, '-created_date');
+      const combined = [...(primary || []), ...(shared || [])];
+      const seen = new Set();
+      return combined.filter(inv => {
+        if (seen.has(inv.id)) return false;
+        seen.add(inv.id);
+        return true;
+      });
+    },
     enabled: !!clientId,
   });
 
   const { data: projects = [] } = useQuery({
     queryKey: ['clientProjects', clientId],
-    queryFn: () => base44.entities.Project.filter({ client_id: clientId }),
+    queryFn: async () => {
+      if (!clientId) return [];
+      return await base44.entities.Project.filter({ client_id: clientId });
+    },
     enabled: !!clientId,
   });
 
@@ -210,6 +226,38 @@ export default function ClientInvoices() {
                         Betalen
                       </Button>
                     </a>
+                  )}
+                  {invoice.status === 'verzonden' && !(invoice.payment_link || invoice.mollie_payment_link_url) && (
+                    <Button
+                      size="sm"
+                      className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full px-5"
+                      disabled={paymentLoadingId === invoice.id}
+                      onClick={async () => {
+                        try {
+                          setPaymentLoadingId(invoice.id);
+                          const response = await base44.functions.invoke('molliePayment', {
+                            action: 'createPaymentLink',
+                            invoiceId: invoice.id,
+                            amount: invoice.total_amount,
+                            description: `Factuur ${invoice.invoice_number || ''}`,
+                            redirectUrl: window.location.href,
+                          });
+                          const data = response?.data || response;
+                          if (data?.paymentLinkUrl) {
+                            queryClient.invalidateQueries({ queryKey: ['clientInvoices', clientId] });
+                            window.open(data.paymentLinkUrl, '_blank');
+                          } else if (data?.error) {
+                            console.error('Payment link error:', data.error);
+                          }
+                        } catch (err) {
+                          console.error('Create payment link error:', err);
+                        } finally {
+                          setPaymentLoadingId(null);
+                        }
+                      }}
+                    >
+                      {paymentLoadingId === invoice.id ? 'Laden...' : 'Betalen'}
+                    </Button>
                   )}
                 </div>
               </div>

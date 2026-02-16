@@ -19,7 +19,8 @@ export default function ClientProfile() {
     phone: '',
     address: '',
     city: '',
-    postal_code: ''
+    postal_code: '',
+    invoice_admin_email: ''
   });
 
   const queryClient = useQueryClient();
@@ -54,7 +55,8 @@ export default function ClientProfile() {
         phone: client.phone || '',
         address: client.address || '',
         city: client.city || '',
-        postal_code: client.postal_code || ''
+        postal_code: client.postal_code || '',
+        invoice_admin_email: client.invoice_admin_email || ''
       });
     }
   }, [clients]);
@@ -231,6 +233,18 @@ export default function ClientProfile() {
               className="mt-2 h-12 rounded-xl"
               placeholder="+31 6 12 34 56 78"
             />
+          </div>
+          <div>
+            <Label htmlFor="invoice_admin_email">Factuuradministratie e-mail (optioneel)</Label>
+            <Input
+              id="invoice_admin_email"
+              type="email"
+              value={clientData.invoice_admin_email}
+              onChange={(e) => setClientData({ ...clientData, invoice_admin_email: e.target.value })}
+              className="mt-2 h-12 rounded-xl"
+              placeholder="administratie@bedrijf.nl"
+            />
+            <p className="text-xs text-gray-400 mt-1">Alleen invullen als er een aparte factuuradministratie is.</p>
           </div>
           <div>
             <Label htmlFor="address">Adres</Label>
