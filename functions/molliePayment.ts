@@ -18,7 +18,16 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Mollie API key not configured' }, { status: 500 });
         }
 
-        const body = await req.json();
+        const contentType = req.headers.get('content-type') || '';
+        let body: any = {};
+        if (contentType.includes('application/json')) {
+            body = await req.json();
+        } else {
+            const raw = await req.text();
+            const params = new URLSearchParams(raw);
+            body = Object.fromEntries(params.entries());
+        }
+
         const { action } = body;
 
         // ==========================
@@ -42,6 +51,7 @@ Deno.serve(async (req) => {
             const formattedAmount = parseFloat(amount).toFixed(2);
 
             // Create payment link via Mollie API
+            const fallbackWebhookUrl = `${new URL(req.url).origin}/functions/molliePayment`;
             const mollieResponse = await fetch('https://api.mollie.com/v2/payment-links', {
                 method: 'POST',
                 headers: {
@@ -55,7 +65,7 @@ Deno.serve(async (req) => {
                     },
                     description: description,
                     redirectUrl: redirectUrl || undefined,
-                    webhookUrl: body.webhookUrl || undefined,
+                    webhookUrl: body.webhookUrl || fallbackWebhookUrl,
                 }),
             });
 
@@ -155,15 +165,13 @@ Deno.serve(async (req) => {
         // ==========================
         // ACTION: handleWebhook (called by Mollie when payment status changes)
         // ==========================
-        if (action === 'handleWebhook') {
-            // Mollie webhook doesn't send auth headers, so we use service role
+        if (action === 'handleWebhook' || (!action && body?.id)) {
             const { id } = body; // Mollie sends the payment link ID
 
             if (!id) {
                 return Response.json({ error: 'No id provided' }, { status: 400 });
             }
 
-            // Verify payment status with Mollie
             const mollieResponse = await fetch(`https://api.mollie.com/v2/payment-links/${id}`, {
                 method: 'GET',
                 headers: {
@@ -181,13 +189,23 @@ Deno.serve(async (req) => {
             const isPaid = mollieData.paidAt !== null && mollieData.paidAt !== undefined;
 
             if (isPaid) {
-                // Note: Without Base44 client from request, we can't use the SDK
-                // The webhook approach requires either a service key or polling
-                // For now, we rely on the checkPaymentStatus action
-                console.log(`Payment link ${id} has been paid at ${mollieData.paidAt}`);
+                try {
+                    const base44 = createClientFromRequest(req);
+                    const invoices = await base44.asServiceRole.entities.ProjectInvoice.filter({
+                        mollie_payment_link_id: id,
+                    });
+                    const invoice = invoices?.[0];
+                    if (invoice) {
+                        await base44.asServiceRole.entities.ProjectInvoice.update(invoice.id, {
+                            status: 'betaald',
+                            paid_date: new Date().toISOString(),
+                        });
+                    }
+                } catch (updateError) {
+                    console.error('Failed to update invoice from webhook:', updateError);
+                }
             }
 
-            // Mollie expects 200 OK response
             return new Response('OK', { status: 200 });
         }
 

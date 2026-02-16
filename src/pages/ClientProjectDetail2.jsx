@@ -854,6 +854,7 @@ export default function ClientProjectDetail2() {
                         amount: projectInvoice.total_amount,
                         description: `Factuur ${projectInvoice.invoice_number || project.project_number}`,
                         redirectUrl: window.location.href,
+                        webhookUrl: `${window.location.origin}/functions/molliePayment`,
                       });
                       const data = response?.data || response;
                       if (data?.paymentLinkUrl) {
