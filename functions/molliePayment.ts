@@ -1,5 +1,30 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
+function getAppIdFromUrl(url: string): string | null {
+    const match = url.match(/\/api\/apps\/([^/]+)\//);
+    return match ? match[1] : null;
+}
+
+function createClientWithAppId(req: Request) {
+    try {
+        return createClientFromRequest(req);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (!message.includes('Base44-App-Id')) {
+            throw error;
+        }
+
+        const appId = req.headers.get('Base44-App-Id') || getAppIdFromUrl(req.url);
+        if (!appId) {
+            throw error;
+        }
+
+        const headers = new Headers(req.headers);
+        headers.set('Base44-App-Id', appId);
+        return createClientFromRequest(new Request(req.url, { method: req.method, headers }));
+    }
+}
+
 Deno.serve(async (req) => {
     if (req.method === 'OPTIONS') {
         return new Response(null, {
@@ -191,16 +216,19 @@ Deno.serve(async (req) => {
 
             if (isPaid) {
                 try {
-                    const base44 = createClientFromRequest(req);
+                    const base44 = createClientWithAppId(req);
                     const invoices = await base44.asServiceRole.entities.ProjectInvoice.filter({
                         mollie_payment_link_id: id,
                     });
                     const invoice = invoices?.[0];
                     if (invoice) {
+                        console.log('Mollie webhook: marking invoice paid', { invoiceId: invoice.id, paymentLinkId: id });
                         await base44.asServiceRole.entities.ProjectInvoice.update(invoice.id, {
                             status: 'betaald',
                             paid_date: new Date().toISOString(),
                         });
+                    } else {
+                        console.warn('Mollie webhook: no invoice found for payment link', { paymentLinkId: id });
                     }
                 } catch (updateError) {
                     console.error('Failed to update invoice from webhook:', updateError);
