@@ -51,7 +51,8 @@ Deno.serve(async (req) => {
             const formattedAmount = parseFloat(amount).toFixed(2);
 
             // Create payment link via Mollie API
-            const fallbackWebhookUrl = `${new URL(req.url).origin}/functions/molliePayment`;
+            const reqUrl = new URL(req.url);
+            const fallbackWebhookUrl = `${reqUrl.origin}${reqUrl.pathname}`;
             const mollieResponse = await fetch('https://api.mollie.com/v2/payment-links', {
                 method: 'POST',
                 headers: {
@@ -65,7 +66,7 @@ Deno.serve(async (req) => {
                     },
                     description: description,
                     redirectUrl: redirectUrl || undefined,
-                    webhookUrl: body.webhookUrl || fallbackWebhookUrl,
+                    webhookUrl: fallbackWebhookUrl,
                 }),
             });
 

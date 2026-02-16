@@ -1469,7 +1469,6 @@ export default function AdminProjectDetail() {
                         invoiceId: projectInvoice.id,
                         amount: projectInvoice.total_amount,
                         description: `Factuur ${projectInvoice.invoice_number || project.project_number}`,
-                        webhookUrl: `${window.location.origin}/functions/molliePayment`,
                       });
                       const data = response?.data || response;
                       if (data?.paymentLinkUrl) {
