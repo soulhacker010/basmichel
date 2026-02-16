@@ -64,6 +64,7 @@ Deno.serve(async (req) => {
                         value: formattedAmount,
                     },
                     description: description,
+                    metadata: { invoiceId },
                     redirectUrl: redirectUrl || undefined,
                     webhookUrl: body.webhookUrl || fallbackWebhookUrl,
                 }),
@@ -191,15 +192,23 @@ Deno.serve(async (req) => {
             if (isPaid) {
                 try {
                     const base44 = createClientFromRequest(req);
-                    const invoices = await base44.asServiceRole.entities.ProjectInvoice.filter({
-                        mollie_payment_link_id: id,
-                    });
-                    const invoice = invoices?.[0];
-                    if (invoice) {
-                        await base44.asServiceRole.entities.ProjectInvoice.update(invoice.id, {
+                    const invoiceIdFromMetadata = mollieData?.metadata?.invoiceId;
+                    if (invoiceIdFromMetadata) {
+                        await base44.asServiceRole.entities.ProjectInvoice.update(invoiceIdFromMetadata, {
                             status: 'betaald',
                             paid_date: new Date().toISOString(),
                         });
+                    } else {
+                        const invoices = await base44.asServiceRole.entities.ProjectInvoice.filter({
+                            mollie_payment_link_id: id,
+                        });
+                        const invoice = invoices?.[0];
+                        if (invoice) {
+                            await base44.asServiceRole.entities.ProjectInvoice.update(invoice.id, {
+                                status: 'betaald',
+                                paid_date: new Date().toISOString(),
+                            });
+                        }
                     }
                 } catch (updateError) {
                     console.error('Failed to update invoice from webhook:', updateError);
