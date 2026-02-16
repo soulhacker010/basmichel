@@ -235,7 +235,7 @@ export default function ClientProfile() {
             />
           </div>
           <div>
-            <Label htmlFor="invoice_admin_email">Factuuradministratie e-mail (optioneel)</Label>
+            <Label htmlFor="invoice_admin_email">Administratie e-mail (optioneel)</Label>
             <Input
               id="invoice_admin_email"
               type="email"
@@ -244,7 +244,7 @@ export default function ClientProfile() {
               className="mt-2 h-12 rounded-xl"
               placeholder="administratie@bedrijf.nl"
             />
-            <p className="text-xs text-gray-400 mt-1">Alleen invullen als er een aparte factuuradministratie is.</p>
+            <p className="text-xs text-gray-400 mt-1">Alleen invullen als er een aparte administratie is.</p>
           </div>
           <div>
             <Label htmlFor="address">Adres</Label>
