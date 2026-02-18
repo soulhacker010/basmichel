@@ -192,6 +192,22 @@ export default function AdminProjects() {
       // First get the project to check for calendar event ID
       const project = projects.find(p => p.id === id);
 
+      // Delete associated sessions and calendar events
+      const sessions = await base44.entities.Session.filter({ project_id: id });
+      for (const session of sessions) {
+        if (session.google_calendar_event_id) {
+          try {
+            await base44.functions.invoke('calendarSession', {
+              action: 'deleteSessionEvent',
+              calendarEventId: session.google_calendar_event_id,
+            });
+          } catch (calendarError) {
+            console.error('Failed to delete session calendar event:', calendarError);
+          }
+        }
+        await base44.entities.Session.delete(session.id);
+      }
+
       // Delete calendar event if it exists
       if (project?.calendar_event_id) {
         try {

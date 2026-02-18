@@ -37,7 +37,6 @@ export default function ProjectGalleryView() {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [selectedFiles, setSelectedFiles] = useState({});
     const [downloading, setDownloading] = useState(false);
-    const [selectMode, setSelectMode] = useState(false);
 
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get('id');
@@ -161,9 +160,24 @@ export default function ProjectGalleryView() {
     };
 
     // Copy share link
-    const handleShare = () => {
-        navigator.clipboard.writeText(window.location.href);
-        toast.success('Link copied to clipboard!');
+    const handleShare = async () => {
+        const url = window.location.href;
+        try {
+            if (navigator.share) {
+                await navigator.share({ url, title: project?.title || 'Galerij' });
+                toast.success('Link gedeeld');
+                return;
+            }
+        } catch (error) {
+            console.warn('Native share failed:', error);
+        }
+
+        try {
+            await navigator.clipboard.writeText(url);
+            toast.success('Link gekopieerd');
+        } catch (error) {
+            window.prompt('Kopieer deze link:', url);
+        }
     };
 
     const selectedCount = Object.values(selectedFiles).filter(Boolean).length;
@@ -235,8 +249,13 @@ export default function ProjectGalleryView() {
                         <p className="text-white/60">{project.address}</p>
                     )}
                     <Button
-                        onClick={() => setSelectMode(true)}
-                        className="mt-6 bg-white hover:bg-gray-100 text-gray-900 font-medium"
+                        onClick={() => {
+                            const section = document.getElementById('gallery-section');
+                            if (section) {
+                                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }}
+                        className="mt-6 bg-white/95 hover:bg-white text-gray-900 font-medium shadow-lg"
                     >
                         <Images className="w-4 h-4 mr-2" />
                         View Gallery
@@ -245,7 +264,7 @@ export default function ProjectGalleryView() {
             </div>
 
             {/* Gallery Section */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div id="gallery-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 {/* Category Tabs + Actions */}
                 <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
                     <div className="flex items-center gap-2">

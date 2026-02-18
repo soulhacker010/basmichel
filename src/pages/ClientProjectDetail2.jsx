@@ -124,7 +124,7 @@ export default function ClientProjectDetail2() {
 
   const { data: galleries = [] } = useQuery({
     queryKey: ['projectGallery', projectId],
-    queryFn: () => base44.entities.Gallery.filter({ project_id: projectId, status: 'gepubliceerd' }),
+    queryFn: () => base44.entities.Gallery.filter({ project_id: projectId }, '-created_date'),
     enabled: !!projectId && project?.status === 'klaar',
   });
 
@@ -205,6 +205,7 @@ export default function ClientProjectDetail2() {
   const deliveryFiles = projectFiles.filter(f =>
     ['bewerkte_fotos', 'bewerkte_videos', '360_matterport', 'meetrapport'].includes(f.category)
   );
+  const hasGallery = galleries.length > 0;
 
   const handleCancelProject = async () => {
     try {
@@ -699,7 +700,7 @@ export default function ClientProjectDetail2() {
       )}
 
       {/* Bewerkte Opleverbestanden - Only when status is "klaar" */}
-      {project.status === 'klaar' && deliveryFiles.length > 0 && (
+      {project.status === 'klaar' && deliveryFiles.length > 0 && !hasGallery && (
         <Collapsible open={deliveryOpen} onOpenChange={setDeliveryOpen} className="mb-8">
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <CollapsibleTrigger className="w-full px-8 py-6 flex items-center justify-between hover:bg-gray-50 transition-colors">

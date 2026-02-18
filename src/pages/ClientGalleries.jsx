@@ -49,7 +49,7 @@ export default function ClientGalleries() {
   // Get galleries for this client
   const { data: galleries = [], isLoading } = useQuery({
     queryKey: ['clientGalleries', clientId],
-    queryFn: () => base44.entities.Gallery.filter({ client_id: clientId, status: 'gepubliceerd' }, '-created_date'),
+    queryFn: () => base44.entities.Gallery.filter({ client_id: clientId }, '-created_date'),
     enabled: !!clientId,
   });
 
@@ -107,9 +107,16 @@ export default function ClientGalleries() {
 
               {/* Content */}
               <div className="p-5">
-                <h3 className="font-medium text-gray-900 mb-2 group-hover:text-[#5C6B52] transition-colors">
-                  {gallery.title}
-                </h3>
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="font-medium text-gray-900 mb-2 group-hover:text-[#5C6B52] transition-colors">
+                    {gallery.title}
+                  </h3>
+                  {gallery.status && gallery.status !== 'gepubliceerd' && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">
+                      Concept
+                    </span>
+                  )}
+                </div>
                 {gallery.description && (
                   <p className="text-sm text-gray-500 mb-3 line-clamp-2">{gallery.description}</p>
                 )}
