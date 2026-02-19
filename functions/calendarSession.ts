@@ -37,9 +37,11 @@ Deno.serve(async (req) => {
             const sessionType = await base44.asServiceRole.entities.SessionType.get(sessionData.session_type_id);
             const durationMinutes = sessionType?.duration_minutes || 60;
 
-            // Calculate end time based on duration
+            // Calculate end time based on duration, unless end_datetime is explicitly provided
             const startDate = new Date(sessionData.start_datetime);
-            const endDate = new Date(startDate.getTime() + (durationMinutes * 60 * 1000));
+            const endDate = sessionData.end_datetime
+                ? new Date(sessionData.end_datetime)
+                : new Date(startDate.getTime() + (durationMinutes * 60 * 1000));
 
             // Get client name
             let clientName = 'Geen klant';

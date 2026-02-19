@@ -207,6 +207,158 @@ export default function ClientProjectDetail2() {
   );
   const hasGallery = galleries.length > 0;
 
+  const formatInvoiceDate = (dateValue) => {
+    if (!dateValue) return '-';
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return '-';
+    return format(date, 'd MMMM yyyy', { locale: nl });
+  };
+
+  const getInvoiceSubtotal = (invoice) => {
+    if (!invoice) return null;
+    if (typeof invoice.subtotal === 'number') return invoice.subtotal;
+    if (typeof invoice.amount === 'number') return invoice.amount;
+    if (typeof invoice.total_amount === 'number' && typeof invoice.vat_amount === 'number') {
+      return invoice.total_amount - invoice.vat_amount;
+    }
+    return null;
+  };
+
+  const openInvoicePrint = (invoice) => {
+    if (!invoice) return;
+    const win = window.open('', '_blank');
+    if (!win) return;
+
+    const items = Array.isArray(invoice.items) ? invoice.items : [];
+    const subtotal = getInvoiceSubtotal(invoice) ?? 0;
+    const discount = typeof invoice.discount_amount === 'number' ? invoice.discount_amount : 0;
+    const vatAmount = typeof invoice.vat_amount === 'number' ? invoice.vat_amount : 0;
+    const total = typeof invoice.total_amount === 'number' ? invoice.total_amount : subtotal - discount + vatAmount;
+    const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date) : null;
+    const dueDate = invoice.due_date ? new Date(invoice.due_date) : null;
+
+    const formatMoney = (value) => `€ ${value.toFixed(2)}`;
+    const formatDate = (value) => value && !Number.isNaN(value.getTime())
+      ? value.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+      : '-';
+
+    const rows = items.map((item) => {
+      const qty = parseFloat(item.quantity) || 0;
+      const price = parseFloat(item.unit_price) || 0;
+      const lineTotal = qty * price;
+      return `
+        <tr>
+          <td>${item.title || ''}</td>
+          <td>${item.description || ''}</td>
+          <td style="text-align:right;">${qty}</td>
+          <td style="text-align:right;">${formatMoney(price)}</td>
+          <td style="text-align:right;">${formatMoney(lineTotal)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    win.document.write(`
+<!DOCTYPE html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <title>Factuur ${invoice.invoice_number || ''}</title>
+    <style>
+      body { font-family: Arial, sans-serif; color: #111827; padding: 40px; }
+      .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+      .brand { font-size: 20px; font-weight: 700; color: #5C6B52; }
+      .title { font-size: 24px; font-weight: 600; }
+      .meta { color: #6b7280; font-size: 13px; line-height: 1.6; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+      .card { border: 1px solid #e5e7eb; padding: 16px; border-radius: 10px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+      th, td { padding: 10px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+      th { text-align: left; background: #f9fafb; color: #6b7280; font-weight: 600; }
+      .totals { margin-top: 16px; display: flex; justify-content: flex-end; }
+      .totals table { width: 320px; }
+      .totals td { border: none; padding: 6px 0; }
+      .totals .label { color: #6b7280; }
+      .totals .value { text-align: right; font-weight: 600; }
+      .footer { margin-top: 24px; color: #6b7280; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div>
+        <div class="brand">Bas Michel Photography</div>
+        <div class="meta">basmichel.nl • basmichelsite@gmail.com</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="title">Factuur</div>
+        <div class="meta">Factuurnummer: ${invoice.invoice_number || '-'}</div>
+        <div class="meta">Factuurdatum: ${formatDate(invoiceDate)}</div>
+        <div class="meta">Vervaldatum: ${formatDate(dueDate)}</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="meta">Factuur aan</div>
+        <div style="font-weight:600; margin-top:6px;">${invoice.client_name || 'Klant'}</div>
+        <div class="meta">${invoice.client_email || ''}</div>
+        <div class="meta">${(invoice.client_address || '').replace(/\\n/g, '<br/>')}</div>
+      </div>
+      <div class="card">
+        <div class="meta">Project</div>
+        <div style="font-weight:600; margin-top:6px;">${project.title || '-'}</div>
+        <div class="meta">${project.address || ''} ${project.city || ''}</div>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Omschrijving</th>
+          <th>Details</th>
+          <th style="text-align:right;">Aantal</th>
+          <th style="text-align:right;">Prijs</th>
+          <th style="text-align:right;">Totaal</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows || '<tr><td colspan="5">Geen items</td></tr>'}
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <table>
+        <tr>
+          <td class="label">Subtotaal (excl. BTW)</td>
+          <td class="value">${formatMoney(subtotal)}</td>
+        </tr>
+        ${discount > 0 ? `
+        <tr>
+          <td class="label">Korting</td>
+          <td class="value">- ${formatMoney(discount)}</td>
+        </tr>` : ''}
+        <tr>
+          <td class="label">BTW (${invoice.vat_percentage || 0}%)</td>
+          <td class="value">${formatMoney(vatAmount)}</td>
+        </tr>
+        <tr>
+          <td class="label">Totaal</td>
+          <td class="value">${formatMoney(total)}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="footer">Dank voor de samenwerking.</div>
+  </body>
+</html>
+    `);
+
+    win.document.close();
+    win.focus();
+    win.onload = () => {
+      win.print();
+    };
+  };
+
   const handleCancelProject = async () => {
     try {
       // Delete associated sessions to free calendar slot
@@ -799,13 +951,15 @@ export default function ClientProjectDetail2() {
               </div>
               <div>
                 <p className="text-sm text-gray-400 mb-1">Datum</p>
-                <p className="font-medium text-gray-900">
-                  {format(new Date(projectInvoice.invoice_date), 'd MMMM yyyy', { locale: nl })}
-                </p>
+                <p className="font-medium text-gray-900">{formatInvoiceDate(projectInvoice.invoice_date)}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-400 mb-1">Bedrag (excl. BTW)</p>
-                <p className="font-medium text-gray-900">€ {projectInvoice.amount?.toFixed(2)}</p>
+                <p className="font-medium text-gray-900">
+                  {getInvoiceSubtotal(projectInvoice) !== null
+                    ? `€ ${getInvoiceSubtotal(projectInvoice).toFixed(2)}`
+                    : '-'}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-400 mb-1">BTW</p>
@@ -822,6 +976,15 @@ export default function ClientProjectDetail2() {
                 <p className="text-sm text-gray-900">{projectInvoice.description}</p>
               </div>
             )}
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => openInvoicePrint(projectInvoice)}
+              >
+                Bekijk factuur / Download PDF
+              </Button>
+            </div>
             {projectInvoice.status === 'betaald' ? (
               <div className="mt-6 pt-6 border-t border-gray-100">
                 <div className="flex items-center gap-2 justify-center py-3 bg-green-50 rounded-lg">

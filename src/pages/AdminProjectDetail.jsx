@@ -232,34 +232,46 @@ export default function AdminProjectDetail() {
             subject: `Je project is klaar - ${project.title}`,
             body: `
 <!DOCTYPE html>
-<html>
-<head>
-<style>
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background-color: #f4f6f8; margin: 0; padding: 0; }
-  .email-container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); overflow: hidden; }
-  .header { background: linear-gradient(135deg, #5C6B52 0%, #4A5641 100%); color: #ffffff; padding: 32px 30px; text-align: center; }
-  .header h2 { margin: 0; font-size: 24px; font-weight: 300; }
-  .content { padding: 32px 40px; line-height: 1.6; color: #333333; }
-  .button { display: inline-block; background-color: #5C6B52; color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; margin-top: 20px; }
-  .footer { background-color: #f8f9fa; color: #6c757d; text-align: center; padding: 20px; font-size: 13px; border-top: 1px solid #e9ecef; }
-</style>
-</head>
-<body>
-  <div class="email-container">
-    <div class="header"><h2>Je project is klaar!</h2></div>
-    <div class="content">
-      <p>Beste ${user.full_name || 'klant'},</p>
-      <p>Goed nieuws! Je project <strong>${project.title}</strong> is klaar en beschikbaar in je portal.</p>
-      <p>Je kunt nu:</p>
-      <ul>
-        <li>De bewerkte bestanden bekijken en downloaden</li>
-        <li>Je factuur inzien</li>
-      </ul>
-      <a href="${window.location.origin}" class="button">Bekijk Project</a>
-    </div>
-    <div class="footer">Bas Michel Photography<br>basmichelsite@gmail.com</div>
-  </div>
-</body>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Project klaar</title>
+  </head>
+  <body style="margin:0; padding:0; background:#f4f6f8; font-family: Arial, sans-serif; color:#1f2937;">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f4f6f8; padding:24px 0;">
+      <tr>
+        <td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.08);">
+            <tr>
+              <td style="background:#5C6B52; color:#ffffff; padding:28px 32px;">
+                <h1 style="margin:0; font-size:22px; font-weight:600;">Je project is klaar</h1>
+                <p style="margin:8px 0 0; font-size:14px; opacity:0.9;">Bas Michel Photography</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 32px;">
+                <p style="margin:0 0 16px; font-size:16px;">Beste ${user.full_name || 'klant'},</p>
+                <p style="margin:0 0 18px; font-size:15px; color:#374151;">Goed nieuws! Je project <strong>${project.title}</strong> is klaar en staat voor je klaar in de portal.</p>
+                <ul style="margin:0 0 20px; padding-left:18px; color:#4b5563; font-size:14px;">
+                  <li>Bekijk de galerij</li>
+                  <li>Download de bewerkte bestanden</li>
+                  <li>Bekijk en betaal de factuur</li>
+                </ul>
+                <a href="${window.location.origin}" style="display:inline-block; background:#5C6B52; color:#ffffff; text-decoration:none; padding:12px 20px; border-radius:8px; font-weight:600; font-size:14px;">Bekijk project</a>
+                <p style="margin:20px 0 0; font-size:13px; color:#6b7280;">Vragen? Reageer gerust op deze e-mail.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#f9fafb; padding:16px 32px; text-align:center; font-size:12px; color:#9ca3af;">
+                Bas Michel Photography • basmichelsite@gmail.com
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
 </html>
             `,
           });
@@ -510,6 +522,9 @@ export default function AdminProjectDetail() {
       const afterDiscount = subtotal - discountAmount;
       const vatAmount = afterDiscount * (data.vat_percentage / 100);
       const totalAmount = afterDiscount + vatAmount;
+      const shouldSetDates = project?.status === 'klaar';
+      const invoiceDate = shouldSetDates ? format(new Date(), 'yyyy-MM-dd') : null;
+      const dueDate = shouldSetDates ? format(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd') : null;
 
       return await base44.entities.ProjectInvoice.create({
         project_id: projectId,
@@ -524,7 +539,9 @@ export default function AdminProjectDetail() {
         vat_percentage: data.vat_percentage,
         vat_amount: vatAmount,
         total_amount: totalAmount,
-        status: 'concept',
+        invoice_date: invoiceDate,
+        due_date: dueDate,
+        status: shouldSetDates ? 'verzonden' : 'concept',
         template_id: data.template_id || null,
         cc_emails: data.cc_emails || '',
         recipient_client_ids: Array.from(new Set([...(data.recipient_client_ids || []), project?.client_id].filter(Boolean))),

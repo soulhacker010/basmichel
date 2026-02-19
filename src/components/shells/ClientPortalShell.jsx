@@ -42,7 +42,7 @@ export default function ClientPortalShell({ children, currentPageName }) {
   useEffect(() => {
     const checkAuthAndClient = async () => {
       if (isError) {
-        window.location.href = createPageUrl('Login');
+        window.location.href = createPageUrl('AdminLogin');
         return;
       }
 

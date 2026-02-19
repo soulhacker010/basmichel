@@ -323,22 +323,75 @@ export default function ClientBooking() {
 
       // Send confirmation email
       try {
+        const recipientName = user.full_name || user.email.split('@')[0];
+        const formattedDate = format(startDatetime, 'd MMMM yyyy', { locale: nl });
+        const formattedTime = `${format(startDatetime, 'HH:mm')} - ${format(endDatetime, 'HH:mm')}`;
+        const formattedAddress = `${formData.address}${formData.city ? `, ${formData.city}` : ''}`;
+
         await base44.integrations.Core.SendEmail({
           to: user.email,
           subject: 'Boeking bevestigd - Basmichel',
           body: `
-Beste ${user.full_name || user.email.split('@')[0]},
+<!DOCTYPE html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Boeking bevestigd</title>
+  </head>
+  <body style="margin:0; padding:0; background:#f4f6f8; font-family: Arial, sans-serif; color:#1f2937;">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f4f6f8; padding:24px 0;">
+      <tr>
+        <td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.08);">
+            <tr>
+              <td style="background:#5C6B52; color:#ffffff; padding:28px 32px;">
+                <h1 style="margin:0; font-size:22px; font-weight:600;">Boeking bevestigd</h1>
+                <p style="margin:8px 0 0; font-size:14px; opacity:0.9;">Bas Michel Photography</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 32px;">
+                <p style="margin:0 0 16px; font-size:16px;">Beste ${recipientName},</p>
+                <p style="margin:0 0 20px; font-size:15px; color:#374151;">Je fotoshoot is bevestigd. Hieronder staan de details:</p>
 
-Uw fotoshoot is bevestigd!
+                <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border:1px solid #e5e7eb; border-radius:10px; overflow:hidden;">
+                  <tr>
+                    <td style="padding:12px 16px; background:#f9fafb; font-size:13px; color:#6b7280;">Dienst</td>
+                    <td style="padding:12px 16px; font-size:14px; color:#111827;">${selectedService.name}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:12px 16px; background:#f9fafb; font-size:13px; color:#6b7280;">Datum</td>
+                    <td style="padding:12px 16px; font-size:14px; color:#111827;">${formattedDate}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:12px 16px; background:#f9fafb; font-size:13px; color:#6b7280;">Tijd</td>
+                    <td style="padding:12px 16px; font-size:14px; color:#111827;">${formattedTime}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:12px 16px; background:#f9fafb; font-size:13px; color:#6b7280;">Adres</td>
+                    <td style="padding:12px 16px; font-size:14px; color:#111827;">${formattedAddress}</td>
+                  </tr>
+                </table>
 
-Details:
-- Dienst: ${selectedService.name}
-- Datum: ${format(startDatetime, 'd MMMM yyyy', { locale: nl })}
-- Tijd: ${format(startDatetime, 'HH:mm')} - ${format(endDatetime, 'HH:mm')}
-- Adres: ${formData.address}${formData.city ? `, ${formData.city}` : ''}
+                <div style="margin:22px 0 0;">
+                  <a href="${window.location.origin}" style="display:inline-block; background:#5C6B52; color:#ffffff; text-decoration:none; padding:12px 20px; border-radius:8px; font-weight:600; font-size:14px;">Bekijk project</a>
+                </div>
 
-Met vriendelijke groet,
-Basmichel
+                <p style="margin:20px 0 0; font-size:13px; color:#6b7280;">Vragen? Reageer gerust op deze e-mail.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#f9fafb; padding:16px 32px; text-align:center; font-size:12px; color:#9ca3af;">
+                Bas Michel Photography • basmichelsite@gmail.com
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
           `
         });
       } catch (emailError) {

@@ -43,13 +43,47 @@ export default function ExtraSessionsSection({ projectId }) {
     enabled: !!projectId,
   });
 
+  const { data: project } = useQuery({
+    queryKey: ['project', projectId],
+    queryFn: () => base44.entities.Project.get(projectId),
+    enabled: !!projectId,
+  });
+
   const { data: sessionTypes = [] } = useQuery({
     queryKey: ['sessionTypes'],
     queryFn: () => base44.entities.SessionType.list(),
   });
 
   const createSessionMutation = useMutation({
-    mutationFn: (data) => base44.entities.Session.create(data),
+    mutationFn: async (data) => {
+      const session = await base44.entities.Session.create(data);
+
+      try {
+        const response = await base44.functions.invoke('calendarSession', {
+          action: 'syncSessionEvent',
+          sessionData: {
+            session_type_id: data.session_type_id,
+            client_id: data.client_id,
+            start_datetime: data.start_datetime,
+            end_datetime: data.end_datetime || null,
+            location: data.location || '',
+            notes: data.notes || '',
+          },
+          calendarEventId: null,
+        });
+
+        const calendarData = response?.data || response;
+        if (calendarData?.calendarEventId) {
+          await base44.entities.Session.update(session.id, {
+            google_calendar_event_id: calendarData.calendarEventId,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to sync extra session to calendar:', error);
+      }
+
+      return session;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['extraSessions', projectId] });
       setDialogOpen(false);
@@ -91,10 +125,13 @@ export default function ExtraSessionsSection({ projectId }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const sessionTypeId = sessionTypes.find(st => st.name === 'Extra Sessie')?.id || sessionTypes?.[0]?.id || null;
+
     createSessionMutation.mutate({
       ...formData,
       project_id: projectId,
-      session_type_id: sessionTypes.find(st => st.name === 'Extra Sessie')?.id || null,
+      client_id: project?.client_id || null,
+      session_type_id: sessionTypeId,
     });
   };
 

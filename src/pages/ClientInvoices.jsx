@@ -77,6 +77,150 @@ export default function ClientInvoices() {
     return project?.title || '-';
   };
 
+  const getInvoiceSubtotal = (invoice) => {
+    if (!invoice) return null;
+    if (typeof invoice.subtotal === 'number') return invoice.subtotal;
+    if (typeof invoice.amount === 'number') return invoice.amount;
+    if (typeof invoice.total_amount === 'number' && typeof invoice.vat_amount === 'number') {
+      return invoice.total_amount - invoice.vat_amount;
+    }
+    return null;
+  };
+
+  const openInvoicePrint = (invoice) => {
+    if (!invoice) return;
+    const win = window.open('', '_blank');
+    if (!win) return;
+
+    const items = Array.isArray(invoice.items) ? invoice.items : [];
+    const subtotal = getInvoiceSubtotal(invoice) ?? 0;
+    const discount = typeof invoice.discount_amount === 'number' ? invoice.discount_amount : 0;
+    const vatAmount = typeof invoice.vat_amount === 'number' ? invoice.vat_amount : 0;
+    const total = typeof invoice.total_amount === 'number' ? invoice.total_amount : subtotal - discount + vatAmount;
+    const invoiceDate = invoice.invoice_date ? new Date(invoice.invoice_date) : null;
+    const dueDate = invoice.due_date ? new Date(invoice.due_date) : null;
+
+    const formatMoney = (value) => `€ ${value.toFixed(2)}`;
+    const formatDate = (value) => value && !Number.isNaN(value.getTime())
+      ? value.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+      : '-';
+
+    const rows = items.map((item) => {
+      const qty = parseFloat(item.quantity) || 0;
+      const price = parseFloat(item.unit_price) || 0;
+      const lineTotal = qty * price;
+      return `
+        <tr>
+          <td>${item.title || ''}</td>
+          <td>${item.description || ''}</td>
+          <td style="text-align:right;">${qty}</td>
+          <td style="text-align:right;">${formatMoney(price)}</td>
+          <td style="text-align:right;">${formatMoney(lineTotal)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    win.document.write(`
+<!DOCTYPE html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <title>Factuur ${invoice.invoice_number || ''}</title>
+    <style>
+      body { font-family: Arial, sans-serif; color: #111827; padding: 40px; }
+      .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+      .brand { font-size: 20px; font-weight: 700; color: #5C6B52; }
+      .title { font-size: 24px; font-weight: 600; }
+      .meta { color: #6b7280; font-size: 13px; line-height: 1.6; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+      .card { border: 1px solid #e5e7eb; padding: 16px; border-radius: 10px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+      th, td { padding: 10px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+      th { text-align: left; background: #f9fafb; color: #6b7280; font-weight: 600; }
+      .totals { margin-top: 16px; display: flex; justify-content: flex-end; }
+      .totals table { width: 320px; }
+      .totals td { border: none; padding: 6px 0; }
+      .totals .label { color: #6b7280; }
+      .totals .value { text-align: right; font-weight: 600; }
+      .footer { margin-top: 24px; color: #6b7280; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div>
+        <div class="brand">Bas Michel Photography</div>
+        <div class="meta">basmichel.nl • basmichelsite@gmail.com</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="title">Factuur</div>
+        <div class="meta">Factuurnummer: ${invoice.invoice_number || '-'}</div>
+        <div class="meta">Factuurdatum: ${formatDate(invoiceDate)}</div>
+        <div class="meta">Vervaldatum: ${formatDate(dueDate)}</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="meta">Factuur aan</div>
+        <div style="font-weight:600; margin-top:6px;">${invoice.client_name || 'Klant'}</div>
+        <div class="meta">${invoice.client_email || ''}</div>
+        <div class="meta">${(invoice.client_address || '').replace(/\\n/g, '<br/>')}</div>
+      </div>
+      <div class="card">
+        <div class="meta">Project</div>
+        <div style="font-weight:600; margin-top:6px;">${getProjectTitle(invoice.project_id)}</div>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Omschrijving</th>
+          <th>Details</th>
+          <th style="text-align:right;">Aantal</th>
+          <th style="text-align:right;">Prijs</th>
+          <th style="text-align:right;">Totaal</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows || '<tr><td colspan="5">Geen items</td></tr>'}
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <table>
+        <tr>
+          <td class="label">Subtotaal (excl. BTW)</td>
+          <td class="value">${formatMoney(subtotal)}</td>
+        </tr>
+        ${discount > 0 ? `
+        <tr>
+          <td class="label">Korting</td>
+          <td class="value">- ${formatMoney(discount)}</td>
+        </tr>` : ''}
+        <tr>
+          <td class="label">BTW (${invoice.vat_percentage || 0}%)</td>
+          <td class="value">${formatMoney(vatAmount)}</td>
+        </tr>
+        <tr>
+          <td class="label">Totaal</td>
+          <td class="value">${formatMoney(total)}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="footer">Dank voor de samenwerking.</div>
+  </body>
+</html>
+    `);
+
+    win.document.close();
+    win.focus();
+    win.onload = () => {
+      win.print();
+    };
+  };
+
   const filteredInvoices = invoices.filter(invoice => {
     if (filter === 'all') return true;
     if (filter === 'open') return invoice.status === 'verzonden';
@@ -217,7 +361,12 @@ export default function ClientInvoices() {
                   {invoice.status === 'betaald' ? 'Betaald' : 'Open'}
                 </span>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="rounded-full w-9 h-9 p-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full w-9 h-9 p-0"
+                    onClick={() => openInvoicePrint(invoice)}
+                  >
                     <Download className="w-4 h-4" />
                   </Button>
                   {invoice.status === 'verzonden' && (invoice.payment_link || invoice.mollie_payment_link_url) && (
