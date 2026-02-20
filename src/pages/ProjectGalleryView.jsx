@@ -230,11 +230,30 @@ export default function ProjectGalleryView() {
         }
 
         try {
-            await navigator.clipboard.writeText(url);
-            toast.success('Link gekopieerd');
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(url);
+                toast.success('Link gekopieerd');
+                return;
+            }
+
+            const textarea = document.createElement('textarea');
+            textarea.value = url;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            const copied = document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            if (copied) {
+                toast.success('Link gekopieerd');
+                return;
+            }
         } catch (error) {
-            window.prompt('Kopieer deze link:', url);
+            console.warn('Clipboard fallback failed:', error);
         }
+
+        window.prompt('Kopieer deze link:', url);
     };
 
     const sendRevisionRequest = async () => {
@@ -370,7 +389,7 @@ Open project: ${window.location.origin}${link}
                 )}
 
                 {/* Top Navigation */}
-                <div className="absolute top-0 left-0 right-0 p-6 flex items-center justify-between">
+                <div className="absolute top-0 left-0 right-0 z-20 p-6 flex items-center justify-between">
                     <Link
                         to={createPageUrl(user?.role === 'admin' ? 'AdminProjectDetail' : 'ClientProjectDetail2') + `?id=${projectId}`}
                         className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
@@ -381,8 +400,13 @@ Open project: ${window.location.origin}${link}
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={handleShare}
-                        className="text-white/70 hover:text-white hover:bg-white/10"
+                        type="button"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleShare();
+                        }}
+                        className="text-white/80 hover:text-white hover:bg-white/10"
                     >
                         <Share2 className="w-4 h-4 mr-2" />
                         Share
@@ -455,7 +479,7 @@ Open project: ${window.location.origin}${link}
                             variant="outline"
                             size="sm"
                             onClick={handleSelectAll}
-                            className="border-white/30 text-white/90 hover:text-white hover:bg-white/10"
+                            className="border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
                         >
                             {selectableFiles.length > 0 && selectableFiles.every(f => selectedFiles[f.id]) ? (
                                 <>
