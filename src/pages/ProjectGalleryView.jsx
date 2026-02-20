@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -51,6 +52,9 @@ export default function ProjectGalleryView() {
     const [revisionOpen, setRevisionOpen] = useState(false);
     const [revisionMessage, setRevisionMessage] = useState('');
     const [revisionSending, setRevisionSending] = useState(false);
+    const [shareOpen, setShareOpen] = useState(false);
+    const [shareUrl, setShareUrl] = useState('');
+    const [shareStatus, setShareStatus] = useState('');
 
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get('id');
@@ -216,24 +220,11 @@ export default function ProjectGalleryView() {
         }
     };
 
-    // Copy share link
-    const handleShare = async () => {
-        const url = window.location.href;
-        try {
-            if (navigator.share) {
-                await navigator.share({ url, title: project?.title || 'Galerij' });
-                toast.success('Link gedeeld');
-                return;
-            }
-        } catch (error) {
-            console.warn('Native share failed:', error);
-        }
-
+    const copyShareLink = async (url) => {
         try {
             if (navigator.clipboard?.writeText) {
                 await navigator.clipboard.writeText(url);
-                toast.success('Link gekopieerd');
-                return;
+                return true;
             }
 
             const textarea = document.createElement('textarea');
@@ -244,16 +235,39 @@ export default function ProjectGalleryView() {
             textarea.select();
             const copied = document.execCommand('copy');
             document.body.removeChild(textarea);
+            return copied;
+        } catch (error) {
+            console.warn('Clipboard copy failed:', error);
+            return false;
+        }
+    };
 
-            if (copied) {
-                toast.success('Link gekopieerd');
+    // Share link with modal fallback (Brave-safe)
+    const handleShare = async () => {
+        const url = window.location.href;
+        setShareUrl(url);
+        setShareOpen(true);
+        setShareStatus('');
+
+        try {
+            if (navigator.share) {
+                await navigator.share({ url, title: project?.title || 'Galerij' });
+                setShareStatus('Link gedeeld');
+                toast.success('Link gedeeld');
                 return;
             }
         } catch (error) {
-            console.warn('Clipboard fallback failed:', error);
+            console.warn('Native share failed:', error);
         }
 
-        window.prompt('Kopieer deze link:', url);
+        const copied = await copyShareLink(url);
+        if (copied) {
+            setShareStatus('Link gekopieerd');
+            toast.success('Link gekopieerd');
+            return;
+        }
+
+        setShareStatus('Kopieer de link hieronder.');
     };
 
     const sendRevisionRequest = async () => {
@@ -736,6 +750,44 @@ Open project: ${window.location.origin}${link}
                                 className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
                             >
                                 {revisionSending ? 'Versturen...' : 'Versturen'}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Deel galerij</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-gray-500">
+                            {shareStatus || 'Kopieer de link om te delen.'}
+                        </p>
+                        <Input
+                            value={shareUrl}
+                            readOnly
+                            onFocus={(e) => e.target.select()}
+                        />
+                        <div className="flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setShareOpen(false)}>
+                                Sluiten
+                            </Button>
+                            <Button
+                                className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
+                                onClick={async () => {
+                                    if (!shareUrl) return;
+                                    const copied = await copyShareLink(shareUrl);
+                                    if (copied) {
+                                        setShareStatus('Link gekopieerd');
+                                        toast.success('Link gekopieerd');
+                                    } else {
+                                        setShareStatus('Kopieer de link handmatig.');
+                                    }
+                                }}
+                            >
+                                Kopieer link
                             </Button>
                         </div>
                     </div>
