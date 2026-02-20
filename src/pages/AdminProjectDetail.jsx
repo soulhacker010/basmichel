@@ -260,6 +260,129 @@ export default function AdminProjectDetail() {
           console.error('Failed to ensure gallery on klaar:', galleryError);
         }
 
+        // Send invoice email on klaar
+        try {
+          if (projectInvoice) {
+            const adminEmail = adminUser?.business_email || 'basmichelsite@gmail.com';
+            const recipientEmails = new Set();
+
+            if (user?.email) recipientEmails.add(user.email);
+            if (client?.invoice_admin_email) recipientEmails.add(client.invoice_admin_email);
+            if (adminEmail) recipientEmails.add(adminEmail);
+
+            const ccList = (projectInvoice.cc_emails || '')
+              .split(/[,;]+/)
+              .map(value => value.trim())
+              .filter(Boolean);
+            ccList.forEach(email => recipientEmails.add(email));
+
+            const linkedClientIds = Array.isArray(projectInvoice.recipient_client_ids)
+              ? projectInvoice.recipient_client_ids
+              : [];
+            if (linkedClientIds.length > 0) {
+              const linkedClients = await Promise.all(
+                linkedClientIds.map(async (clientId) => {
+                  try {
+                    return await base44.entities.Client.get(clientId);
+                  } catch (err) {
+                    console.warn('Failed to load linked client for invoice email:', err);
+                    return null;
+                  }
+                })
+              );
+
+              for (const linkedClient of linkedClients.filter(Boolean)) {
+                if (linkedClient?.user_id) {
+                  try {
+                    const linkedUser = await base44.entities.User.get(linkedClient.user_id);
+                    if (linkedUser?.email) recipientEmails.add(linkedUser.email);
+                  } catch (err) {
+                    console.warn('Failed to load linked client user:', err);
+                  }
+                }
+              }
+            }
+
+            const toList = Array.from(recipientEmails).filter(Boolean);
+            if (toList.length > 0) {
+              const invoiceDateLabel = projectInvoice.invoice_date
+                ? format(new Date(projectInvoice.invoice_date), 'd MMMM yyyy', { locale: nl })
+                : '-';
+              const dueDateLabel = projectInvoice.due_date
+                ? format(new Date(projectInvoice.due_date), 'd MMMM yyyy', { locale: nl })
+                : '-';
+              const amount = typeof projectInvoice.total_amount === 'number'
+                ? projectInvoice.total_amount.toFixed(2)
+                : '';
+              const paymentLink = projectInvoice.mollie_payment_link_url || '';
+              const projectLink = `${window.location.origin}${createPageUrl('ClientProjectDetail2')}?id=${projectId}`;
+
+              await base44.integrations.Core.SendEmail({
+                to: toList.join(','),
+                subject: `Factuur beschikbaar - ${project.title}`,
+                body: `
+<!DOCTYPE html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Factuur</title>
+  </head>
+  <body style="margin:0; padding:0; background:#f4f6f8; font-family: Arial, sans-serif; color:#1f2937;">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f4f6f8; padding:24px 0;">
+      <tr>
+        <td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.08);">
+            <tr>
+              <td style="background:#5C6B52; color:#ffffff; padding:28px 32px;">
+                <h1 style="margin:0; font-size:22px; font-weight:600;">Factuur beschikbaar</h1>
+                <p style="margin:8px 0 0; font-size:14px; opacity:0.9;">Bas Michel Photography</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 32px;">
+                <p style="margin:0 0 12px; font-size:15px; color:#374151;">De factuur voor <strong>${project.title}</strong> is klaar.</p>
+                <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; margin:16px 0;">
+                  <tr>
+                    <td style="padding:12px 16px; background:#f9fafb; font-size:13px; color:#6b7280;">Factuurnummer</td>
+                    <td style="padding:12px 16px; font-size:14px; color:#111827;">${projectInvoice.invoice_number || '-'}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:12px 16px; background:#f9fafb; font-size:13px; color:#6b7280;">Factuurdatum</td>
+                    <td style="padding:12px 16px; font-size:14px; color:#111827;">${invoiceDateLabel}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:12px 16px; background:#f9fafb; font-size:13px; color:#6b7280;">Vervaldatum</td>
+                    <td style="padding:12px 16px; font-size:14px; color:#111827;">${dueDateLabel}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:12px 16px; background:#f9fafb; font-size:13px; color:#6b7280;">Totaalbedrag</td>
+                    <td style="padding:12px 16px; font-size:14px; color:#111827;">€ ${amount}</td>
+                  </tr>
+                </table>
+                <a href="${projectLink}" style="display:inline-block; background:#5C6B52; color:#ffffff; text-decoration:none; padding:12px 20px; border-radius:8px; font-weight:600; font-size:14px;">Bekijk factuur</a>
+                ${paymentLink ? `<p style="margin:16px 0 0; font-size:13px; color:#6b7280;">Betaallink: <a href="${paymentLink}" style="color:#5C6B52;">${paymentLink}</a></p>` : ''}
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#f9fafb; padding:16px 32px; text-align:center; font-size:12px; color:#9ca3af;">
+                Bas Michel Photography - ${adminEmail}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+                `,
+              });
+            }
+          }
+        } catch (invoiceEmailError) {
+          console.error('Failed to send invoice email on klaar:', invoiceEmailError);
+        }
+
         if (user?.email) {
           await base44.integrations.Core.SendEmail({
             to: user.email,
