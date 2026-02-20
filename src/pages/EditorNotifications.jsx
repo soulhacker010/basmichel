@@ -12,6 +12,7 @@ const notificationIcons = {
   raw_files_uploaded: Upload,
   project_status_changed: FileText,
   note_added: MessageSquare,
+  revision_request: MessageSquare,
 };
 
 export default function EditorNotifications() {

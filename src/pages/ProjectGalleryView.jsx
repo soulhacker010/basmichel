@@ -16,20 +16,29 @@ import {
     Square,
     Play,
     ExternalLink,
-    Loader2
+    Loader2,
+    MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 const categories = [
     { key: 'all', label: 'Alle' },
     { key: 'bewerkte_fotos', label: "Foto's" },
     { key: 'bewerkte_videos', label: "Video's" },
-    { key: '360_matterport', label: '360°' },
+    { key: '360_matterport', label: '360 graden' },
+    { key: 'meetrapport', label: 'Meetrapport' },
 ];
 
 export default function ProjectGalleryView() {
@@ -37,9 +46,31 @@ export default function ProjectGalleryView() {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [selectedFiles, setSelectedFiles] = useState({});
     const [downloading, setDownloading] = useState(false);
+    const [user, setUser] = useState(null);
+    const [authChecked, setAuthChecked] = useState(false);
+    const [revisionOpen, setRevisionOpen] = useState(false);
+    const [revisionMessage, setRevisionMessage] = useState('');
+    const [revisionSending, setRevisionSending] = useState(false);
 
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get('id');
+
+    useEffect(() => {
+        const loadUser = async () => {
+            try {
+                const isAuth = await base44.auth.isAuthenticated();
+                if (isAuth) {
+                    const userData = await base44.auth.me();
+                    setUser(userData);
+                }
+            } catch (e) {
+                console.log('Not authenticated');
+            } finally {
+                setAuthChecked(true);
+            }
+        };
+        loadUser();
+    }, []);
 
     // Fetch project
     const { data: project, isLoading: projectLoading } = useQuery({
@@ -62,9 +93,16 @@ export default function ProjectGalleryView() {
         enabled: !!project?.client_id,
     });
 
+    const hasAccess = () => {
+        if (!user) return false;
+        if (user.role === 'admin') return true;
+        if (client && client.user_id === user.id) return true;
+        return false;
+    };
+
     // Filter files to delivery categories only
     const deliveryFiles = allFiles.filter(f =>
-        ['bewerkte_fotos', 'bewerkte_videos', '360_matterport'].includes(f.category)
+        ['bewerkte_fotos', 'bewerkte_videos', '360_matterport', 'meetrapport'].includes(f.category)
     );
 
     // Filter by selected category
@@ -72,12 +110,20 @@ export default function ProjectGalleryView() {
         ? deliveryFiles
         : deliveryFiles.filter(f => f.category === selectedCategory);
 
-    // Get only image and video files for gallery display
+    // Get only image, video, and link files for gallery display
     const galleryFiles = filteredFiles.filter(f =>
         f.mime_type?.startsWith('image/') ||
         f.mime_type?.startsWith('video/') ||
         f.mime_type === 'text/url'
     );
+
+    const listFiles = filteredFiles.filter(f =>
+        !f.mime_type?.startsWith('image/') &&
+        !f.mime_type?.startsWith('video/') &&
+        f.mime_type !== 'text/url'
+    );
+
+    const selectableFiles = filteredFiles.filter(f => f.mime_type !== 'text/url');
 
     // Get cover image
     const coverImage = deliveryFiles.find(f => f.mime_type?.startsWith('image/'));
@@ -109,10 +155,11 @@ export default function ProjectGalleryView() {
 
     // Select all visible files
     const handleSelectAll = () => {
-        const allSelected = galleryFiles.every(f => selectedFiles[f.id]);
+        if (selectableFiles.length === 0) return;
+        const allSelected = selectableFiles.every(f => selectedFiles[f.id]);
         const newSelected = {};
         if (!allSelected) {
-            galleryFiles.forEach(f => {
+            selectableFiles.forEach(f => {
                 newSelected[f.id] = true;
             });
         }
@@ -121,7 +168,7 @@ export default function ProjectGalleryView() {
 
     // Download selected files
     const handleDownload = async () => {
-        const filesToDownload = galleryFiles.filter(f => selectedFiles[f.id] && f.mime_type !== 'text/url');
+        const filesToDownload = selectableFiles.filter(f => selectedFiles[f.id]);
         if (filesToDownload.length === 0) {
             toast.error('No files selected for download');
             return;
@@ -150,12 +197,22 @@ export default function ProjectGalleryView() {
             }
             toast.success(`Downloaded ${filesToDownload.length} file(s)`);
             setSelectedFiles({});
-            setSelectMode(false);
         } catch (error) {
             toast.error('Download failed');
             console.error(error);
         } finally {
             setDownloading(false);
+        }
+    };
+
+    const handleDownloadSingle = async (file) => {
+        try {
+            const response = await fetch(file.file_url);
+            const blob = await response.blob();
+            saveAs(blob, file.filename);
+        } catch (error) {
+            toast.error('Download failed');
+            console.error(error);
         }
     };
 
@@ -180,9 +237,75 @@ export default function ProjectGalleryView() {
         }
     };
 
-    const selectedCount = Object.values(selectedFiles).filter(Boolean).length;
+    const sendRevisionRequest = async () => {
+        if (!revisionMessage.trim()) {
+            toast.error('Voer een bericht in');
+            return;
+        }
 
-    if (projectLoading || filesLoading) {
+        setRevisionSending(true);
+        try {
+            const adminEmail = 'basmichelsite@gmail.com';
+            const senderName = user?.full_name || user?.email || 'Klant';
+            const link = createPageUrl('AdminProjectDetail') + `?id=${projectId}`;
+
+            await base44.entities.Notification.create({
+                type: 'revision_request',
+                title: 'Revisieverzoek',
+                message: `${senderName}: ${revisionMessage.trim()}`,
+                project_id: projectId,
+                link,
+            });
+
+            await base44.entities.InboxMessage.create({
+                subject: `Revisieverzoek - ${project?.title || 'Project'}`,
+                sender_name: senderName,
+                sender_email: user?.email || '',
+                message: revisionMessage.trim(),
+                is_read: false,
+                is_archived: false,
+            });
+
+            const editors = await base44.entities.Editor.filter({ status: 'active' });
+            for (const editor of editors) {
+                await base44.entities.EditorNotification.create({
+                    editor_id: editor.id,
+                    type: 'revision_request',
+                    title: 'Revisieverzoek',
+                    message: `${senderName}: ${revisionMessage.trim()}`,
+                    project_id: projectId,
+                    metadata: { source: 'project_gallery' },
+                });
+            }
+
+            await base44.integrations.Core.SendEmail({
+                to: adminEmail,
+                subject: `Revisieverzoek - ${project?.title || 'Project'}`,
+                body: `
+Nieuw revisieverzoek:
+
+Project: ${project?.title || 'Project'}
+Van: ${senderName}
+Bericht: ${revisionMessage.trim()}
+
+Open project: ${window.location.origin}${link}
+                `
+            });
+
+            toast.success('Revisieverzoek verstuurd');
+            setRevisionMessage('');
+            setRevisionOpen(false);
+        } catch (error) {
+            console.error('Revision request error:', error);
+            toast.error('Versturen mislukt');
+        } finally {
+            setRevisionSending(false);
+        }
+    };
+
+    const selectedCount = selectableFiles.filter(f => selectedFiles[f.id]).length;
+
+    if (projectLoading || filesLoading || !authChecked) {
         return (
             <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
                 <div className="text-white/60">Loading...</div>
@@ -197,6 +320,33 @@ export default function ProjectGalleryView() {
                     <Images className="w-16 h-16 text-white/30 mx-auto mb-4" />
                     <h1 className="text-xl font-medium text-white mb-2">Gallery not found</h1>
                     <p className="text-white/50">This project does not exist.</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+                <div className="text-center">
+                    <Images className="w-16 h-16 text-white/30 mx-auto mb-4" />
+                    <h1 className="text-xl font-medium text-white mb-2">Toegang vereist</h1>
+                    <p className="text-white/50 mb-6">Log in om deze galerij te bekijken.</p>
+                    <Button onClick={() => base44.auth.redirectToLogin()} className="bg-white text-black">
+                        Inloggen
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!hasAccess()) {
+        return (
+            <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+                <div className="text-center">
+                    <Images className="w-16 h-16 text-white/30 mx-auto mb-4" />
+                    <h1 className="text-xl font-medium text-white mb-2">Geen toegang</h1>
+                    <p className="text-white/50">Je hebt geen toegang tot deze galerij.</p>
                 </div>
             </div>
         );
@@ -222,11 +372,11 @@ export default function ProjectGalleryView() {
                 {/* Top Navigation */}
                 <div className="absolute top-0 left-0 right-0 p-6 flex items-center justify-between">
                     <Link
-                        to={createPageUrl('AdminProjectDetail') + `?id=${projectId}`}
+                        to={createPageUrl(user?.role === 'admin' ? 'AdminProjectDetail' : 'ClientProjectDetail2') + `?id=${projectId}`}
                         className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
                     >
                         <ArrowLeft className="w-5 h-5" />
-                        <span className="text-sm">Back to project</span>
+                        <span className="text-sm">Terug naar project</span>
                     </Link>
                     <Button
                         variant="ghost"
@@ -260,6 +410,13 @@ export default function ProjectGalleryView() {
                         <Images className="w-4 h-4 mr-2" />
                         View Gallery
                     </Button>
+                    <Button
+                        onClick={() => setRevisionOpen(true)}
+                        className="mt-4 bg-white/10 hover:bg-white/20 text-white border border-white/30"
+                    >
+                        <MessageSquare className="w-4 h-4 mr-2" />
+                        Revisie aanvragen
+                    </Button>
                 </div>
             </div>
 
@@ -270,8 +427,8 @@ export default function ProjectGalleryView() {
                     <div className="flex items-center gap-2">
                         {categories.map(cat => {
                             const count = cat.key === 'all'
-                                ? deliveryFiles.filter(f => f.mime_type?.startsWith('image/') || f.mime_type?.startsWith('video/')).length
-                                : deliveryFiles.filter(f => f.category === cat.key && (f.mime_type?.startsWith('image/') || f.mime_type?.startsWith('video/'))).length;
+                                ? deliveryFiles.length
+                                : deliveryFiles.filter(f => f.category === cat.key).length;
 
                             return (
                                 <button
@@ -300,7 +457,7 @@ export default function ProjectGalleryView() {
                             onClick={handleSelectAll}
                             className="border-white/20 text-white hover:bg-white/10"
                         >
-                            {galleryFiles.every(f => selectedFiles[f.id]) ? (
+                            {selectableFiles.length > 0 && selectableFiles.every(f => selectedFiles[f.id]) ? (
                                 <>
                                     <CheckSquare className="w-4 h-4 mr-2" />
                                     Deselect All
@@ -331,73 +488,120 @@ export default function ProjectGalleryView() {
                 </div>
 
                 {/* Gallery Grid */}
-                {galleryFiles.length === 0 ? (
+                {galleryFiles.length === 0 && listFiles.length === 0 ? (
                     <div className="text-center py-20">
                         <Images className="w-16 h-16 text-white/20 mx-auto mb-4" />
                         <p className="text-white/50">No files in this category</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                        {galleryFiles.map((file, index) => (
-                            <motion.div
-                                key={file.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.03 }}
-                                className="aspect-[4/3] rounded-lg overflow-hidden relative group cursor-pointer"
-                                onClick={() => {
-                                    if (file.mime_type === 'text/url') {
-                                        window.open(file.file_url, '_blank');
-                                    } else {
-                                        setSelectedIndex(index);
-                                    }
-                                }}
-                            >
-                                {/* Thumbnail */}
-                                {file.mime_type === 'text/url' ? (
-                                    <div className="w-full h-full bg-white/10 flex items-center justify-center">
-                                        <ExternalLink className="w-8 h-8 text-white/50" />
-                                    </div>
-                                ) : file.mime_type?.startsWith('video/') ? (
-                                    <div className="relative w-full h-full">
-                                        <video
-                                            src={file.file_url}
-                                            className="w-full h-full object-cover"
-                                        />
-                                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                            <Play className="w-12 h-12 text-white/80" />
+                    <>
+                        {galleryFiles.length > 0 && (
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                {galleryFiles.map((file, index) => (
+                                    <motion.div
+                                        key={file.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.03 }}
+                                        className="aspect-[4/3] rounded-lg overflow-hidden relative group cursor-pointer"
+                                        onClick={() => {
+                                            if (file.mime_type === 'text/url') {
+                                                window.open(file.file_url, '_blank');
+                                            } else {
+                                                setSelectedIndex(index);
+                                            }
+                                        }}
+                                    >
+                                        {/* Thumbnail */}
+                                        {file.mime_type === 'text/url' ? (
+                                            <div className="w-full h-full bg-white/10 flex items-center justify-center">
+                                                <ExternalLink className="w-8 h-8 text-white/50" />
+                                            </div>
+                                        ) : file.mime_type?.startsWith('video/') ? (
+                                            <div className="relative w-full h-full">
+                                                <video
+                                                    src={file.file_url}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                                    <Play className="w-12 h-12 text-white/80" />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <img
+                                                src={file.file_url}
+                                                alt={file.filename}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                loading="lazy"
+                                            />
+                                        )}
+
+                                        {/* Hover overlay */}
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+
+                                        {/* Selection checkbox */}
+                                        {file.mime_type !== 'text/url' && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleSelect(file.id);
+                                                }}
+                                                className={cn(
+                                                    "absolute top-2 left-2 w-6 h-6 rounded border-2 flex items-center justify-center transition-all",
+                                                    selectedFiles[file.id]
+                                                        ? "bg-[#5C6B52] border-[#5C6B52] text-white"
+                                                        : "border-white/50 bg-black/30 opacity-0 group-hover:opacity-100"
+                                                )}
+                                            >
+                                                {selectedFiles[file.id] && <Check className="w-4 h-4" />}
+                                            </button>
+                                        )}
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+
+                        {listFiles.length > 0 && (
+                            <div className="mt-10">
+                                <h3 className="text-sm uppercase tracking-wide text-white/60 mb-4">Bestanden</h3>
+                                <div className="space-y-3">
+                                    {listFiles.map((file) => (
+                                        <div
+                                            key={file.id}
+                                            className="flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-white/5 p-4"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    onClick={() => toggleSelect(file.id)}
+                                                    className={cn(
+                                                        "w-6 h-6 rounded border-2 flex items-center justify-center transition-all",
+                                                        selectedFiles[file.id]
+                                                            ? "bg-[#5C6B52] border-[#5C6B52] text-white"
+                                                            : "border-white/30 text-white/60"
+                                                    )}
+                                                >
+                                                    {selectedFiles[file.id] && <Check className="w-4 h-4" />}
+                                                </button>
+                                                <div>
+                                                    <p className="text-sm text-white">{file.filename}</p>
+                                                    <p className="text-xs text-white/50">{file.category}</p>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleDownloadSingle(file)}
+                                                className="text-white/80 hover:text-white hover:bg-white/10"
+                                            >
+                                                <Download className="w-4 h-4 mr-2" />
+                                                Download
+                                            </Button>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <img
-                                        src={file.file_url}
-                                        alt={file.filename}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                        loading="lazy"
-                                    />
-                                )}
-
-                                {/* Hover overlay */}
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-
-                                {/* Selection checkbox */}
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleSelect(file.id);
-                                    }}
-                                    className={cn(
-                                        "absolute top-2 left-2 w-6 h-6 rounded border-2 flex items-center justify-center transition-all",
-                                        selectedFiles[file.id]
-                                            ? "bg-[#5C6B52] border-[#5C6B52] text-white"
-                                            : "border-white/50 bg-black/30 opacity-0 group-hover:opacity-100"
-                                    )}
-                                >
-                                    {selectedFiles[file.id] && <Check className="w-4 h-4" />}
-                                </button>
-                            </motion.div>
-                        ))}
-                    </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 
@@ -482,6 +686,37 @@ export default function ProjectGalleryView() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <Dialog open={revisionOpen} onOpenChange={setRevisionOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Revisieverzoek</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p className="text-sm text-gray-500">
+                            Geef aan wat er aangepast moet worden. Dit bericht wordt doorgestuurd naar de studio en editors.
+                        </p>
+                        <Textarea
+                            value={revisionMessage}
+                            onChange={(e) => setRevisionMessage(e.target.value)}
+                            rows={5}
+                            placeholder="Beschrijf je revisie..."
+                        />
+                        <div className="flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setRevisionOpen(false)}>
+                                Annuleren
+                            </Button>
+                            <Button
+                                onClick={sendRevisionRequest}
+                                disabled={revisionSending}
+                                className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
+                            >
+                                {revisionSending ? 'Versturen...' : 'Versturen'}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

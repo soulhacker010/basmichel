@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { 
@@ -47,7 +47,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, addDays } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useEffect } from 'react';
 
 export default function AdminBookings() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -63,6 +62,7 @@ export default function AdminBookings() {
   const [deleteBlockedId, setDeleteBlockedId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
+  const cleanupRunningRef = useRef(false);
   
   const queryClient = useQueryClient();
 
@@ -109,9 +109,67 @@ export default function AdminBookings() {
     queryFn: () => base44.entities.Project.list(),
   });
 
+  useEffect(() => {
+    if (cleanupRunningRef.current) return;
+    if (!sessions.length || !projects.length) return;
+
+    const projectIds = new Set(projects.map(project => project.id));
+    const orphanSessions = sessions.filter(session => session.project_id && !projectIds.has(session.project_id));
+
+    if (orphanSessions.length === 0) return;
+
+    cleanupRunningRef.current = true;
+    (async () => {
+      for (const session of orphanSessions) {
+        try {
+          if (session.google_calendar_event_id) {
+            await base44.functions.invoke('calendarSession', {
+              action: 'deleteSessionEvent',
+              calendarEventId: session.google_calendar_event_id,
+            });
+          }
+        } catch (error) {
+          console.error('Failed to delete orphan calendar event:', error);
+        }
+
+        try {
+          await base44.entities.Session.delete(session.id);
+        } catch (error) {
+          console.error('Failed to delete orphan session:', error);
+        }
+      }
+    })().finally(() => {
+      cleanupRunningRef.current = false;
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    });
+  }, [sessions, projects, queryClient]);
+
   const createSessionMutation = useMutation({
     mutationFn: async (data) => {
       const session = await base44.entities.Session.create(data);
+
+      const sessionType = sessionTypes.find(t => t.id === data.session_type_id);
+      const isExtraSession = sessionType?.name?.toLowerCase().includes('extra');
+
+      if (data.project_id && !isExtraSession) {
+        try {
+          const startDate = new Date(data.start_datetime);
+          await base44.entities.Project.update(data.project_id, {
+            shoot_date: format(startDate, 'yyyy-MM-dd'),
+            shoot_time: format(startDate, 'HH:mm'),
+          });
+
+          const bookings = await base44.entities.Booking.filter({ project_id: data.project_id });
+          for (const booking of bookings) {
+            await base44.entities.Booking.update(booking.id, {
+              start_datetime: data.start_datetime,
+              end_datetime: data.end_datetime,
+            });
+          }
+        } catch (error) {
+          console.error('Failed to update project/booking for session:', error);
+        }
+      }
       
       // Sync to Google Calendar
       try {
@@ -120,9 +178,10 @@ export default function AdminBookings() {
           sessionData: { ...data, session_type_id: data.session_type_id }
         });
         
-        if (calendarResponse.data.success && calendarResponse.data.calendarEventId) {
+        const calendarData = calendarResponse?.data || calendarResponse;
+        if (calendarData?.success && calendarData?.calendarEventId) {
           await base44.entities.Session.update(session.id, {
-            google_calendar_event_id: calendarResponse.data.calendarEventId
+            google_calendar_event_id: calendarData.calendarEventId
           });
         }
       } catch (error) {
@@ -133,6 +192,8 @@ export default function AdminBookings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
       setIsSessionDialogOpen(false);
       setEditingSession(null);
     },
@@ -141,13 +202,46 @@ export default function AdminBookings() {
   const updateSessionMutation = useMutation({
     mutationFn: async ({ id, data }) => {
       const session = await base44.entities.Session.get(id);
-      const updatedSession = await base44.entities.Session.update(id, data);
+      const resolvedSessionTypeId = data.session_type_id || session.session_type_id;
+      const resolvedProjectId = data.project_id || session.project_id || null;
+      const resolvedClientId = data.client_id || session.client_id || null;
+      const resolvedData = {
+        ...data,
+        session_type_id: resolvedSessionTypeId,
+        project_id: resolvedProjectId,
+        client_id: resolvedClientId,
+      };
+
+      const updatedSession = await base44.entities.Session.update(id, resolvedData);
+
+      const sessionType = sessionTypes.find(t => t.id === resolvedSessionTypeId);
+      const isExtraSession = sessionType?.name?.toLowerCase().includes('extra');
+
+      if (resolvedProjectId && !isExtraSession) {
+        try {
+          const startDate = new Date(resolvedData.start_datetime);
+          await base44.entities.Project.update(resolvedProjectId, {
+            shoot_date: format(startDate, 'yyyy-MM-dd'),
+            shoot_time: format(startDate, 'HH:mm'),
+          });
+
+          const bookings = await base44.entities.Booking.filter({ project_id: resolvedProjectId });
+          for (const booking of bookings) {
+            await base44.entities.Booking.update(booking.id, {
+              start_datetime: resolvedData.start_datetime,
+              end_datetime: resolvedData.end_datetime,
+            });
+          }
+        } catch (error) {
+          console.error('Failed to update project/booking for session:', error);
+        }
+      }
       
       // Sync to Google Calendar
       try {
         await base44.functions.invoke('calendarSession', {
           action: 'syncSessionEvent',
-          sessionData: { ...data, session_type_id: data.session_type_id },
+          sessionData: { ...resolvedData, session_type_id: resolvedSessionTypeId },
           calendarEventId: session.google_calendar_event_id
         });
       } catch (error) {
@@ -158,6 +252,8 @@ export default function AdminBookings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
       setIsSessionDialogOpen(false);
       setEditingSession(null);
     },
@@ -261,8 +357,14 @@ export default function AdminBookings() {
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
+  const visibleSessions = useMemo(() => {
+    if (!sessions.length) return [];
+    const projectIds = new Set(projects.map(p => p.id));
+    return sessions.filter(session => !session.project_id || projectIds.has(session.project_id));
+  }, [sessions, projects]);
+
   const getSessionsForDay = (day) => {
-    return sessions.filter(session => 
+    return visibleSessions.filter(session =>
       session.start_datetime && isSameDay(new Date(session.start_datetime), day)
     );
   };

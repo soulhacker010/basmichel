@@ -70,9 +70,15 @@ export default function AdminSettings() {
       await base44.auth.updateMe({
         // Note: full_name is read-only, but we can save custom fields
         business_name: formData.get('business_name'),
+        business_email: formData.get('business_email'),
         phone: formData.get('phone'),
         address: formData.get('address'),
         website: formData.get('website'),
+        kvk_number: formData.get('kvk_number'),
+        vat_number: formData.get('vat_number'),
+        bank_name: formData.get('bank_name'),
+        bank_iban: formData.get('bank_iban'),
+        bank_bic: formData.get('bank_bic'),
       });
       toast.success('Instellingen opgeslagen');
     } catch (error) {
@@ -264,6 +270,16 @@ export default function AdminSettings() {
                 />
               </div>
               <div>
+                <Label htmlFor="business_email">Administratie e-mail</Label>
+                <Input
+                  id="business_email"
+                  name="business_email"
+                  defaultValue={user?.business_email || user?.email || ''}
+                  className="mt-1.5"
+                  placeholder="administratie@bedrijf.nl"
+                />
+              </div>
+              <div>
                 <Label htmlFor="address">Adres</Label>
                 <Textarea
                   id="address"
@@ -282,6 +298,55 @@ export default function AdminSettings() {
                   defaultValue={user?.website || 'https://basmichel.nl'}
                   className="mt-1.5"
                 />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="kvk_number">KvK-nummer</Label>
+                  <Input
+                    id="kvk_number"
+                    name="kvk_number"
+                    defaultValue={user?.kvk_number || ''}
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="vat_number">BTW-nummer</Label>
+                  <Input
+                    id="vat_number"
+                    name="vat_number"
+                    defaultValue={user?.vat_number || ''}
+                    className="mt-1.5"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <Label htmlFor="bank_name">Bank</Label>
+                  <Input
+                    id="bank_name"
+                    name="bank_name"
+                    defaultValue={user?.bank_name || 'ING'}
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="bank_iban">IBAN</Label>
+                  <Input
+                    id="bank_iban"
+                    name="bank_iban"
+                    defaultValue={user?.bank_iban || ''}
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="bank_bic">BIC</Label>
+                  <Input
+                    id="bank_bic"
+                    name="bank_bic"
+                    defaultValue={user?.bank_bic || ''}
+                    className="mt-1.5"
+                  />
+                </div>
               </div>
 
               <div className="flex justify-end pt-4">

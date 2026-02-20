@@ -16,6 +16,7 @@ import {
   X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { format, addDays, startOfWeek, addWeeks, isSameDay, setHours, setMinutes, addMinutes, isAfter, isBefore } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -24,6 +25,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import ProjectTimeline from '@/components/project/ProjectTimeline';
 
@@ -37,7 +44,7 @@ const statusSteps = [
 const deliveryCategories = [
   { key: 'bewerkte_fotos', label: 'Bewerkte foto\'s' },
   { key: 'bewerkte_videos', label: 'Bewerkte video\'s' },
-  { key: '360_matterport', label: '360° / Matterport' },
+  { key: '360_matterport', label: '360 graden / Matterport' },
   { key: 'meetrapport', label: 'Meetrapport' },
 ];
 
@@ -53,6 +60,9 @@ export default function ClientProjectDetail2() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [revisionOpen, setRevisionOpen] = useState(false);
+  const [revisionMessage, setRevisionMessage] = useState('');
+  const [revisionSending, setRevisionSending] = useState(false);
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -229,6 +239,21 @@ export default function ClientProjectDetail2() {
     const win = window.open('', '_blank');
     if (!win) return;
 
+    const business = {
+      name: invoice.business_name || 'Bas Michel Photography',
+      address: invoice.business_address || '',
+      postcode: '',
+      city: '',
+      country: 'Nederland',
+      email: invoice.business_email || 'basmichelsite@gmail.com',
+      website: invoice.business_website || 'basmichel.nl',
+      kvk: invoice.kvk_number || '',
+      vat: invoice.vat_number || '',
+      iban: invoice.bank_iban || '',
+      bic: invoice.bank_bic || '',
+      bank: invoice.bank_name || 'ING',
+    };
+
     const items = Array.isArray(invoice.items) ? invoice.items : [];
     const subtotal = getInvoiceSubtotal(invoice) ?? 0;
     const discount = typeof invoice.discount_amount === 'number' ? invoice.discount_amount : 0;
@@ -257,6 +282,11 @@ export default function ClientProjectDetail2() {
       `;
     }).join('');
 
+    const businessAddress = [business.address, business.postcode && business.city ? `${business.postcode} ${business.city}` : business.city, business.country]
+      .filter(Boolean)
+      .join('<br/>');
+    const paymentRef = invoice.invoice_number || project.project_number || '';
+
     win.document.write(`
 <!DOCTYPE html>
 <html lang="nl">
@@ -264,8 +294,10 @@ export default function ClientProjectDetail2() {
     <meta charset="utf-8" />
     <title>Factuur ${invoice.invoice_number || ''}</title>
     <style>
+      @page { size: A4; margin: 20mm; }
       body { font-family: Arial, sans-serif; color: #111827; padding: 40px; }
-      .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+      .page { width: 210mm; min-height: 297mm; margin: 0 auto; }
+      .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
       .brand { font-size: 20px; font-weight: 700; color: #5C6B52; }
       .title { font-size: 24px; font-weight: 600; }
       .meta { color: #6b7280; font-size: 13px; line-height: 1.6; }
@@ -280,13 +312,19 @@ export default function ClientProjectDetail2() {
       .totals .label { color: #6b7280; }
       .totals .value { text-align: right; font-weight: 600; }
       .footer { margin-top: 24px; color: #6b7280; font-size: 12px; }
+      .toolbar { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+      .print-btn { background: #5C6B52; color: #fff; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+      @media print { .toolbar { display: none; } body { padding: 0; } }
     </style>
   </head>
   <body>
+    <div class="page">
+    <div class="toolbar"><button class="print-btn" onclick="window.print()">Download PDF</button></div>
     <div class="header">
       <div>
         <div class="brand">Bas Michel Photography</div>
-        <div class="meta">basmichel.nl • basmichelsite@gmail.com</div>
+        <div class="meta">${business.website || '-'} - ${business.email || '-'}</div>
+        <div class="meta">${businessAddress || '-'}</div>
       </div>
       <div style="text-align:right;">
         <div class="title">Factuur</div>
@@ -307,6 +345,7 @@ export default function ClientProjectDetail2() {
         <div class="meta">Project</div>
         <div style="font-weight:600; margin-top:6px;">${project.title || '-'}</div>
         <div class="meta">${project.address || ''} ${project.city || ''}</div>
+        <div class="meta">Betalingskenmerk: ${paymentRef || '-'}</div>
       </div>
     </div>
 
@@ -347,16 +386,85 @@ export default function ClientProjectDetail2() {
       </table>
     </div>
 
-    <div class="footer">Dank voor de samenwerking.</div>
+    <div class="footer">
+      <div>Bank: ${business.bank || '-'} - IBAN: ${business.iban || '-'} - BIC: ${business.bic || '-'}</div>
+      <div>KvK: ${business.kvk || '-'} - BTW: ${business.vat || '-'}</div>
+      <div>Dank voor de samenwerking.</div>
+    </div>
+    </div>
   </body>
 </html>
     `);
 
     win.document.close();
     win.focus();
-    win.onload = () => {
-      win.print();
-    };
+  };
+
+  const sendRevisionRequest = async () => {
+    if (!revisionMessage.trim()) {
+      toast.error('Voer een bericht in');
+      return;
+    }
+
+    setRevisionSending(true);
+    try {
+      const adminEmail = 'basmichelsite@gmail.com';
+      const projectTitle = project?.title || 'Project';
+      const senderName = user?.full_name || user?.email || 'Klant';
+      const link = createPageUrl('AdminProjectDetail') + `?id=${projectId}`;
+
+      await base44.entities.Notification.create({
+        type: 'revision_request',
+        title: 'Revisieverzoek',
+        message: `${senderName}: ${revisionMessage.trim()}`,
+        project_id: projectId,
+        link,
+      });
+
+      await base44.entities.InboxMessage.create({
+        subject: `Revisieverzoek - ${projectTitle}`,
+        sender_name: senderName,
+        sender_email: user?.email || '',
+        message: revisionMessage.trim(),
+        is_read: false,
+        is_archived: false,
+      });
+
+      const editors = await base44.entities.Editor.filter({ status: 'active' });
+      for (const editor of editors) {
+        await base44.entities.EditorNotification.create({
+          editor_id: editor.id,
+          type: 'revision_request',
+          title: 'Revisieverzoek',
+          message: `${senderName}: ${revisionMessage.trim()}`,
+          project_id: projectId,
+          metadata: { source: 'client_project' },
+        });
+      }
+
+      await base44.integrations.Core.SendEmail({
+        to: adminEmail,
+        subject: `Revisieverzoek - ${projectTitle}`,
+        body: `
+Nieuw revisieverzoek:
+
+Project: ${projectTitle}
+Van: ${senderName}
+Bericht: ${revisionMessage.trim()}
+
+Open project: ${window.location.origin}${link}
+        `
+      });
+
+      toast.success('Revisieverzoek verstuurd');
+      setRevisionMessage('');
+      setRevisionOpen(false);
+    } catch (error) {
+      console.error('Revision request error:', error);
+      toast.error('Versturen mislukt');
+    } finally {
+      setRevisionSending(false);
+    }
   };
 
   const handleCancelProject = async () => {
@@ -817,12 +925,21 @@ export default function ClientProjectDetail2() {
             </div>
           )}
         </div>
+        <div className="mt-6 pt-6 border-t border-gray-100">
+          <Button
+            variant="outline"
+            onClick={() => setRevisionOpen(true)}
+            className="w-full"
+          >
+            Revisie aanvragen
+          </Button>
+        </div>
       </div>
 
       {/* Gallery Link - Only when status is "klaar" and gallery exists */}
       {project.status === 'klaar' && galleries.length > 0 && (
         <Link
-          to={createPageUrl(`GalleryView?slug=${galleries[0].slug}`)}
+          to={createPageUrl(`ProjectGalleryView?id=${projectId}`)}
           className="block bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow mb-8"
         >
           <div className="p-8">
@@ -1047,6 +1164,37 @@ export default function ClientProjectDetail2() {
           </div>
         </div>
       )}
+
+      <Dialog open={revisionOpen} onOpenChange={setRevisionOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Revisieverzoek</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">
+              Geef aan wat er aangepast moet worden. Dit bericht wordt doorgestuurd naar de studio en editors.
+            </p>
+            <Textarea
+              value={revisionMessage}
+              onChange={(e) => setRevisionMessage(e.target.value)}
+              rows={5}
+              placeholder="Beschrijf je revisie..."
+            />
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setRevisionOpen(false)}>
+                Annuleren
+              </Button>
+              <Button
+                onClick={sendRevisionRequest}
+                disabled={revisionSending}
+                className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
+              >
+                {revisionSending ? 'Versturen...' : 'Versturen'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

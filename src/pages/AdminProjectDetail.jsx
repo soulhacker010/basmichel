@@ -50,14 +50,14 @@ const statusSteps = [
 const deliveryCategories = [
   { key: 'bewerkte_fotos', label: 'Bewerkte foto\'s' },
   { key: 'bewerkte_videos', label: 'Bewerkte video\'s' },
-  { key: '360_matterport', label: '360° / Matterport' },
+  { key: '360_matterport', label: '360 graden / Matterport' },
   { key: 'meetrapport', label: 'Meetrapport' },
 ];
 
 const rawCategories = [
   { key: 'raw_fotos', label: 'Raw Foto\'s' },
   { key: 'raw_videos', label: 'Raw Video\'s' },
-  { key: '360_raw', label: '360° Foto\'s' },
+  { key: '360_raw', label: '360 graden Foto\'s' },
   { key: 'pointcloud', label: 'Pointcloud' },
 ];
 
@@ -114,6 +114,11 @@ export default function AdminProjectDetail() {
       return projects?.[0];
     },
     enabled: !!projectId,
+  });
+
+  const { data: adminUser } = useQuery({
+    queryKey: ['currentAdmin'],
+    queryFn: () => base44.auth.me(),
   });
 
   const { data: client } = useQuery({
@@ -226,6 +231,35 @@ export default function AdminProjectDetail() {
           queryClient.invalidateQueries({ queryKey: ['invoices'] });
         }
 
+        // Ensure gallery exists and is published when project is klaar
+        try {
+          const existingGalleries = await base44.entities.Gallery.filter({ project_id: project.id });
+          const existingGallery = existingGalleries?.[0];
+          if (existingGallery) {
+            if (existingGallery.status !== 'gepubliceerd') {
+              await base44.entities.Gallery.update(existingGallery.id, { status: 'gepubliceerd' });
+            }
+          } else {
+            const baseSlug = (project.title || 'galerij')
+              .toLowerCase()
+              .replace(/\s+/g, '-')
+              .replace(/[^a-z0-9-]/g, '');
+            const suffix = project.project_number || project.id?.slice(0, 6);
+            const slug = `${baseSlug}-${suffix}`;
+
+            await base44.entities.Gallery.create({
+              title: project.title || 'Galerij',
+              slug,
+              client_id: project.client_id,
+              project_id: project.id,
+              status: 'gepubliceerd',
+            });
+          }
+          queryClient.invalidateQueries({ queryKey: ['galleries'] });
+        } catch (galleryError) {
+          console.error('Failed to ensure gallery on klaar:', galleryError);
+        }
+
         if (user?.email) {
           await base44.integrations.Core.SendEmail({
             to: user.email,
@@ -264,7 +298,7 @@ export default function AdminProjectDetail() {
             </tr>
             <tr>
               <td style="background:#f9fafb; padding:16px 32px; text-align:center; font-size:12px; color:#9ca3af;">
-                Bas Michel Photography • basmichelsite@gmail.com
+                Bas Michel Photography - basmichelsite@gmail.com
               </td>
             </tr>
           </table>
@@ -530,6 +564,16 @@ export default function AdminProjectDetail() {
         project_id: projectId,
         client_id: project?.client_id || null,
         invoice_number: project.project_number,
+        business_name: adminUser?.business_name || 'Bas Michel Photography',
+        business_address: adminUser?.address || '',
+        business_phone: adminUser?.phone || '',
+        business_website: adminUser?.website || '',
+        business_email: adminUser?.email || 'basmichelsite@gmail.com',
+        bank_name: adminUser?.bank_name || 'ING',
+        bank_iban: adminUser?.bank_iban || '',
+        bank_bic: adminUser?.bank_bic || '',
+        kvk_number: adminUser?.kvk_number || '',
+        vat_number: adminUser?.vat_number || '',
         client_name: data.use_custom_recipient ? data.recipient_name : (user?.full_name || client?.company_name || ''),
         client_email: data.use_custom_recipient ? data.recipient_email : (user?.email || ''),
         client_address: data.use_custom_recipient ? data.recipient_address : (project.address || ''),
@@ -581,6 +625,16 @@ export default function AdminProjectDetail() {
 
       return await base44.entities.ProjectInvoice.update(projectInvoice.id, {
         client_id: project?.client_id || null,
+        business_name: adminUser?.business_name || 'Bas Michel Photography',
+        business_address: adminUser?.address || '',
+        business_phone: adminUser?.phone || '',
+        business_website: adminUser?.website || '',
+        business_email: adminUser?.email || 'basmichelsite@gmail.com',
+        bank_name: adminUser?.bank_name || 'ING',
+        bank_iban: adminUser?.bank_iban || '',
+        bank_bic: adminUser?.bank_bic || '',
+        kvk_number: adminUser?.kvk_number || '',
+        vat_number: adminUser?.vat_number || '',
         client_name: data.use_custom_recipient ? data.recipient_name : (user?.full_name || client?.company_name || ''),
         client_email: data.use_custom_recipient ? data.recipient_email : (user?.email || ''),
         client_address: data.use_custom_recipient ? data.recipient_address : (project.address || ''),
@@ -1105,31 +1159,8 @@ export default function AdminProjectDetail() {
                             )}
                           </>
                         )}
-                        <div className="relative">
-                          <input
-                            type="file"
-                            multiple
-                            onChange={(e) => handleFileUpload(category.key, e)}
-                            className="absolute inset-0 opacity-0 cursor-pointer"
-                            disabled={uploadingCategory === category.key}
-                          />
-                          <Button
-                            size="sm"
-                            disabled={uploadingCategory === category.key}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            {uploadingCategory === category.key ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                {uploadPercent}%
-                              </>
-                            ) : (
-                              <>
-                                <Upload className="w-4 h-4 mr-2" />
-                                Uploaden
-                              </>
-                            )}
-                          </Button>
+                        <div className="text-xs text-gray-500">
+                          Uploads verlopen via het Editor portaal.
                         </div>
                       </div>
                     </div>

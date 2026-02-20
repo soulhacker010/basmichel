@@ -83,6 +83,7 @@ export default function NotificationCenter({ userId, clientId, isAdmin = false }
       'nieuwe_factuur': '💰',
       'betaling_ontvangen': '💳',
       'nieuwe_sessie': '🎯',
+      'revision_request': '✏️',
     };
     return iconMap[type] || '📢';
   };

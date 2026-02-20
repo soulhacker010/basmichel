@@ -1,21 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { createPageUrl } from '@/utils';
 import { 
   Images, 
   X,
   ChevronLeft,
   ChevronRight,
-  ArrowLeft
+  ArrowLeft,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 export default function GalleryView() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const [revisionOpen, setRevisionOpen] = useState(false);
+  const [revisionMessage, setRevisionMessage] = useState('');
+  const [revisionSending, setRevisionSending] = useState(false);
   
   const urlParams = new URLSearchParams(window.location.search);
   const slug = urlParams.get('slug');
@@ -70,6 +83,77 @@ export default function GalleryView() {
     if (client && gallery.client_id === client.id) return true;
     
     return false;
+  };
+
+  const sendRevisionRequest = async () => {
+    if (!revisionMessage.trim()) {
+      toast.error('Voer een bericht in');
+      return;
+    }
+
+    if (!gallery?.project_id) {
+      toast.error('Project niet gevonden');
+      return;
+    }
+
+    setRevisionSending(true);
+    try {
+      const adminEmail = 'basmichelsite@gmail.com';
+      const senderName = user?.full_name || user?.email || 'Klant';
+      const link = createPageUrl('AdminProjectDetail') + `?id=${gallery.project_id}`;
+
+      await base44.entities.Notification.create({
+        type: 'revision_request',
+        title: 'Revisieverzoek',
+        message: `${senderName}: ${revisionMessage.trim()}`,
+        project_id: gallery.project_id,
+        link,
+      });
+
+      await base44.entities.InboxMessage.create({
+        subject: `Revisieverzoek - ${gallery.title || 'Galerij'}`,
+        sender_name: senderName,
+        sender_email: user?.email || '',
+        message: revisionMessage.trim(),
+        is_read: false,
+        is_archived: false,
+      });
+
+      const editors = await base44.entities.Editor.filter({ status: 'active' });
+      for (const editor of editors) {
+        await base44.entities.EditorNotification.create({
+          editor_id: editor.id,
+          type: 'revision_request',
+          title: 'Revisieverzoek',
+          message: `${senderName}: ${revisionMessage.trim()}`,
+          project_id: gallery.project_id,
+          metadata: { source: 'gallery' },
+        });
+      }
+
+      await base44.integrations.Core.SendEmail({
+        to: adminEmail,
+        subject: `Revisieverzoek - ${gallery.title || 'Galerij'}`,
+        body: `
+Nieuw revisieverzoek:
+
+Galerij: ${gallery.title || 'Galerij'}
+Van: ${senderName}
+Bericht: ${revisionMessage.trim()}
+
+Open project: ${window.location.origin}${link}
+        `
+      });
+
+      toast.success('Revisieverzoek verstuurd');
+      setRevisionMessage('');
+      setRevisionOpen(false);
+    } catch (error) {
+      console.error('Revision request error:', error);
+      toast.error('Versturen mislukt');
+    } finally {
+      setRevisionSending(false);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -144,7 +228,18 @@ export default function GalleryView() {
                 <p className="text-xs text-gray-500">{mediaItems.length} foto's</p>
               </div>
             </div>
-            <span className="text-sm font-light text-gray-500">Basmichel</span>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setRevisionOpen(true)}
+                className="text-gray-700"
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Revisie aanvragen
+              </Button>
+              <span className="text-sm font-light text-gray-500">Basmichel</span>
+            </div>
           </div>
         </div>
       </header>
@@ -234,6 +329,37 @@ export default function GalleryView() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Dialog open={revisionOpen} onOpenChange={setRevisionOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Revisieverzoek</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">
+              Geef aan wat er aangepast moet worden. Dit bericht wordt doorgestuurd naar de studio en editors.
+            </p>
+            <Textarea
+              value={revisionMessage}
+              onChange={(e) => setRevisionMessage(e.target.value)}
+              rows={5}
+              placeholder="Beschrijf je revisie..."
+            />
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setRevisionOpen(false)}>
+                Annuleren
+              </Button>
+              <Button
+                onClick={sendRevisionRequest}
+                disabled={revisionSending}
+                className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
+              >
+                {revisionSending ? 'Versturen...' : 'Versturen'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

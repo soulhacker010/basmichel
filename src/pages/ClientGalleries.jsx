@@ -80,7 +80,7 @@ export default function ClientGalleries() {
           {galleries.map(gallery => (
             <Link
               key={gallery.id}
-              to={createPageUrl(`GalleryView?slug=${gallery.slug}`)}
+              to={createPageUrl(`ProjectGalleryView?id=${gallery.project_id}`)}
               className="group bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
             >
               {/* Cover Image */}

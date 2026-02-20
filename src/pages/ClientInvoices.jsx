@@ -92,6 +92,21 @@ export default function ClientInvoices() {
     const win = window.open('', '_blank');
     if (!win) return;
 
+    const business = {
+      name: invoice.business_name || 'Bas Michel Photography',
+      address: invoice.business_address || '',
+      postcode: '',
+      city: '',
+      country: 'Nederland',
+      email: invoice.business_email || 'basmichelsite@gmail.com',
+      website: invoice.business_website || 'basmichel.nl',
+      kvk: invoice.kvk_number || '',
+      vat: invoice.vat_number || '',
+      iban: invoice.bank_iban || '',
+      bic: invoice.bank_bic || '',
+      bank: invoice.bank_name || 'ING',
+    };
+
     const items = Array.isArray(invoice.items) ? invoice.items : [];
     const subtotal = getInvoiceSubtotal(invoice) ?? 0;
     const discount = typeof invoice.discount_amount === 'number' ? invoice.discount_amount : 0;
@@ -120,6 +135,11 @@ export default function ClientInvoices() {
       `;
     }).join('');
 
+    const businessAddress = [business.address, business.postcode && business.city ? `${business.postcode} ${business.city}` : business.city, business.country]
+      .filter(Boolean)
+      .join('<br/>');
+    const paymentRef = invoice.invoice_number || '';
+
     win.document.write(`
 <!DOCTYPE html>
 <html lang="nl">
@@ -127,8 +147,10 @@ export default function ClientInvoices() {
     <meta charset="utf-8" />
     <title>Factuur ${invoice.invoice_number || ''}</title>
     <style>
+      @page { size: A4; margin: 20mm; }
       body { font-family: Arial, sans-serif; color: #111827; padding: 40px; }
-      .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+      .page { width: 210mm; min-height: 297mm; margin: 0 auto; }
+      .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
       .brand { font-size: 20px; font-weight: 700; color: #5C6B52; }
       .title { font-size: 24px; font-weight: 600; }
       .meta { color: #6b7280; font-size: 13px; line-height: 1.6; }
@@ -143,13 +165,19 @@ export default function ClientInvoices() {
       .totals .label { color: #6b7280; }
       .totals .value { text-align: right; font-weight: 600; }
       .footer { margin-top: 24px; color: #6b7280; font-size: 12px; }
+      .toolbar { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+      .print-btn { background: #5C6B52; color: #fff; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+      @media print { .toolbar { display: none; } body { padding: 0; } }
     </style>
   </head>
   <body>
+    <div class="page">
+    <div class="toolbar"><button class="print-btn" onclick="window.print()">Download PDF</button></div>
     <div class="header">
       <div>
         <div class="brand">Bas Michel Photography</div>
-        <div class="meta">basmichel.nl • basmichelsite@gmail.com</div>
+        <div class="meta">${business.website || '-'} • ${business.email || '-'}</div>
+        <div class="meta">${businessAddress || '-'}</div>
       </div>
       <div style="text-align:right;">
         <div class="title">Factuur</div>
@@ -169,6 +197,7 @@ export default function ClientInvoices() {
       <div class="card">
         <div class="meta">Project</div>
         <div style="font-weight:600; margin-top:6px;">${getProjectTitle(invoice.project_id)}</div>
+        <div class="meta">Betalingskenmerk: ${paymentRef || '-'}</div>
       </div>
     </div>
 
@@ -209,16 +238,18 @@ export default function ClientInvoices() {
       </table>
     </div>
 
-    <div class="footer">Dank voor de samenwerking.</div>
+    <div class="footer">
+      <div>Bank: ${business.bank || '-'} • IBAN: ${business.iban || '-'} • BIC: ${business.bic || '-'}</div>
+      <div>KvK: ${business.kvk || '-'} • BTW: ${business.vat || '-'}</div>
+      <div>Dank voor de samenwerking.</div>
+    </div>
+    </div>
   </body>
 </html>
     `);
 
     win.document.close();
     win.focus();
-    win.onload = () => {
-      win.print();
-    };
   };
 
   const filteredInvoices = invoices.filter(invoice => {
