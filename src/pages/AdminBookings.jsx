@@ -190,10 +190,13 @@ export default function AdminBookings() {
       
       return session;
     },
-    onSuccess: () => {
+    onSuccess: (session) => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      if (session?.project_id) {
+        queryClient.invalidateQueries({ queryKey: ['extraSessions', session.project_id] });
+      }
       setIsSessionDialogOpen(false);
       setEditingSession(null);
     },
@@ -250,10 +253,13 @@ export default function AdminBookings() {
       
       return updatedSession;
     },
-    onSuccess: () => {
+    onSuccess: (updatedSession) => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      if (updatedSession?.project_id) {
+        queryClient.invalidateQueries({ queryKey: ['extraSessions', updatedSession.project_id] });
+      }
       setIsSessionDialogOpen(false);
       setEditingSession(null);
     },
@@ -296,12 +302,16 @@ export default function AdminBookings() {
         }
       }
       
-      return await base44.entities.Session.delete(id);
+      await base44.entities.Session.delete(id);
+      return { project_id: session?.project_id || null };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      if (result?.project_id) {
+        queryClient.invalidateQueries({ queryKey: ['extraSessions', result.project_id] });
+      }
       setDeleteSessionId(null);
     },
   });
