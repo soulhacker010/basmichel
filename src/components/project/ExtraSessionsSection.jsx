@@ -41,6 +41,9 @@ export default function ExtraSessionsSection({ projectId }) {
     queryKey: ['extraSessions', projectId],
     queryFn: () => base44.entities.Session.filter({ project_id: projectId }, '-start_datetime'),
     enabled: !!projectId,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: project } = useQuery({
