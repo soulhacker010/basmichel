@@ -455,7 +455,7 @@ Open project: ${window.location.origin}${link}
                             variant="outline"
                             size="sm"
                             onClick={handleSelectAll}
-                            className="border-white/20 text-white hover:bg-white/10"
+                            className="border-white/30 text-white/90 hover:text-white hover:bg-white/10"
                         >
                             {selectableFiles.length > 0 && selectableFiles.every(f => selectedFiles[f.id]) ? (
                                 <>
