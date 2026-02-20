@@ -60,6 +60,8 @@ export default function ClientProjects() {
     enabled: !!clientId,
     refetchInterval: false,
     staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const filteredProjects = projects.filter(project => {
@@ -184,7 +186,10 @@ export default function ClientProjects() {
 
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-400">
-                      {project.created_date && format(new Date(project.created_date), 'd MMMM yyyy', { locale: nl })}
+                      {(() => {
+                        const dateValue = project.shoot_date || project.created_date;
+                        return dateValue ? format(new Date(dateValue), 'd MMMM yyyy', { locale: nl }) : '-';
+                      })()}
                     </span>
                     <span className="text-[#5C6B52] group-hover:translate-x-1 transition-transform flex items-center gap-1">
                       Bekijk <ArrowRight className="w-4 h-4" />

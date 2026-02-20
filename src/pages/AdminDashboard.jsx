@@ -190,7 +190,10 @@ export default function AdminDashboard() {
                     <StatusBadge status={project.status} />
                   </div>
                   <p className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
-                    {project.created_date && format(new Date(project.created_date), 'd MMM yyyy', { locale: nl })}
+                    {(() => {
+                      const dateValue = project.shoot_date || project.created_date;
+                      return dateValue ? format(new Date(dateValue), 'd MMM yyyy', { locale: nl }) : '-';
+                    })()}
                   </p>
                 </div>
               ))}

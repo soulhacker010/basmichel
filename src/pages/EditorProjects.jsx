@@ -83,6 +83,9 @@ export default function EditorProjects() {
   const { data: projects = [] } = useQuery({
     queryKey: ['allProjects'],
     queryFn: () => base44.entities.Project.list('-created_date'),
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: clients = [] } = useQuery({
@@ -1135,7 +1138,10 @@ export default function EditorProjects() {
                   </span>
                 </div>
                 <div className={cn("text-sm", darkMode ? "text-gray-500" : "text-gray-400")}>
-                  {project.created_date && format(new Date(project.created_date), 'MMM d, yyyy')}
+                  {(() => {
+                    const dateValue = project.shoot_date || project.created_date;
+                    return dateValue ? format(new Date(dateValue), 'MMM d, yyyy') : '-';
+                  })()}
                 </div>
               </div>
             </div>
