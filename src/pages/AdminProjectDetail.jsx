@@ -15,7 +15,8 @@ import {
   ChevronDown,
   FileText,
   Plus,
-  Pencil
+  Pencil,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -336,7 +337,7 @@ export default function AdminProjectDetail() {
             <tr>
               <td style="background:#5C6B52; color:#ffffff; padding:28px 32px;">
                 <h1 style="margin:0; font-size:22px; font-weight:600;">Factuur beschikbaar</h1>
-                <p style="margin:8px 0 0; font-size:14px; opacity:0.9;">Bas Michel Photography</p>
+                <p style="margin:8px 0 0; font-size:14px; opacity:0.9;">Bas Michel</p>
               </td>
             </tr>
             <tr>
@@ -366,7 +367,7 @@ export default function AdminProjectDetail() {
             </tr>
             <tr>
               <td style="background:#f9fafb; padding:16px 32px; text-align:center; font-size:12px; color:#9ca3af;">
-                Bas Michel Photography - ${adminEmail}
+                Bas Michel - ${adminEmail}
               </td>
             </tr>
           </table>
@@ -403,7 +404,7 @@ export default function AdminProjectDetail() {
             <tr>
               <td style="background:#5C6B52; color:#ffffff; padding:28px 32px;">
                 <h1 style="margin:0; font-size:22px; font-weight:600;">Je project is klaar</h1>
-                <p style="margin:8px 0 0; font-size:14px; opacity:0.9;">Bas Michel Photography</p>
+                <p style="margin:8px 0 0; font-size:14px; opacity:0.9;">Bas Michel</p>
               </td>
             </tr>
             <tr>
@@ -421,7 +422,7 @@ export default function AdminProjectDetail() {
             </tr>
             <tr>
               <td style="background:#f9fafb; padding:16px 32px; text-align:center; font-size:12px; color:#9ca3af;">
-                Bas Michel Photography - basmichelsite@gmail.com
+                Bas Michel - basmichelsite@gmail.com
               </td>
             </tr>
           </table>
@@ -687,7 +688,7 @@ export default function AdminProjectDetail() {
         project_id: projectId,
         client_id: project?.client_id || null,
         invoice_number: project.project_number,
-        business_name: adminUser?.business_name || 'Bas Michel Photography',
+        business_name: adminUser?.business_name || 'Bas Michel',
         business_address: adminUser?.address || '',
         business_phone: adminUser?.phone || '',
         business_website: adminUser?.website || '',
@@ -734,6 +735,22 @@ export default function AdminProjectDetail() {
     },
   });
 
+  const markSoldMutation = useMutation({
+    mutationFn: async () => {
+      const confirmed = confirm('Weet je zeker dat je dit project wilt verwijderen? Alle bestanden worden na 14 dagen verwijderd.');
+      if (!confirmed) throw new Error('Cancelled');
+      return base44.entities.Project.update(projectId, {
+        status: 'sold',
+        sold_date: new Date().toISOString(),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast.success('Project gemarkeerd als verkocht');
+    },
+  });
+
   const updateInvoiceMutation = useMutation({
     mutationFn: async (data) => {
       const subtotal = data.items.reduce((sum, item) => {
@@ -748,7 +765,7 @@ export default function AdminProjectDetail() {
 
       return await base44.entities.ProjectInvoice.update(projectInvoice.id, {
         client_id: project?.client_id || null,
-        business_name: adminUser?.business_name || 'Bas Michel Photography',
+        business_name: adminUser?.business_name || 'Bas Michel',
         business_address: adminUser?.address || '',
         business_phone: adminUser?.phone || '',
         business_website: adminUser?.website || '',
@@ -1021,7 +1038,35 @@ export default function AdminProjectDetail() {
 
       {/* Status Bar */}
       <div className={cn("rounded-2xl p-8 mb-8", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
-        <h1 className={cn("text-2xl font-light mb-8", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h1>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
+          <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h1>
+          <Button
+            variant="outline"
+            onClick={() => markSoldMutation.mutate()}
+            disabled={markSoldMutation.isPending}
+            className={cn(
+              "border-red-200 text-red-600 hover:bg-red-50",
+              darkMode ? "border-red-500/50 text-red-300 hover:bg-red-500/10" : ""
+            )}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Verkocht / Verwijderen
+          </Button>
+        </div>
+
+        {project.status === 'sold' && project.sold_date && (
+          <div className={cn("mb-6 rounded-xl border p-4 flex items-start gap-3",
+            darkMode ? "border-red-500/40 bg-red-500/10 text-red-200" : "border-red-200 bg-red-50 text-red-700"
+          )}>
+            <AlertCircle className="w-5 h-5 mt-0.5" />
+            <div>
+              <p className="font-medium">Project is gemarkeerd als verkocht</p>
+              <p className="text-sm">
+                Automatische verwijdering gepland op {format(new Date(new Date(project.sold_date).getTime() + 14 * 24 * 60 * 60 * 1000), 'd MMMM yyyy', { locale: nl })}.
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="relative pt-2">
           <div className={cn("absolute top-7 left-6 right-6 h-0.5", darkMode ? "bg-gray-700" : "bg-gray-100")}>
@@ -1433,6 +1478,14 @@ export default function AdminProjectDetail() {
             </Button>
           )}
         </div>
+
+        {(!adminUser?.bank_iban || !adminUser?.bank_bic || !adminUser?.kvk_number || !adminUser?.vat_number) && (
+          <div className={cn("mb-6 rounded-xl border p-4 text-sm",
+            darkMode ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-200" : "border-yellow-200 bg-yellow-50 text-yellow-800"
+          )}>
+            Vul je bedrijfs- en bankgegevens in via <strong>Instellingen → Bedrijf</strong> zodat ze op de factuur verschijnen.
+          </div>
+        )}
 
         {projectInvoice ? (
           <div className="border border-gray-100 rounded-xl p-6">

@@ -240,7 +240,7 @@ export default function ClientProjectDetail2() {
     if (!win) return;
 
     const business = {
-      name: invoice.business_name || 'Bas Michel Photography',
+      name: invoice.business_name || 'Bas Michel',
       address: invoice.business_address || '',
       postcode: '',
       city: '',
@@ -322,7 +322,7 @@ export default function ClientProjectDetail2() {
     <div class="toolbar"><button class="print-btn" onclick="window.print()">Download PDF</button></div>
     <div class="header">
       <div>
-        <div class="brand">Bas Michel Photography</div>
+        <div class="brand">Bas Michel</div>
         <div class="meta">${business.website || '-'} - ${business.email || '-'}</div>
         <div class="meta">${businessAddress || '-'}</div>
       </div>

@@ -265,9 +265,10 @@ export default function AdminSettings() {
                 <Input
                   id="business_name"
                   name="business_name"
-                  defaultValue={user?.business_name || 'Basmichel'}
+                  defaultValue={user?.business_name || 'Bas Michel'}
                   className="mt-1.5"
                 />
+                <p className="text-xs text-gray-400 mt-1">Deze gegevens verschijnen op de factuur</p>
               </div>
               <div>
                 <Label htmlFor="business_email">Administratie e-mail</Label>
