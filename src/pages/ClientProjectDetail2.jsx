@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -13,7 +13,8 @@ import {
   FileText,
   Trash2,
   Calendar as CalendarIcon,
-  X
+  X,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -63,6 +64,7 @@ export default function ClientProjectDetail2() {
   const [revisionOpen, setRevisionOpen] = useState(false);
   const [revisionMessage, setRevisionMessage] = useState('');
   const [revisionSending, setRevisionSending] = useState(false);
+  const [soldDialogOpen, setSoldDialogOpen] = useState(false);
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -148,6 +150,23 @@ export default function ClientProjectDetail2() {
     queryKey: ['existingSessions'],
     queryFn: () => base44.entities.Session.filter({ status: 'bevestigd' }),
     enabled: showReschedule,
+  });
+
+  const markSoldMutation = useMutation({
+    mutationFn: () => base44.entities.Project.update(projectId, {
+      status: 'sold',
+      sold_date: new Date().toISOString(),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['clientProjects'] });
+      toast.success('Project gemarkeerd als verkocht');
+      setSoldDialogOpen(false);
+    },
+    onError: () => {
+      toast.error('Kon project niet als verkocht markeren');
+    },
   });
 
   // Security check
@@ -680,15 +699,39 @@ Open project: ${window.location.origin}${link}
               </div>
             )}
           </div>
-          {project.delivery_date && project.status !== 'klaar' && (
-            <div className="text-left md:text-right bg-[#F8FAF7] rounded-xl px-5 py-3">
-              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Verwachte levering</p>
-              <p className="font-medium text-[#5C6B52]">
-                {format(new Date(project.delivery_date), 'd MMMM yyyy', { locale: nl })}
+          <div className="flex flex-col md:items-end gap-3">
+            {project.delivery_date && project.status !== 'klaar' && (
+              <div className="text-left md:text-right bg-[#F8FAF7] rounded-xl px-5 py-3">
+                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Verwachte levering</p>
+                <p className="font-medium text-[#5C6B52]">
+                  {format(new Date(project.delivery_date), 'd MMMM yyyy', { locale: nl })}
+                </p>
+              </div>
+            )}
+            {project.status !== 'sold' && (
+              <Button
+                variant="outline"
+                onClick={() => setSoldDialogOpen(true)}
+                className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Verkocht / Verwijderen
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {project.status === 'sold' && project.sold_date && (
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 text-red-700 p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 mt-0.5" />
+            <div>
+              <p className="font-medium">Project is gemarkeerd als verkocht</p>
+              <p className="text-sm">
+                Automatische verwijdering gepland op {format(new Date(new Date(project.sold_date).getTime() + 14 * 24 * 60 * 60 * 1000), 'd MMMM yyyy', { locale: nl })}.
               </p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="relative pt-2">
           <div className="absolute top-7 left-6 right-6 h-0.5 bg-gray-100">
@@ -1163,6 +1206,31 @@ Open project: ${window.location.origin}${link}
           </div>
         </div>
       )}
+
+      <Dialog open={soldDialogOpen} onOpenChange={setSoldDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Project als verkocht markeren?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">
+              Weet je zeker dat je dit project wilt markeren als verkocht? Alle bestanden worden na 14 dagen verwijderd.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setSoldDialogOpen(false)}>
+                Annuleren
+              </Button>
+              <Button
+                onClick={() => markSoldMutation.mutate()}
+                disabled={markSoldMutation.isPending}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {markSoldMutation.isPending ? 'Bezig...' : 'Ja, markeer als verkocht'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={revisionOpen} onOpenChange={setRevisionOpen}>
         <DialogContent>

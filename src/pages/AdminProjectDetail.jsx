@@ -16,7 +16,6 @@ import {
   FileText,
   Plus,
   Pencil,
-  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -734,22 +733,6 @@ export default function AdminProjectDetail() {
     },
   });
 
-  const markSoldMutation = useMutation({
-    mutationFn: async () => {
-      const confirmed = confirm('Weet je zeker dat je dit project wilt verwijderen? Alle bestanden worden na 14 dagen verwijderd.');
-      if (!confirmed) throw new Error('Cancelled');
-      return base44.entities.Project.update(projectId, {
-        status: 'sold',
-        sold_date: new Date().toISOString(),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      toast.success('Project gemarkeerd als verkocht');
-    },
-  });
-
   const updateInvoiceMutation = useMutation({
     mutationFn: async (data) => {
       const subtotal = data.items.reduce((sum, item) => {
@@ -1038,33 +1021,7 @@ export default function AdminProjectDetail() {
       <div className={cn("rounded-2xl p-8 mb-8", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
           <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h1>
-          <Button
-            variant="outline"
-            onClick={() => markSoldMutation.mutate()}
-            disabled={markSoldMutation.isPending}
-            className={cn(
-              "border-red-200 text-red-600 hover:bg-red-50",
-              darkMode ? "border-red-500/50 text-red-300 hover:bg-red-500/10" : ""
-            )}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Verkocht / Verwijderen
-          </Button>
         </div>
-
-        {project.status === 'sold' && project.sold_date && (
-          <div className={cn("mb-6 rounded-xl border p-4 flex items-start gap-3",
-            darkMode ? "border-red-500/40 bg-red-500/10 text-red-200" : "border-red-200 bg-red-50 text-red-700"
-          )}>
-            <AlertCircle className="w-5 h-5 mt-0.5" />
-            <div>
-              <p className="font-medium">Project is gemarkeerd als verkocht</p>
-              <p className="text-sm">
-                Automatische verwijdering gepland op {format(new Date(new Date(project.sold_date).getTime() + 14 * 24 * 60 * 60 * 1000), 'd MMMM yyyy', { locale: nl })}.
-              </p>
-            </div>
-          </div>
-        )}
 
         <div className="relative pt-2">
           <div className={cn("absolute top-7 left-6 right-6 h-0.5", darkMode ? "bg-gray-700" : "bg-gray-100")}>
