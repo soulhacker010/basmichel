@@ -71,14 +71,13 @@ export default function AdminSettings() {
         // Note: full_name is read-only, but we can save custom fields
         business_name: formData.get('business_name'),
         business_email: formData.get('business_email'),
+        bank_account_name: formData.get('bank_account_name'),
         phone: formData.get('phone'),
         address: formData.get('address'),
         website: formData.get('website'),
         kvk_number: formData.get('kvk_number'),
         vat_number: formData.get('vat_number'),
-        bank_name: formData.get('bank_name'),
         bank_iban: formData.get('bank_iban'),
-        bank_bic: formData.get('bank_bic'),
       });
       toast.success('Instellingen opgeslagen');
     } catch (error) {
@@ -281,6 +280,16 @@ export default function AdminSettings() {
                 />
               </div>
               <div>
+                <Label htmlFor="bank_account_name">T.n.v.</Label>
+                <Input
+                  id="bank_account_name"
+                  name="bank_account_name"
+                  defaultValue={user?.bank_account_name || user?.business_name || 'Bas Michel'}
+                  className="mt-1.5"
+                  placeholder="Naam op bankrekening"
+                />
+              </div>
+              <div>
                 <Label htmlFor="address">Adres</Label>
                 <Textarea
                   id="address"
@@ -322,29 +331,11 @@ export default function AdminSettings() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <Label htmlFor="bank_name">Bank</Label>
-                  <Input
-                    id="bank_name"
-                    name="bank_name"
-                    defaultValue={user?.bank_name || 'ING'}
-                    className="mt-1.5"
-                  />
-                </div>
-                <div>
                   <Label htmlFor="bank_iban">IBAN</Label>
                   <Input
                     id="bank_iban"
                     name="bank_iban"
                     defaultValue={user?.bank_iban || ''}
-                    className="mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="bank_bic">BIC</Label>
-                  <Input
-                    id="bank_bic"
-                    name="bank_bic"
-                    defaultValue={user?.bank_bic || ''}
                     className="mt-1.5"
                   />
                 </div>

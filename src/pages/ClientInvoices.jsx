@@ -92,20 +92,19 @@ export default function ClientInvoices() {
     const win = window.open('', '_blank');
     if (!win) return;
 
-    const business = {
-      name: invoice.business_name || 'Bas Michel',
-      address: invoice.business_address || '',
-      postcode: '',
-      city: '',
-      country: 'Nederland',
-      email: invoice.business_email || 'basmichelsite@gmail.com',
-      website: invoice.business_website || 'basmichel.nl',
-      kvk: invoice.kvk_number || '',
-      vat: invoice.vat_number || '',
-      iban: invoice.bank_iban || '',
-      bic: invoice.bank_bic || '',
-      bank: invoice.bank_name || 'ING',
-    };
+      const business = {
+        name: invoice.business_name || 'Bas Michel',
+        address: invoice.business_address || '',
+        postcode: '',
+        city: '',
+        country: 'Nederland',
+        email: invoice.business_email || 'basmichelsite@gmail.com',
+        website: invoice.business_website || 'basmichel.nl',
+        kvk: invoice.kvk_number || '',
+        vat: invoice.vat_number || '',
+        iban: invoice.bank_iban || '',
+        tnv: invoice.bank_account_name || invoice.business_name || 'Bas Michel',
+      };
 
     const items = Array.isArray(invoice.items) ? invoice.items : [];
     const subtotal = getInvoiceSubtotal(invoice) ?? 0;
@@ -239,7 +238,7 @@ export default function ClientInvoices() {
     </div>
 
     <div class="footer">
-      <div>Bank: ${business.bank || '-'} • IBAN: ${business.iban || '-'} • BIC: ${business.bic || '-'}</div>
+      <div>T.n.v.: ${business.tnv || '-'} • IBAN: ${business.iban || '-'}</div>
       <div>KvK: ${business.kvk || '-'} • BTW: ${business.vat || '-'}</div>
       <div>Dank voor de samenwerking.</div>
     </div>

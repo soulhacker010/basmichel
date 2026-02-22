@@ -693,9 +693,8 @@ export default function AdminProjectDetail() {
         business_phone: adminUser?.phone || '',
         business_website: adminUser?.website || '',
         business_email: adminUser?.email || 'basmichelsite@gmail.com',
-        bank_name: adminUser?.bank_name || 'ING',
+        bank_account_name: adminUser?.bank_account_name || adminUser?.business_name || 'Bas Michel',
         bank_iban: adminUser?.bank_iban || '',
-        bank_bic: adminUser?.bank_bic || '',
         kvk_number: adminUser?.kvk_number || '',
         vat_number: adminUser?.vat_number || '',
         client_name: data.use_custom_recipient ? data.recipient_name : (user?.full_name || client?.company_name || ''),
@@ -770,9 +769,8 @@ export default function AdminProjectDetail() {
         business_phone: adminUser?.phone || '',
         business_website: adminUser?.website || '',
         business_email: adminUser?.email || 'basmichelsite@gmail.com',
-        bank_name: adminUser?.bank_name || 'ING',
+        bank_account_name: adminUser?.bank_account_name || adminUser?.business_name || 'Bas Michel',
         bank_iban: adminUser?.bank_iban || '',
-        bank_bic: adminUser?.bank_bic || '',
         kvk_number: adminUser?.kvk_number || '',
         vat_number: adminUser?.vat_number || '',
         client_name: data.use_custom_recipient ? data.recipient_name : (user?.full_name || client?.company_name || ''),
@@ -1479,7 +1477,7 @@ export default function AdminProjectDetail() {
           )}
         </div>
 
-        {(!adminUser?.bank_iban || !adminUser?.bank_bic || !adminUser?.kvk_number || !adminUser?.vat_number) && (
+        {(!adminUser?.bank_iban || !adminUser?.bank_account_name || !adminUser?.kvk_number || !adminUser?.vat_number) && (
           <div className={cn("mb-6 rounded-xl border p-4 text-sm",
             darkMode ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-200" : "border-yellow-200 bg-yellow-50 text-yellow-800"
           )}>
