@@ -307,7 +307,10 @@ export default function AdminGalleries() {
                         Media Uploaden
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => {
-                        window.open(createPageUrl(`GalleryView?slug=${gallery.slug}`), '_blank');
+                        const url = gallery.project_id
+                          ? createPageUrl(`ProjectGalleryView?id=${gallery.project_id}`)
+                          : createPageUrl(`GalleryView?slug=${gallery.slug}`);
+                        window.open(url, '_blank');
                       }}>
                         <Eye className="w-4 h-4 mr-2" />
                         Bekijken
