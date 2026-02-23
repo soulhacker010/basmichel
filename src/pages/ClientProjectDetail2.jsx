@@ -978,8 +978,8 @@ Open project: ${window.location.origin}${link}
         </div>
       </div>
 
-      {/* Gallery Link - Only when status is "klaar" and gallery exists */}
-      {project.status === 'klaar' && galleries.length > 0 && (
+      {/* Gallery Link - when status is "klaar" and gallery exists OR delivery files exist */}
+      {project.status === 'klaar' && (galleries.length > 0 || deliveryFiles.length > 0) && (
         <Link
           to={createPageUrl(`ProjectGalleryView?id=${projectId}`)}
           className="block bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow mb-8"
@@ -988,9 +988,9 @@ Open project: ${window.location.origin}${link}
             <h2 className="text-lg font-medium text-gray-900 mb-4">Galerij</h2>
             <div className="flex items-center gap-6">
               <div className="w-32 h-32 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                {galleries[0].cover_image_url ? (
+                {(galleries[0]?.cover_image_url || deliveryFiles.find(f => f.mime_type?.startsWith('image/'))?.file_url) ? (
                   <img
-                    src={galleries[0].cover_image_url}
+                    src={galleries[0]?.cover_image_url || deliveryFiles.find(f => f.mime_type?.startsWith('image/'))?.file_url}
                     alt="Gallery preview"
                     className="w-full h-full object-cover"
                   />
@@ -999,7 +999,7 @@ Open project: ${window.location.origin}${link}
                 )}
               </div>
               <div className="flex-1">
-                <p className="font-medium text-gray-900 mb-2">{galleries[0].title}</p>
+                <p className="font-medium text-gray-900 mb-2">{galleries[0]?.title || project.title}</p>
                 <p className="text-sm text-gray-500 flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-gray-400" />
                   {project.title}
