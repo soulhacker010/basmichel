@@ -535,12 +535,19 @@ export default function Home() {
       <footer className="py-16 bg-black text-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
-            <div className="flex items-start">
+            <div>
               <img
                 src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/d493012a0_BasMichel_K102.png"
                 alt="Bas Michel"
-                className="h-14 brightness-0 invert"
+                className="h-14 brightness-0 invert mb-4"
               />
+              <ul className="space-y-1 text-sm text-gray-400">
+                <li>Bas Michel</li>
+                <li><a href="mailto:basmichelsite@gmail.com" className="hover:text-white transition-colors">basmichelsite@gmail.com</a></li>
+                <li>Goudvink 35, Numansdorp</li>
+                <li className="pt-1">KvK: 87212978</li>
+                <li>BTW: 004372351B68</li>
+              </ul>
             </div>
 
             <div>
