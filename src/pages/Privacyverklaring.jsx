@@ -76,7 +76,7 @@ export default function Privacyverklaring() {
             <p>- Je gegevens te laten corrigeren of verwijderen</p>
             <p>- Bezwaar te maken tegen het gebruik</p>
             <p>- Gegevens over te laten dragen aan een andere partij</p>
-            <p>Een verzoek indienen? Stuur een e-mail naar <a href="mailto:info@basmichel.nl" className="text-gray-900 underline">info@basmichel.nl</a>.</p>
+            <p>Een verzoek indienen? Stuur een e-mail naar <a href="mailto:basmichelsite@gmail.com" className="text-gray-900 underline">basmichelsite@gmail.com</a>.</p>
           </div>
           <div>
             <h2 className="text-lg font-medium text-gray-900 mb-2">9. Wijzigingen in dit beleid</h2>
@@ -84,7 +84,7 @@ export default function Privacyverklaring() {
           </div>
           <div>
             <h2 className="text-lg font-medium text-gray-900 mb-2">10. Contact</h2>
-            <p>Heb je vragen? Neem gerust contact met ons op via <a href="mailto:info@basmichel.nl" className="text-gray-900 underline">info@basmichel.nl</a>.</p>
+            <p>Heb je vragen? Neem gerust contact met ons op via <a href="mailto:basmichelsite@gmail.com" className="text-gray-900 underline">basmichelsite@gmail.com</a>.</p>
           </div>
         </div>
       </main>
