@@ -566,13 +566,32 @@ export default function Home() {
                 <li><a href="#" className="hover:text-white transition-colors">Home</a></li>
                 <li><a href="#diensten" className="hover:text-white transition-colors">Diensten</a></li>
                 <li><Link to={createPageUrl('Contact')} className="hover:text-white transition-colors">Contact</Link></li>
-                <li><a href="https://www.basmichel.nl/algemene-voorwaarden/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Algemene Voorwaarden</a></li>
-                <li><a href="https://www.basmichel.nl/servicevoorwaarden/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Servicevoorwaarden</a></li>
-                <li><a href="https://www.basmichel.nl/privacyverklaring/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Privacyverklaring</a></li>
-                <li><a href="https://www.basmichel.nl/cookieverklaring/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Cookieverklaring</a></li>
-                <li><a href="https://www.basmichel.nl/disclaimer/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Disclaimer</a></li>
               </ul>
             </div>
+          </div>
+
+          <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-gray-500">© {new Date().getFullYear()} Bas Michel. Alle rechten voorbehouden.</p>
+            <div className="flex gap-6 text-sm text-gray-500">
+              {isAuthenticated && (
+                <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientDashboard')} className="hover:text-white transition-colors">
+                  Mijn Account
+                </Link>
+              )}
+              {(!isAuthenticated || user?.role === 'admin') && (
+                <Link to={createPageUrl('AdminLogin')} className="hover:text-white transition-colors">
+                  Beheer
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-gray-800 flex flex-wrap justify-center gap-6 text-sm text-gray-500">
+            <a href="https://www.basmichel.nl/algemene-voorwaarden/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Algemene Voorwaarden</a>
+            <a href="https://www.basmichel.nl/servicevoorwaarden/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Servicevoorwaarden</a>
+            <a href="https://www.basmichel.nl/privacyverklaring/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Privacyverklaring</a>
+            <a href="https://www.basmichel.nl/cookieverklaring/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Cookieverklaring</a>
+            <a href="https://www.basmichel.nl/disclaimer/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Disclaimer</a>
           </div>
         </div>
       </footer>
