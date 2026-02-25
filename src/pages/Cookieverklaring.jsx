@@ -50,7 +50,7 @@ export default function Cookieverklaring() {
           </div>
           <div>
             <h2 className="text-lg font-medium text-gray-900 mb-2">5. Vragen?</h2>
-            <p>Heb je vragen over ons cookiegebruik? Neem dan contact op via <a href="mailto:info@basmichel.nl" className="text-gray-900 underline">info@basmichel.nl</a>.</p>
+            <p>Heb je vragen over ons cookiegebruik? Neem dan contact op via <a href="mailto:basmichelsite@gmail.com" className="text-gray-900 underline">basmichelsite@gmail.com</a>.</p>
           </div>
         </div>
       </main>
