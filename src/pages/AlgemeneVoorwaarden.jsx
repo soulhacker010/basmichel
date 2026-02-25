@@ -18,7 +18,7 @@ export default function AlgemeneVoorwaarden() {
 
       {/* Content */}
       <main className="flex-1 max-w-3xl mx-auto px-6 py-16 w-full">
-        <h1 className="text-3xl font-light text-gray-900 mb-10">ALGEMENE VOORWAARDEN - Bas Michel Vastgoedpresentatie</h1>
+        <h1 className="text-3xl font-light text-gray-900 mb-10">ALGEMENE VOORWAARDEN - Bas Michel</h1>
         <div className="prose prose-gray max-w-none text-gray-700 leading-relaxed space-y-6">
           <div>
             <h2 className="text-lg font-medium text-gray-900 mb-2">Artikel 1 - Definities</h2>

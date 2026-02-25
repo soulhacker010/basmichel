@@ -18,7 +18,7 @@ export default function Disclaimer() {
 
       {/* Content */}
       <main className="flex-1 max-w-3xl mx-auto px-6 py-16 w-full">
-        <h1 className="text-3xl font-light text-gray-900 mb-10">DISCLAIMER – Bas Michel Vastgoedpresentatie</h1>
+        <h1 className="text-3xl font-light text-gray-900 mb-10">DISCLAIMER – Bas Michel</h1>
         <div className="space-y-6 text-gray-700 leading-relaxed">
           <p>De informatie op deze website is met grote zorg samengesteld. Toch kan het voorkomen dat gegevens onvolledig, verouderd of onjuist zijn. Aan de inhoud van deze website kunnen geen rechten worden ontleend.</p>
           <div>

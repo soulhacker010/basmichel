@@ -18,8 +18,8 @@ export default function Cookieverklaring() {
 
       {/* Content */}
       <main className="flex-1 max-w-3xl mx-auto px-6 py-16 w-full">
-        <h1 className="text-3xl font-light text-gray-900 mb-2">COOKIEVERKLARING – Bas Michel Vastgoedpresentatie</h1>
-        <p className="text-sm text-gray-500 mb-10">Laatst bijgewerkt: 01/05/2025</p>
+        <h1 className="text-3xl font-light text-gray-900 mb-2">COOKIEVERKLARING – Bas Michel</h1>
+        <p className="text-sm text-gray-500 mb-10">Laatst bijgewerkt: 25/02/2026</p>
         <p className="text-gray-700 mb-8">Op de website van Bas Michel Vastgoedpresentatie maken wij gebruik van cookies. In deze verklaring leggen we uit wat cookies zijn, welke cookies we gebruiken en waarom.</p>
         <div className="space-y-6 text-gray-700 leading-relaxed">
           <div>

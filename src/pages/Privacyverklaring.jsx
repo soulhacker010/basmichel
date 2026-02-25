@@ -18,8 +18,8 @@ export default function Privacyverklaring() {
 
       {/* Content */}
       <main className="flex-1 max-w-3xl mx-auto px-6 py-16 w-full">
-        <h1 className="text-3xl font-light text-gray-900 mb-2">PRIVACYVERKLARING – Bas Michel Vastgoedpresentatie</h1>
-        <p className="text-sm text-gray-500 mb-10">Laatst bijgewerkt: 01/05/2025</p>
+        <h1 className="text-3xl font-light text-gray-900 mb-2">PRIVACYVERKLARING – Bas Michel</h1>
+        <p className="text-sm text-gray-500 mb-10">Laatst bijgewerkt: 25/02/2026</p>
         <p className="text-gray-700 mb-8">Bij Bas Michel Vastgoedpresentatie hechten we veel waarde aan jouw privacy. In deze privacyverklaring leggen we uit welke persoonsgegevens we verzamelen, waarom we dat doen, en wat jouw rechten zijn.</p>
         <div className="space-y-6 text-gray-700 leading-relaxed">
           <div>
