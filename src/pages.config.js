@@ -84,6 +84,11 @@ import GalleryView from './pages/GalleryView';
 import ProjectGalleryView from './pages/ProjectGalleryView';
 import ComingSoon from './pages/ComingSoon';
 import Home from './pages/Home';
+import AlgemeneVoorwaarden from './pages/AlgemeneVoorwaarden';
+import Servicevoorwaarden from './pages/Servicevoorwaarden';
+import Privacyverklaring from './pages/Privacyverklaring';
+import Cookieverklaring from './pages/Cookieverklaring';
+import Disclaimer from './pages/Disclaimer';
 import __Layout from './Layout.jsx';
 
 
@@ -125,6 +130,11 @@ export const PAGES = {
     "ProjectGalleryView": ProjectGalleryView,
     "ComingSoon": ComingSoon,
     "Home": Home,
+    "AlgemeneVoorwaarden": AlgemeneVoorwaarden,
+    "Servicevoorwaarden": Servicevoorwaarden,
+    "Privacyverklaring": Privacyverklaring,
+    "Cookieverklaring": Cookieverklaring,
+    "Disclaimer": Disclaimer,
 }
 
 export const pagesConfig = {

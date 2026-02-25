@@ -4,7 +4,7 @@ import ClientPortalShell from '@/components/shells/ClientPortalShell';
 import AdminPortalShell from '@/components/shells/AdminPortalShell';
 import EditorPortalShell from '@/components/shells/EditorPortalShell';
 
-const publicPages = ['Home', 'BookingPage', 'GalleryView', 'AdminLogin', 'Contact'];
+const publicPages = ['Home', 'BookingPage', 'GalleryView', 'AdminLogin', 'Contact', 'AlgemeneVoorwaarden', 'Servicevoorwaarden', 'Privacyverklaring', 'Cookieverklaring', 'Disclaimer'];
 
 const clientPages = [
   'ClientDashboard', 

@@ -563,11 +563,11 @@ export default function Home() {
             <div>
               <h4 className="text-sm font-medium mb-4 uppercase tracking-wide">Juridisch</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="https://www.basmichel.nl/algemene-voorwaarden/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Algemene Voorwaarden</a></li>
-                <li><a href="https://www.basmichel.nl/servicevoorwaarden/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Servicevoorwaarden</a></li>
-                <li><a href="https://www.basmichel.nl/privacyverklaring/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Privacyverklaring</a></li>
-                <li><a href="https://www.basmichel.nl/cookieverklaring/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Cookieverklaring</a></li>
-                <li><a href="https://www.basmichel.nl/disclaimer/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Disclaimer</a></li>
+                <li><Link to={createPageUrl('AlgemeneVoorwaarden')} className="hover:text-white transition-colors">Algemene Voorwaarden</Link></li>
+                <li><Link to={createPageUrl('Servicevoorwaarden')} className="hover:text-white transition-colors">Servicevoorwaarden</Link></li>
+                <li><Link to={createPageUrl('Privacyverklaring')} className="hover:text-white transition-colors">Privacyverklaring</Link></li>
+                <li><Link to={createPageUrl('Cookieverklaring')} className="hover:text-white transition-colors">Cookieverklaring</Link></li>
+                <li><Link to={createPageUrl('Disclaimer')} className="hover:text-white transition-colors">Disclaimer</Link></li>
               </ul>
             </div>
           </div>
