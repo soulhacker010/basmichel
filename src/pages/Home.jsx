@@ -561,11 +561,13 @@ export default function Home() {
             </div>
 
             <div>
-              <h4 className="text-sm font-medium mb-4 uppercase tracking-wide">Bedrijf</h4>
+              <h4 className="text-sm font-medium mb-4 uppercase tracking-wide">Juridisch</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Home</a></li>
-                <li><a href="#diensten" className="hover:text-white transition-colors">Diensten</a></li>
-                <li><Link to={createPageUrl('Contact')} className="hover:text-white transition-colors">Contact</Link></li>
+                <li><a href="https://www.basmichel.nl/algemene-voorwaarden/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Algemene Voorwaarden</a></li>
+                <li><a href="https://www.basmichel.nl/servicevoorwaarden/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Servicevoorwaarden</a></li>
+                <li><a href="https://www.basmichel.nl/privacyverklaring/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Privacyverklaring</a></li>
+                <li><a href="https://www.basmichel.nl/cookieverklaring/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Cookieverklaring</a></li>
+                <li><a href="https://www.basmichel.nl/disclaimer/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Disclaimer</a></li>
               </ul>
             </div>
           </div>
