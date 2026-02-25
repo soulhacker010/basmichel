@@ -59,7 +59,7 @@ export default function Servicevoorwaarden() {
           </div>
           <div>
             <h2 className="text-lg font-medium text-gray-900 mb-2">8. Contact</h2>
-            <p>Voor vragen of overleg kun je altijd contact opnemen via <a href="mailto:info@basmichel.nl" className="text-gray-900 underline">info@basmichel.nl</a>.</p>
+            <p>Voor vragen of overleg kun je altijd contact opnemen via <a href="mailto:basmichelsite@gmail.com" className="text-gray-900 underline">basmichelsite@gmail.com</a>.</p>
           </div>
         </div>
       </main>
