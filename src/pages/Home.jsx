@@ -534,38 +534,12 @@ export default function Home() {
       {/* Footer */}
       <footer className="py-16 bg-black text-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            <div>
-              <img 
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/d493012a0_BasMichel_K102.png" 
-                alt="Bas Michel" 
-                className="h-16 mb-3 brightness-0 invert"
-              />
-              <p className="text-sm text-gray-400 mt-3">
-                Bas Michel zet jouw woningen op een manier die werkt en verkoopt.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="text-sm font-medium mb-4 uppercase tracking-wide">Diensten</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#diensten" className="hover:text-white transition-colors">Fotografie</a></li>
-                <li><a href="#diensten" className="hover:text-white transition-colors">Video Tours</a></li>
-                <li><a href="#diensten" className="hover:text-white transition-colors">360° Virtuele Tours</a></li>
-                <li><a href="#diensten" className="hover:text-white transition-colors">Plattegronden</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-medium mb-4 uppercase tracking-wide">Bedrijf</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Home</a></li>
-                <li><a href="#diensten" className="hover:text-white transition-colors">Diensten</a></li>
-                <li><Link to={createPageUrl('Contact')} className="hover:text-white transition-colors">Contact</Link></li>
-              </ul>
-            </div>
-
-
+          <div className="flex justify-center mb-12">
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/d493012a0_BasMichel_K102.png" 
+              alt="Bas Michel" 
+              className="h-16 brightness-0 invert"
+            />
           </div>
 
           <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row items-center justify-between gap-4">
