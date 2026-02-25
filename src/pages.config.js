@@ -83,6 +83,7 @@ import EditorUpcoming from './pages/EditorUpcoming';
 import GalleryView from './pages/GalleryView';
 import Home from './pages/Home';
 import ProjectGalleryView from './pages/ProjectGalleryView';
+import ComingSoon from './pages/ComingSoon';
 import __Layout from './Layout.jsx';
 
 
@@ -123,6 +124,7 @@ export const PAGES = {
     "GalleryView": GalleryView,
     "Home": Home,
     "ProjectGalleryView": ProjectGalleryView,
+    "ComingSoon": ComingSoon,
 }
 
 export const pagesConfig = {
