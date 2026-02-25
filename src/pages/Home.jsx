@@ -565,20 +565,7 @@ export default function Home() {
               </ul>
             </div>
 
-            <div>
-              <h4 className="text-sm font-medium mb-4 uppercase tracking-wide">Volg Ons</h4>
-              <div className="flex gap-4">
-                <a href="#" className="w-8 h-8 bg-gray-800 hover:bg-gray-700 rounded flex items-center justify-center transition-colors">
-                  <span className="text-xs">in</span>
-                </a>
-                <a href="#" className="w-8 h-8 bg-gray-800 hover:bg-gray-700 rounded flex items-center justify-center transition-colors">
-                  <span className="text-xs">fb</span>
-                </a>
-                <a href="#" className="w-8 h-8 bg-gray-800 hover:bg-gray-700 rounded flex items-center justify-center transition-colors">
-                  <span className="text-xs">tw</span>
-                </a>
-              </div>
-            </div>
+
           </div>
 
           <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row items-center justify-between gap-4">
