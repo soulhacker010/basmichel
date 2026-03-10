@@ -67,6 +67,11 @@ export default function EditorDashboard() {
     queryFn: () => base44.entities.Client.list(),
   });
 
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => base44.entities.User.list(),
+  });
+
   const inEditingProjects = projects.filter(p => p.status === 'wordt_bewerkt');
   const recentProjects = projects.slice(0, 10);
 
@@ -74,11 +79,11 @@ export default function EditorDashboard() {
   const [currentTime, setCurrentTime] = useState('');
   useEffect(() => {
     const updateTime = () => {
-      const amsterdamTime = new Date().toLocaleString('en-US', { 
+      const amsterdamTime = new Date().toLocaleString('en-US', {
         timeZone: 'Europe/Amsterdam',
         hour: '2-digit',
         minute: '2-digit',
-        hour12: true 
+        hour12: true
       });
       setCurrentTime(amsterdamTime);
     };
@@ -166,7 +171,7 @@ export default function EditorDashboard() {
                   <div className="flex-1">
                     <h3 className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h3>
                     <div className={cn("flex items-center gap-3 mt-1 text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
-                      <span>{client?.company_name || 'Unknown Client'}</span>
+                      <span>{(() => { const u = users.find(u => u.id === client?.user_id); return u?.first_name && u?.last_name ? `${u.first_name} ${u.last_name}` : u?.full_name || client?.company_name || 'Unknown Client'; })()}</span>
                       {project.shoot_date && (
                         <>
                           <span>•</span>
