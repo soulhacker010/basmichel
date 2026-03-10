@@ -227,11 +227,7 @@ export default function AdminProjects() {
         await base44.entities.Booking.delete(booking.id);
       }
 
-      // Delete related invoices
-      const relatedInvoices = await base44.entities.ProjectInvoice.filter({ project_id: id });
-      for (const invoice of relatedInvoices) {
-        await base44.entities.ProjectInvoice.delete(invoice.id);
-      }
+      // NOTE: Invoices are intentionally NOT deleted  retained for accounting
 
       // Delete related files
       const relatedFiles = await base44.entities.ProjectFile.filter({ project_id: id });

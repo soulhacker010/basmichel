@@ -258,19 +258,19 @@ export default function ClientProjectDetail2() {
     const win = window.open('', '_blank');
     if (!win) return;
 
-      const business = {
-        name: invoice.business_name || 'Bas Michel',
-        address: invoice.business_address || '',
-        postcode: '',
-        city: '',
-        country: 'Nederland',
-        email: invoice.business_email || 'basmichelsite@gmail.com',
-        website: invoice.business_website || 'basmichel.nl',
-        kvk: invoice.kvk_number || '',
-        vat: invoice.vat_number || '',
-        iban: invoice.bank_iban || '',
-        tnv: invoice.bank_account_name || invoice.business_name || 'Bas Michel',
-      };
+    const business = {
+      name: invoice.business_name || 'Bas Michel',
+      address: invoice.business_address || '',
+      postcode: '',
+      city: '',
+      country: 'Nederland',
+      email: invoice.business_email || 'basmichelsite@gmail.com',
+      website: invoice.business_website || 'basmichel.nl',
+      kvk: invoice.kvk_number || '',
+      vat: invoice.vat_number || '',
+      iban: invoice.bank_iban || '',
+      tnv: invoice.bank_account_name || invoice.business_name || 'Bas Michel',
+    };
 
     const items = Array.isArray(invoice.items) ? invoice.items : [];
     const subtotal = getInvoiceSubtotal(invoice) ?? 0;
@@ -515,11 +515,7 @@ Open project: ${window.location.origin}${link}
         await base44.entities.ProjectFile.delete(file.id);
       }
 
-      // Delete project invoices
-      const invoices = await base44.entities.ProjectInvoice.filter({ project_id: projectId });
-      for (const invoice of invoices) {
-        await base44.entities.ProjectInvoice.delete(invoice.id);
-      }
+      // NOTE: Invoices are intentionally NOT deleted — they must be retained for accounting records
 
       // Create admin notification
       await base44.entities.Notification.create({

@@ -107,7 +107,7 @@ export default function ProjectGalleryView() {
     // Filter files to delivery categories only
     const deliveryFiles = allFiles.filter(f =>
         ['bewerkte_fotos', 'bewerkte_videos', '360_matterport', 'meetrapport'].includes(f.category)
-    );
+    ).sort((a, b) => (a.file_name || '').localeCompare(b.file_name || '', undefined, { numeric: true }));
 
     // Filter by selected category
     const filteredFiles = selectedCategory === 'all'

@@ -32,3 +32,9 @@ dist-ssr
 install-skills.ps1
 brain/
 PROJECT_NOTES.md
+
+
+#Ignore windsurf AI rules
+.windsurfrules
+.windsurf/workflows/codacy-check-coverage.md
+.windsurf/workflows/codacy-fix-issues.md

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { 
-  FolderKanban, 
+import {
+  FolderKanban,
   Calendar,
   FileText,
   Bell,
@@ -43,18 +43,33 @@ export default function ClientDashboard() {
     }
   }, [userData]);
 
-  const { data: clients = [] } = useQuery({
+  const queryClient = useQueryClient();
+
+  const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ['clients', user?.id],
     queryFn: () => base44.entities.Client.filter({ user_id: user?.id }),
     enabled: !!user,
   });
 
   useEffect(() => {
-    if (user && clients.length > 0) {
-      const client = clients[0];
-      if (client) setClientId(client.id);
-    }
-  }, [user, clients]);
+    const autoCreateClient = async () => {
+      if (user && !clientsLoading && clients.length === 0 && user.role !== 'admin') {
+        try {
+          const newClient = await base44.entities.Client.create({
+            user_id: user.id,
+            company_name: user.full_name || '',
+          });
+          setClientId(newClient.id);
+          queryClient.invalidateQueries({ queryKey: ['clients'] });
+        } catch (err) {
+          console.error('Auto-create client failed:', err);
+        }
+      } else if (clients.length > 0) {
+        setClientId(clients[0].id);
+      }
+    };
+    autoCreateClient();
+  }, [user, clients, clientsLoading]);
 
   const { data: projects = [] } = useQuery({
     queryKey: ['clientProjects', clientId],
@@ -68,7 +83,7 @@ export default function ClientDashboard() {
   // Calculate upcoming shoots from projects directly
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   const upcomingProjects = projects.filter(p => {
     if (!p.shoot_date) return false;
     const shootDate = new Date(p.shoot_date);
@@ -168,14 +183,14 @@ export default function ClientDashboard() {
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-8">
         <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
           <h2 className="text-lg font-medium text-gray-900">Uw projecten</h2>
-          <Link 
+          <Link
             to={createPageUrl('ClientProjects')}
             className="text-sm text-[#5C6B52] hover:text-[#4A5A42] flex items-center gap-1.5"
           >
             Bekijk alle <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
-        
+
         {projects.length === 0 ? (
           <div className="py-16 text-center">
             <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-4">
@@ -208,8 +223,8 @@ export default function ClientDashboard() {
                     <span className={cn(
                       "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium",
                       project.status === 'klaar' ? "bg-green-50 text-green-700" :
-                      project.status === 'geboekt' ? "bg-blue-50 text-blue-700" :
-                      "bg-purple-50 text-purple-700"
+                        project.status === 'geboekt' ? "bg-blue-50 text-blue-700" :
+                          "bg-purple-50 text-purple-700"
                     )}>
                       {status?.label}
                     </span>
