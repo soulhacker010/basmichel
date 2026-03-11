@@ -61,6 +61,7 @@ import AdminProjectDetail from './pages/AdminProjectDetail';
 import AdminProjects from './pages/AdminProjects';
 import AdminSettings from './pages/AdminSettings';
 import AdminTemplates from './pages/AdminTemplates';
+import AlgemeneVoorwaarden from './pages/AlgemeneVoorwaarden';
 import BookingPage from './pages/BookingPage';
 import ClientBooking from './pages/ClientBooking';
 import ClientBookings from './pages/ClientBookings';
@@ -71,7 +72,10 @@ import ClientProfile from './pages/ClientProfile';
 import ClientProjectDetail from './pages/ClientProjectDetail';
 import ClientProjectDetail2 from './pages/ClientProjectDetail2';
 import ClientProjects from './pages/ClientProjects';
+import ComingSoon from './pages/ComingSoon';
 import Contact from './pages/Contact';
+import Cookieverklaring from './pages/Cookieverklaring';
+import Disclaimer from './pages/Disclaimer';
 import EditorDashboard from './pages/EditorDashboard';
 import EditorFinished from './pages/EditorFinished';
 import EditorInProgress from './pages/EditorInProgress';
@@ -81,14 +85,10 @@ import EditorRevisions from './pages/EditorRevisions';
 import EditorSettings from './pages/EditorSettings';
 import EditorUpcoming from './pages/EditorUpcoming';
 import GalleryView from './pages/GalleryView';
-import ProjectGalleryView from './pages/ProjectGalleryView';
-import ComingSoon from './pages/ComingSoon';
 import Home from './pages/Home';
-import AlgemeneVoorwaarden from './pages/AlgemeneVoorwaarden';
-import Servicevoorwaarden from './pages/Servicevoorwaarden';
 import Privacyverklaring from './pages/Privacyverklaring';
-import Cookieverklaring from './pages/Cookieverklaring';
-import Disclaimer from './pages/Disclaimer';
+import ProjectGalleryView from './pages/ProjectGalleryView';
+import Servicevoorwaarden from './pages/Servicevoorwaarden';
 import __Layout from './Layout.jsx';
 
 
@@ -107,6 +107,7 @@ export const PAGES = {
     "AdminProjects": AdminProjects,
     "AdminSettings": AdminSettings,
     "AdminTemplates": AdminTemplates,
+    "AlgemeneVoorwaarden": AlgemeneVoorwaarden,
     "BookingPage": BookingPage,
     "ClientBooking": ClientBooking,
     "ClientBookings": ClientBookings,
@@ -117,7 +118,10 @@ export const PAGES = {
     "ClientProjectDetail": ClientProjectDetail,
     "ClientProjectDetail2": ClientProjectDetail2,
     "ClientProjects": ClientProjects,
+    "ComingSoon": ComingSoon,
     "Contact": Contact,
+    "Cookieverklaring": Cookieverklaring,
+    "Disclaimer": Disclaimer,
     "EditorDashboard": EditorDashboard,
     "EditorFinished": EditorFinished,
     "EditorInProgress": EditorInProgress,
@@ -127,18 +131,14 @@ export const PAGES = {
     "EditorSettings": EditorSettings,
     "EditorUpcoming": EditorUpcoming,
     "GalleryView": GalleryView,
-    "ProjectGalleryView": ProjectGalleryView,
-    "ComingSoon": ComingSoon,
     "Home": Home,
-    "AlgemeneVoorwaarden": AlgemeneVoorwaarden,
-    "Servicevoorwaarden": Servicevoorwaarden,
     "Privacyverklaring": Privacyverklaring,
-    "Cookieverklaring": Cookieverklaring,
-    "Disclaimer": Disclaimer,
+    "ProjectGalleryView": ProjectGalleryView,
+    "Servicevoorwaarden": Servicevoorwaarden,
 }
 
 export const pagesConfig = {
-    mainPage: "ComingSoon",
+    mainPage: "Home",
     Pages: PAGES,
     Layout: __Layout,
 };
