@@ -1834,7 +1834,7 @@ export default function AdminProjectDetail() {
                 {allClients.map((c) => {
                   const isPrimary = c.id === project?.client_id;
                   const isChecked = isPrimary || invoiceData.recipient_client_ids.includes(c.id);
-                  const label = c.company_name || c.contact_name || c.id;
+                  const label = c.contact_name || c.company_name || c.id;
                   return (
                     <label key={c.id} className="flex items-center gap-2 text-sm text-gray-700">
                       <input

@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { 
-  Images, 
+import {
+  Images,
   Calendar,
   Eye,
   Image as ImageIcon
@@ -75,7 +75,8 @@ export default function ClientGalleries() {
           ['bewerkte_fotos', 'bewerkte_videos', '360_matterport', 'meetrapport'].includes(f.category)
         );
         if (deliveryFiles.length > 0) {
-          const firstImage = deliveryFiles.find(f => f.mime_type?.startsWith('image/'));
+          const firstImage = deliveryFiles.find(f => f.category === 'bewerkte_fotos' && f.mime_type?.startsWith('image/'))
+            || deliveryFiles.find(f => f.category !== '360_matterport' && f.mime_type?.startsWith('image/'));
           results.push({
             project_id: project.id,
             title: project.title,
@@ -117,13 +118,13 @@ export default function ClientGalleries() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <PageHeader 
+      <PageHeader
         title="Mijn Galerijen"
         description="Bekijk je fotogalerijen"
       />
 
       {displayItems.length === 0 ? (
-        <EmptyState 
+        <EmptyState
           icon={Images}
           title="Nog geen galerijen"
           description="Er zijn nog geen galerijen beschikbaar. Zodra je fotograaf een galerij publiceert, verschijnt deze hier."
@@ -139,8 +140,8 @@ export default function ClientGalleries() {
               {/* Cover Image */}
               <div className="aspect-video bg-gray-100 relative overflow-hidden">
                 {item.cover_image_url ? (
-                  <img 
-                    src={item.cover_image_url} 
+                  <img
+                    src={item.cover_image_url}
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />

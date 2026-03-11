@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { 
-  Plus, 
+import {
+  Plus,
   Search,
   MoreHorizontal,
   Pencil,
@@ -113,6 +113,12 @@ export default function AdminInvoices() {
   });
 
   const getClientName = (invoice) => {
+    const client = clients.find(c => c.id === invoice.client_id);
+    if (client) {
+      const user = users.find(u => u.id === client.user_id);
+      const name = client.contact_name || (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : user?.full_name) || client.company_name;
+      if (name) return name;
+    }
     return invoice.client_name || '-';
   };
 
@@ -122,7 +128,7 @@ export default function AdminInvoices() {
   };
 
   const filteredInvoices = invoices.filter(invoice => {
-    const matchesSearch = 
+    const matchesSearch =
       invoice.invoice_number?.toLowerCase().includes(search.toLowerCase()) ||
       getClientName(invoice).toLowerCase().includes(search.toLowerCase()) ||
       getProjectTitle(invoice.project_id).toLowerCase().includes(search.toLowerCase());
@@ -217,7 +223,7 @@ export default function AdminInvoices() {
                   <td className={cn("px-6 py-4 text-sm", darkMode ? "text-gray-300" : "text-gray-600")}>{getClientName(invoice)}</td>
                   <td className={cn("px-6 py-4 text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
                     {invoice.project_id && (
-                      <Link 
+                      <Link
                         to={`${createPageUrl('AdminProjectDetail')}?id=${invoice.project_id}`}
                         className="text-blue-600 hover:text-blue-800 hover:underline"
                       >
@@ -227,20 +233,20 @@ export default function AdminInvoices() {
                   </td>
                   <td className={cn("px-6 py-4 text-sm font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>€ {invoice.total_amount?.toFixed(2)}</td>
                   <td className={cn("px-6 py-4 text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
-                    {invoice.due_date ? format(new Date(invoice.due_date), 'd MMM yyyy', { locale: nl }) : 
-                     invoice.invoice_date ? '-' : 'Bij status Klaar'}
+                    {invoice.due_date ? format(new Date(invoice.due_date), 'd MMM yyyy', { locale: nl }) :
+                      invoice.invoice_date ? '-' : 'Bij status Klaar'}
                   </td>
                   <td className="px-6 py-4">
                     <span className={cn(
                       "inline-flex px-2 py-1 rounded text-xs font-medium",
                       invoice.status === 'betaald' ? "bg-green-50 text-green-700" :
-                      invoice.status === 'verzonden' ? "bg-amber-50 text-amber-700" :
-                      invoice.status === 'verlopen' ? "bg-red-50 text-red-700" :
-                      "bg-gray-100 text-gray-600"
+                        invoice.status === 'verzonden' ? "bg-amber-50 text-amber-700" :
+                          invoice.status === 'verlopen' ? "bg-red-50 text-red-700" :
+                            "bg-gray-100 text-gray-600"
                     )}>
                       {invoice.status === 'betaald' ? 'Betaald' :
-                       invoice.status === 'verzonden' ? 'Verzonden' :
-                       invoice.status === 'verlopen' ? 'Verlopen' : 'Concept'}
+                        invoice.status === 'verzonden' ? 'Verzonden' :
+                          invoice.status === 'verlopen' ? 'Verlopen' : 'Concept'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -259,9 +265,9 @@ export default function AdminInvoices() {
                         </DropdownMenuItem>
                         {invoice.status === 'verzonden' && (
                           <DropdownMenuItem onClick={() => {
-                            updateMutation.mutate({ 
-                              id: invoice.id, 
-                              data: { status: 'betaald', paid_date: format(new Date(), 'yyyy-MM-dd') } 
+                            updateMutation.mutate({
+                              id: invoice.id,
+                              data: { status: 'betaald', paid_date: format(new Date(), 'yyyy-MM-dd') }
                             });
                           }}>
                             <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -269,7 +275,7 @@ export default function AdminInvoices() {
                           </DropdownMenuItem>
                         )}
                         {invoice.status !== 'betaald' && (
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => {
                               if (confirm('Weet je zeker dat je deze factuur wilt verwijderen?')) {
                                 deleteMutation.mutate(invoice.id);
