@@ -202,9 +202,14 @@ export default function AdminGalleries() {
   const getCoverImage = (gallery) => {
     if (gallery.cover_image_url) return gallery.cover_image_url;
     if (!gallery.project_id) return null;
+    // Prefer bewerkte_fotos, never use 360
     const file = allProjectFiles.find(f =>
       f.project_id === gallery.project_id &&
-      ['bewerkte_fotos', 'bewerkte_videos', '360_matterport'].includes(f.category) &&
+      f.category === 'bewerkte_fotos' &&
+      f.mime_type?.startsWith('image/')
+    ) || allProjectFiles.find(f =>
+      f.project_id === gallery.project_id &&
+      f.category !== '360_matterport' &&
       f.mime_type?.startsWith('image/')
     );
     return file?.file_url || null;

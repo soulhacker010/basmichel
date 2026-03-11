@@ -107,7 +107,7 @@ export default function ProjectGalleryView() {
     // Filter files to delivery categories only
     const deliveryFiles = allFiles.filter(f =>
         ['bewerkte_fotos', 'bewerkte_videos', '360_matterport', 'meetrapport'].includes(f.category)
-    ).sort((a, b) => (a.file_name || '').localeCompare(b.file_name || '', undefined, { numeric: true }));
+    ).sort((a, b) => new Date(a.created_date).getTime() - new Date(b.created_date).getTime());
 
     // Filter by selected category
     const filteredFiles = selectedCategory === 'all'
@@ -129,8 +129,9 @@ export default function ProjectGalleryView() {
 
     const selectableFiles = filteredFiles.filter(f => f.mime_type !== 'text/url');
 
-    // Get cover image
-    const coverImage = deliveryFiles.find(f => f.mime_type?.startsWith('image/'));
+    // Get cover image — prefer bewerkte_fotos, never use 360
+    const coverImage = deliveryFiles.find(f => f.category === 'bewerkte_fotos' && f.mime_type?.startsWith('image/'))
+        || deliveryFiles.find(f => f.category !== '360_matterport' && f.mime_type?.startsWith('image/'));
 
     // Keyboard navigation
     const handleKeyDown = useCallback((e) => {
