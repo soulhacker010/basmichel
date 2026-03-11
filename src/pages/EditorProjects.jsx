@@ -93,6 +93,11 @@ export default function EditorProjects() {
     queryFn: () => base44.entities.Client.list(),
   });
 
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => base44.entities.User.list(),
+  });
+
   const { data: projectFiles = [] } = useQuery({
     queryKey: ['projectFiles', selectedProject?.id],
     queryFn: () => base44.entities.ProjectFile.filter({ project_id: selectedProject.id }),
@@ -1129,9 +1134,11 @@ export default function EditorProjects() {
                     )}>
                       {project.title}
                     </h3>
-                    {client?.company_name && (
-                      <div className={cn("text-xs mt-1", darkMode ? "text-gray-500" : "text-gray-400")}>{client.company_name}</div>
-                    )}
+                    {(() => {
+                      const u = users.find(u => u.id === client?.user_id);
+                      const name = u?.first_name && u?.last_name ? `${u.first_name} ${u.last_name}` : u?.full_name || client?.company_name;
+                      return name ? <div className={cn('text-xs mt-1', darkMode ? 'text-gray-500' : 'text-gray-400')}>{name}</div> : null;
+                    })()}
                   </div>
                   <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", status?.bgLight, status?.textColor)}>
                     {status?.label}

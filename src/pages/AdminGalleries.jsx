@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { 
-  Plus, 
-  Images, 
+import {
+  Plus,
+  Images,
   Search,
   MoreHorizontal,
   Pencil,
@@ -62,7 +62,7 @@ export default function AdminGalleries() {
   const [deleteId, setDeleteId] = useState(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
-  
+
   const queryClient = useQueryClient();
 
   const { data: galleries = [] } = useQuery({
@@ -89,6 +89,11 @@ export default function AdminGalleries() {
     queryKey: ['mediaItems', selectedGallery?.id],
     queryFn: () => selectedGallery ? base44.entities.MediaItem.filter({ gallery_id: selectedGallery.id }, 'order') : [],
     enabled: !!selectedGallery,
+  });
+
+  const { data: allProjectFiles = [] } = useQuery({
+    queryKey: ['allProjectFiles'],
+    queryFn: () => base44.entities.ProjectFile.list('created_date'),
   });
 
   const createMutation = useMutation({
@@ -144,7 +149,7 @@ export default function AdminGalleries() {
     const project = projects.find(p => p.id === projectId);
     const title = project?.title || 'Galerij';
     const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    
+
     const data = {
       title,
       slug,
@@ -165,7 +170,7 @@ export default function AdminGalleries() {
     if (!files.length || !selectedGallery) return;
 
     setUploading(true);
-    
+
     for (const file of files) {
       try {
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -190,7 +195,19 @@ export default function AdminGalleries() {
     const client = clients.find(c => c.id === clientId);
     if (!client) return 'Geen klant';
     const user = users.find(u => u.id === client.user_id);
-    return user?.full_name || client.company_name || 'Onbekend';
+    const name = user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : user?.full_name || client.company_name;
+    return name || 'Onbekend';
+  };
+
+  const getCoverImage = (gallery) => {
+    if (gallery.cover_image_url) return gallery.cover_image_url;
+    if (!gallery.project_id) return null;
+    const file = allProjectFiles.find(f =>
+      f.project_id === gallery.project_id &&
+      ['bewerkte_fotos', 'bewerkte_videos', '360_matterport'].includes(f.category) &&
+      f.mime_type?.startsWith('image/')
+    );
+    return file?.file_url || null;
   };
 
   const getMediaCount = (galleryId) => {
@@ -207,11 +224,11 @@ export default function AdminGalleries() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <PageHeader 
+      <PageHeader
         title="Galerijen"
         description="Beheer je fotogalerijen"
         actions={
-          <Button 
+          <Button
             onClick={() => {
               setEditingGallery(null);
               setIsDialogOpen(true);
@@ -247,13 +264,13 @@ export default function AdminGalleries() {
 
       {/* Galleries */}
       {filteredGalleries.length === 0 ? (
-        <EmptyState 
+        <EmptyState
           icon={Images}
           title={search || statusFilter !== 'all' ? "Geen resultaten" : "Nog geen galerijen"}
           description={search || statusFilter !== 'all' ? "Probeer andere filters" : "Maak je eerste galerij aan"}
           action={
             !search && statusFilter === 'all' && (
-              <Button 
+              <Button
                 onClick={() => setIsDialogOpen(true)}
                 className="bg-[#A8B5A0] hover:bg-[#97A690] text-white"
               >
@@ -266,15 +283,15 @@ export default function AdminGalleries() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredGalleries.map(gallery => (
-            <div 
+            <div
               key={gallery.id}
               className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-sm transition-shadow"
             >
               {/* Cover Image */}
               <div className="aspect-video bg-gray-100 relative">
-                {gallery.cover_image_url ? (
-                  <img 
-                    src={gallery.cover_image_url} 
+                {getCoverImage(gallery) ? (
+                  <img
+                    src={getCoverImage(gallery)}
                     alt={gallery.title}
                     className="w-full h-full object-cover"
                   />
@@ -323,7 +340,7 @@ export default function AdminGalleries() {
                         <Pencil className="w-4 h-4 mr-2" />
                         Bewerken
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={() => setDeleteId(gallery.id)}
                         className="text-red-600"
                       >
@@ -436,10 +453,10 @@ export default function AdminGalleries() {
           <DialogHeader>
             <DialogTitle>Media Uploaden - {selectedGallery?.title}</DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             {/* Upload Area */}
-            <div 
+            <div
               className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#A8B5A0] transition-colors"
               onClick={() => fileInputRef.current?.click()}
             >
@@ -471,8 +488,8 @@ export default function AdminGalleries() {
                 <div className="grid grid-cols-4 gap-3 max-h-64 overflow-y-auto">
                   {mediaItems.map(item => (
                     <div key={item.id} className="relative group aspect-square">
-                      <img 
-                        src={item.thumbnail_url || item.file_url} 
+                      <img
+                        src={item.thumbnail_url || item.file_url}
                         alt=""
                         className="w-full h-full object-cover rounded-lg"
                       />
