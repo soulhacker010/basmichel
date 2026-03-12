@@ -87,40 +87,30 @@ export default function ClientBooking() {
   const [loadingBusyTimes, setLoadingBusyTimes] = useState(false);
   const [calendarError, setCalendarError] = useState(null);
 
-  useEffect(() => {
+    useEffect(() => {
     const fetchBusyTimes = async () => {
-      if (!selectedDate) return;
-
+      const start = addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), weekOffset);
+      const end = addDays(start, 6);
       setLoadingBusyTimes(true);
       try {
-        // Get busy times for the entire day
-        const dayStart = new Date(selectedDate);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(selectedDate);
-        dayEnd.setHours(23, 59, 59, 999);
-
+        const weekStart = new Date(start);
+        weekStart.setHours(0, 0, 0, 0);
+        const weekEnd = new Date(end);
+        weekEnd.setHours(23, 59, 59, 999);
         const response = await base44.functions.invoke('calendarSession', {
           action: 'checkAvailability',
-          timeMin: dayStart.toISOString(),
-          timeMax: dayEnd.toISOString(),
+          timeMin: weekStart.toISOString(),
+          timeMax: weekEnd.toISOString(),
         });
-
-        console.log('FreeBusy response:', response);
-
-        // Handle both response formats (response.data or response directly)
         const data = response?.data || response;
-
-        // Check for errors returned from the API
         if (data?.error) {
           console.error('FreeBusy API returned error:', data.error);
           setCalendarError(data.error);
           setCalendarBusyTimes([]);
         } else if (data?.success && data?.busyTimes) {
-          console.log('Busy times found:', data.busyTimes);
           setCalendarBusyTimes(data.busyTimes);
           setCalendarError(null);
         } else {
-          console.log('No busy times in response:', data);
           setCalendarBusyTimes([]);
           setCalendarError(null);
         }
@@ -132,9 +122,8 @@ export default function ClientBooking() {
         setLoadingBusyTimes(false);
       }
     };
-
     fetchBusyTimes();
-  }, [selectedDate]);
+  }, [weekOffset]);
 
   // Generate week days
   const getWeekDays = () => {
@@ -566,8 +555,8 @@ export default function ClientBooking() {
                 const isPast = isBefore(day, new Date()) && !isToday;
                 const isSelected = selectedDate && isSameDay(day, selectedDate);
                 const isAvailable = isDayAvailable(day);
-                const isDisabled = isPast || !isAvailable;
-
+                const hasSlots = isAvailable && !isPast ? getTimeSlots(day).length > 0 : false;
+                const isDisabled = isPast || !isAvailable || (!isPast && isAvailable && !hasSlots);
                 return (
                   <button
                     key={day.toISOString()}

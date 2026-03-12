@@ -109,6 +109,41 @@ export default function AdminBookings() {
     queryFn: () => base44.entities.Project.list(),
   });
 
+  const [calendarBusyTimes, setCalendarBusyTimes] = useState([]);
+  const [loadingCalendar, setLoadingCalendar] = useState(false);
+
+  useEffect(() => {
+    const fetchMonthEvents = async () => {
+      setLoadingCalendar(true);
+      try {
+        const monthStart = startOfMonth(currentDate);
+        const monthEnd = endOfMonth(currentDate);
+        const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+        const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
+        const response = await base44.functions.invoke('calendarSession', {
+          action: 'checkAvailability',
+          timeMin: calStart.toISOString(),
+          timeMax: calEnd.toISOString(),
+        });
+
+        const data = response?.data || response;
+        if (data?.success && data?.busyTimes) {
+          setCalendarBusyTimes(data.busyTimes);
+        } else {
+          setCalendarBusyTimes([]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch calendar events:', error);
+        setCalendarBusyTimes([]);
+      } finally {
+        setLoadingCalendar(false);
+      }
+    };
+
+    fetchMonthEvents();
+  }, [currentDate]);
+
   useEffect(() => {
     if (cleanupRunningRef.current) return;
     if (!sessions.length || !projects.length) return;
@@ -385,6 +420,12 @@ export default function AdminBookings() {
     );
   };
 
+  const getCalendarEventsForDay = (day) => {
+    return calendarBusyTimes.filter(busy => 
+      busy.start && isSameDay(new Date(busy.start), day)
+    );
+  };
+
   const getClientName = (clientId) => {
     const client = clients.find(c => c.id === clientId);
     if (!client) return 'Geen klant';
@@ -580,33 +621,60 @@ export default function AdminBookings() {
                     {format(day, 'd')}
                   </div>
                   <div className="space-y-0.5">
-                    {daySessions.slice(0, 2).map(session => {
-                      const type = sessionTypes.find(t => t.id === session.session_type_id);
+                    {(() => {
+                      const dayCalendarEvents = getCalendarEventsForDay(day);
+                      const allItems = [
+                        ...daySessions.map(s => ({ ...s, _type: 'session' })),
+                        ...dayBlocked.map(b => ({ ...b, _type: 'blocked' })),
+                        ...dayCalendarEvents.map(c => ({ ...c, _type: 'calendar' }))
+                      ].sort((a, b) => {
+                        const dateA = new Date(a.start_datetime || a.start);
+                        const dateB = new Date(b.start_datetime || b.start);
+                        return dateA.getTime() - dateB.getTime();
+                      });
+
                       return (
-                        <div
-                          key={session.id}
-                          className="text-xs px-1.5 py-0.5 rounded truncate"
-                          style={{ backgroundColor: type?.color || '#E8EDE5', color: '#5C6B52' }}
-                        >
-                          {session.start_datetime && format(new Date(session.start_datetime), 'HH:mm')} {session.location || 'Sessie'}
-                        </div>
+                        <>
+                          {allItems.slice(0, 3).map((item, idx) => {
+                            if (item._type === 'session') {
+                              const type = sessionTypes.find(t => t.id === item.session_type_id);
+                              return (
+                                <div
+                                  key={`session-${item.id}`}
+                                  className="text-xs px-1.5 py-0.5 rounded truncate"
+                                  style={{ backgroundColor: type?.color || '#E8EDE5', color: '#5C6B52' }}
+                                >
+                                  {item.start_datetime && format(new Date(item.start_datetime), 'HH:mm')} {item.location || 'Sessie'}
+                                </div>
+                              );
+                            } else if (item._type === 'blocked') {
+                              return (
+                                <div
+                                  key={`blocked-${item.id}`}
+                                  className={cn("text-xs px-1.5 py-0.5 rounded truncate", darkMode ? "bg-gray-600/50 text-gray-300" : "bg-gray-100/80 text-gray-600")}
+                                >
+                                  {item.start_datetime && format(new Date(item.start_datetime), 'HH:mm')} Geblokkeerd
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <div
+                                  key={`cal-${idx}`}
+                                  className="text-xs px-1.5 py-0.5 rounded truncate bg-blue-100/50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                                >
+                                  {item.start && format(new Date(item.start), 'HH:mm')} Externe afspraak
+                                </div>
+                              );
+                            }
+                          })}
+                          {allItems.length > 3 && (
+                            <div className={cn("text-xs px-1.5", darkMode ? "text-gray-500" : "text-gray-400")}>
+                              +{allItems.length - 3} meer
+                            </div>
+                          )}
+                        </>
                       );
-                    })}
-                    {daySessions.length > 2 && (
-                      <div className={cn("text-xs px-1.5", darkMode ? "text-gray-500" : "text-gray-400")}>
-                        +{daySessions.length - 2} meer
-                      </div>
-                    )}
-                    {dayBlocked.map(blocked => (
-                      <div
-                        key={blocked.id}
-                        className={cn("text-xs px-1.5 py-0.5 rounded truncate", 
-                          darkMode ? "bg-gray-600 text-gray-300" : "bg-gray-200 text-gray-600"
-                        )}
-                      >
-                        Geblokkeerd
-                      </div>
-                    ))}
+                    })()}
                   </div>
                 </div>
               );
@@ -1138,14 +1206,41 @@ export default function AdminBookings() {
                 </div>
               </div>
             ))}
-            {selectedDate && getSessionsForDay(selectedDate).length === 0 && getBlockedForDay(selectedDate).length === 0 && (
+            {selectedDate && getSessionsForDay(selectedDate).length === 0 && getBlockedForDay(selectedDate).length === 0 && getCalendarEventsForDay(selectedDate).length === 0 && (
               <div className="text-center py-8">
                 <CalendarIcon className={cn("w-12 h-12 mx-auto mb-3", darkMode ? "text-gray-600" : "text-gray-300")} />
                 <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
-                  Geen sessies of blokkades op deze dag
+                  Geen afspraken of blokkades op deze dag
                 </p>
               </div>
             )}
+            {selectedDate && getCalendarEventsForDay(selectedDate).map((calEvent, idx) => (
+              <div 
+                key={`dayview-cal-${idx}`}
+                className={cn("p-4 rounded-lg border",
+                  darkMode ? "bg-blue-900/20 border-blue-800/50" : "bg-blue-50 border-blue-100/50"
+                )}
+              >
+                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="w-4 h-4 text-blue-500" />
+                      <span className={cn("font-medium", darkMode ? "text-blue-300" : "text-blue-800")}>
+                        {format(new Date(calEvent.start), 'HH:mm')} - {format(new Date(calEvent.end), 'HH:mm')}
+                      </span>
+                      <span className={cn("text-sm px-2 py-0.5 rounded",
+                        darkMode ? "bg-blue-900/40 text-blue-300" : "bg-blue-100 text-blue-700"
+                      )}>
+                        Google Calendar
+                      </span>
+                    </div>
+                    <p className={cn("text-sm", darkMode ? "text-blue-300/70" : "text-blue-700/70")}>
+                      Externe afspraak ingeladen vanuit Google Agenda
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
           <div className="flex justify-end pt-4 border-t">
             <Button variant="outline" onClick={() => setIsDayOverviewOpen(false)}>
