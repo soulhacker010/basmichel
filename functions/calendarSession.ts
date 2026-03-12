@@ -185,6 +185,7 @@ Deno.serve(async (req) => {
                 const busyTimes = events
                     .filter((event: any) => event.status !== 'cancelled' && event.transparency !== 'transparent')
                     .map((event: any) => ({
+                        summary: event.summary,
                         start: event.start?.dateTime || event.start?.date,
                         end: event.end?.dateTime || event.end?.date
                     }))

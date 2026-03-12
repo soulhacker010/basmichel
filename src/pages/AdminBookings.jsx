@@ -662,7 +662,7 @@ export default function AdminBookings() {
                                   key={`cal-${idx}`}
                                   className="text-xs px-1.5 py-0.5 rounded truncate bg-blue-100/50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                                 >
-                                  {item.start && format(new Date(item.start), 'HH:mm')} Externe afspraak
+                                  {item.start && format(new Date(item.start), 'HH:mm')} {item.summary || 'Externe afspraak'}
                                 </div>
                               );
                             }
@@ -1235,7 +1235,7 @@ export default function AdminBookings() {
                       </span>
                     </div>
                     <p className={cn("text-sm", darkMode ? "text-blue-300/70" : "text-blue-700/70")}>
-                      Externe afspraak ingeladen vanuit Google Agenda
+                      {calEvent.summary || 'Externe afspraak'} (Google Agenda)
                     </p>
                   </div>
                 </div>
