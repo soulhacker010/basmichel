@@ -533,32 +533,35 @@ export default function AdminBookings() {
 
       {/* Calendar Navigation */}
       <div className={cn("rounded-xl mb-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
-        <div className={cn("p-4 flex items-center justify-between border-b", darkMode ? "border-gray-700" : "border-gray-50")}>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-            <h2 className={cn("text-lg font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
+        <div className={cn("p-3 border-b", darkMode ? "border-gray-700" : "border-gray-50")}>
+          {/* Top row: nav + month title */}
+          <div className="flex items-center gap-2 mb-2">
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={() => setCurrentDate(subMonths(currentDate, 1))}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+            <h2 className={cn("text-base font-semibold flex-1", darkMode ? "text-gray-100" : "text-gray-900")}>
               {format(currentDate, 'MMMM yyyy', { locale: nl })}
             </h2>
           </div>
+          {/* Bottom row: action buttons */}
           <div className="flex items-center gap-2">
             <Button 
               variant="outline" 
               size="sm"
+              className="flex-1 text-xs h-8"
               onClick={() => setCurrentDate(new Date())}
             >
               Vandaag
@@ -566,6 +569,7 @@ export default function AdminBookings() {
             <Button 
               variant="outline" 
               size="sm"
+              className="flex-1 text-xs h-8"
               onClick={() => setIsBlockedDialogOpen(true)}
             >
               Tijd Blokkeren
