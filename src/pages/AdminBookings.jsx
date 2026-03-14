@@ -626,7 +626,7 @@ export default function AdminBookings() {
                     <span className={cn(
                       "w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium transition-colors",
                       isToday
-                        ? "bg-red-500 text-white font-semibold"
+                      ? "bg-[#A8B5A0] text-white font-semibold"
                         : isWeekend
                           ? darkMode ? "text-gray-400" : "text-gray-400"
                           : darkMode ? "text-gray-100" : "text-gray-800"
