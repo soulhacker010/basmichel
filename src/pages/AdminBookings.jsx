@@ -532,7 +532,7 @@ export default function AdminBookings() {
       />
 
       {/* Calendar Navigation */}
-      <div className={cn("rounded-xl mb-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
+      <div className={cn("rounded-xl mb-6 overflow-hidden", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
         <div className={cn("p-3 border-b", darkMode ? "border-gray-700" : "border-gray-50")}>
           {/* Top row: nav + month title */}
           <div className="flex items-center gap-2 mb-2">
