@@ -1006,7 +1006,7 @@ export default function AdminProjectDetail() {
   const currentStepIndex = getStepIndex(selectedStatus);
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-screen-2xl mx-auto">
       <Link
         to={createPageUrl('AdminProjects')}
         className={cn("inline-flex items-center gap-2 mb-8 transition-colors text-sm",

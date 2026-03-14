@@ -156,8 +156,8 @@ export default function AdminClients() {
   };
 
   return (
-    <div className={cn("min-h-screen", darkMode ? "bg-gradient-to-b from-gray-900 to-gray-800" : "bg-gradient-to-b from-white to-gray-50")}>
-      <div className="max-w-7xl mx-auto px-6 py-12">
+    <div>
+      <div className="max-w-screen-2xl mx-auto">
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <div>

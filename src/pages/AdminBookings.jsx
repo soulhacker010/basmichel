@@ -500,7 +500,7 @@ export default function AdminBookings() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-screen-2xl mx-auto">
       <PageHeader 
         title="Boekingen"
         description="Beheer je sessies en kalender"

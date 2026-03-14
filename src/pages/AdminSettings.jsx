@@ -159,7 +159,7 @@ export default function AdminSettings() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-screen-2xl mx-auto">
       <PageHeader 
         title="Instellingen"
         description="Beheer je account en studio-instellingen"
