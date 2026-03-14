@@ -250,6 +250,18 @@ export default function Home() {
             <Link to={createPageUrl('Contact')} className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
               Contact
             </Link>
+            <div className="pt-2 border-t border-gray-100">
+              {isAuthenticated ?
+                <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientDashboard')} onClick={() => setMenuOpen(false)}>
+                  <Button className="w-full bg-black hover:bg-gray-900 text-white rounded">
+                    Mijn Account
+                  </Button>
+                </Link> :
+                <Button onClick={() => { setMenuOpen(false); handleLogin(); }} className="w-full bg-black hover:bg-gray-900 text-white rounded">
+                  Inloggen voor Makelaars
+                </Button>
+              }
+            </div>
           </div>
         }
       </nav>
