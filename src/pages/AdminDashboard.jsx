@@ -46,6 +46,11 @@ export default function AdminDashboard() {
     queryFn: () => base44.entities.Project.list('-created_date', 4),
   });
 
+  const { data: allSessions = [] } = useQuery({
+    queryKey: ['sessions'],
+    queryFn: () => base44.entities.Session.list(),
+  });
+
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
     queryFn: () => base44.entities.Client.list(),
