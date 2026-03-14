@@ -148,7 +148,7 @@ export default function AdminDashboard() {
                 tick={{ fill: darkMode ? '#9ca3af' : '#9ca3af', fontSize: 12 }}
                 axisLine={{ stroke: darkMode ? '#374151' : '#e5e7eb' }}
                 tickFormatter={(value) => `€${value}`}
-                width={45}
+                width={55}
               />
               <Tooltip 
                 contentStyle={{ 
