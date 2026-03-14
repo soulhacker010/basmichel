@@ -91,8 +91,15 @@ export default function AdminPortalShell({ children, currentPageName }) {
 
   if (loading) {
     return (
-      <div className={cn("min-h-screen flex items-center justify-center", darkMode ? "bg-gray-900" : "bg-[#FCFCFB]")}>
-        <div className="animate-pulse text-[#A8B5A0]">Laden...</div>
+      <div className={cn("min-h-screen flex items-center justify-center", darkMode ? "bg-gray-900" : "bg-white")}>
+        <img
+          src={darkMode
+            ? "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/fefc16c37_BasMichel_K102.png"
+            : "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/9370b8342_BasMichel_K152.png"
+          }
+          alt="Bas Michel"
+          className="h-16 animate-pulse"
+        />
       </div>
     );
   }
