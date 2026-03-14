@@ -131,7 +131,7 @@ export default function AdminDashboard() {
         </div>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={revenueData}>
+            <AreaChart data={revenueData} margin={{ left: -10, right: 10, top: 5, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#A8B5A0" stopOpacity={0.2}/>
