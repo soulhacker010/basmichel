@@ -273,9 +273,10 @@ export default function Home() {
                 }
               </div>
             </div>
-          </div>
-        }
-      </nav>
+            </motion.div>
+            }
+            </AnimatePresence>
+            </nav>
 
       {/* Hero Slider */}
       <section className="relative h-screen overflow-hidden">
