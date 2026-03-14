@@ -51,6 +51,11 @@ export default function AdminDashboard() {
     queryFn: () => base44.entities.Session.list(),
   });
 
+  const { data: sessionTypes = [] } = useQuery({
+    queryKey: ['sessionTypes'],
+    queryFn: () => base44.entities.SessionType.list(),
+  });
+
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
     queryFn: () => base44.entities.Client.list(),
