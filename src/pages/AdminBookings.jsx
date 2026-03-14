@@ -578,7 +578,7 @@ export default function AdminBookings() {
         </div>
 
         {/* Calendar Grid */}
-        <div className="p-2 sm:p-4">
+        <div className="p-0 sm:p-2">
           {/* Weekday Headers */}
           <div className="grid grid-cols-7 mb-1">
             {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map((day, i) => (
