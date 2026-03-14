@@ -989,7 +989,7 @@ export default function AdminProjectDetail() {
 
   if (isLoading || !project) {
     return (
-      <div className="max-w-7xl mx-auto py-16 text-center">
+      <div className="max-w-screen-2xl mx-auto py-16 text-center">
         <Loader2 className={cn("w-8 h-8 animate-spin mx-auto mb-3", darkMode ? "text-gray-600" : "text-gray-400")} />
         <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Laden...</p>
       </div>

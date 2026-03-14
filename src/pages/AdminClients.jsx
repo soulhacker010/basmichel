@@ -301,7 +301,7 @@ export default function AdminClients() {
             })}
           </div>
         )}
-      </div>
+
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
