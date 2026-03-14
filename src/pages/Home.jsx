@@ -239,8 +239,14 @@ export default function Home() {
         </div>
 
         {/* Mobile Menu */}
+        <AnimatePresence>
         {menuOpen &&
-        <div className="md:hidden mx-3 mb-3 rounded-2xl overflow-hidden"
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: -8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: -8 }}
+          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="md:hidden mx-3 mb-3 rounded-2xl overflow-hidden"
           style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
             <div className="px-4 py-3 space-y-1">
               <a href="#diensten" className="flex items-center px-3 py-3 rounded-xl text-gray-700 text-sm font-medium hover:bg-black/5 transition-colors" onClick={() => setMenuOpen(false)}>
