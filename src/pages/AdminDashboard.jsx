@@ -111,7 +111,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div>
+    <div className="max-w-screen-2xl mx-auto">
       {/* Header - Pixieset style */}
       <div className="mb-10">
         <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>
