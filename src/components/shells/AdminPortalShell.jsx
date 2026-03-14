@@ -268,7 +268,7 @@ export default function AdminPortalShell({ children, currentPageName }) {
         "lg:ml-64",
         "pt-16 lg:pt-0"
       )}>
-        <div className="p-6 lg:p-10 lg:pt-8">
+        <div className="p-4 lg:p-6 lg:pt-6">
           {children}
         </div>
       </main>
