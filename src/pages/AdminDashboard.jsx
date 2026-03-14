@@ -5,7 +5,10 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { 
   FolderKanban, 
-  Images
+  Images,
+  CalendarCheck,
+  Clock,
+  MapPin
 } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from 'date-fns';
