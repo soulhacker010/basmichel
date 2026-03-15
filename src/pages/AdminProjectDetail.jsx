@@ -644,44 +644,7 @@ export default function AdminProjectDetail() {
           <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h1>
         </div>
 
-        {/* Mobile progress: compact pill */}
-        <div className="block md:hidden">
-          <div className="flex items-center justify-between mb-3">
-            <span className={cn("text-xs font-medium uppercase tracking-wide", darkMode ? "text-gray-500" : "text-gray-400")}>Voortgang</span>
-            <span className="text-xs font-semibold text-[#5C6B52]">
-              Stap {currentStepIndex + 1} van {statusSteps.length} · {statusSteps[currentStepIndex]?.label}
-            </span>
-          </div>
-          <div className={cn("w-full h-2 rounded-full overflow-hidden", darkMode ? "bg-gray-700" : "bg-gray-100")}>
-            <div
-              className="h-full bg-[#5C6B52] rounded-full transition-all duration-700"
-              style={{ width: `${(currentStepIndex / (statusSteps.length - 1)) * 100}%` }}
-            />
-          </div>
-          <div className="flex justify-between mt-2">
-            {statusSteps.map((step, index) => {
-              const isCompleted = index <= currentStepIndex;
-              return (
-                <div key={step.key} className={cn(
-                  "w-2 h-2 rounded-full transition-all",
-                  isCompleted ? "bg-[#5C6B52]" : darkMode ? "bg-gray-600" : "bg-gray-200"
-                )} />
-              );
-            })}
-          </div>
-          {/* Klaar button on mobile */}
-          {selectedStatus !== 'klaar' && (
-            <button
-              onClick={() => setSelectedStatus('klaar')}
-              className="mt-4 w-full py-2.5 rounded-xl text-sm font-medium border border-[#5C6B52] text-[#5C6B52] hover:bg-[#F8FAF7] transition-colors"
-            >
-              Markeer als Klaar
-            </button>
-          )}
-        </div>
-
-        {/* Desktop progress: full stepper */}
-        <div className="hidden md:block relative pt-2">
+        <div className="relative pt-2">
           <div className={cn("absolute top-7 left-6 right-6 h-0.5", darkMode ? "bg-gray-700" : "bg-gray-100")}>
             <div
               className="h-full bg-[#5C6B52] transition-all duration-700"
