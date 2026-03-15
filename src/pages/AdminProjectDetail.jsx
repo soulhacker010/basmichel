@@ -29,7 +29,27 @@ import EditorNotesSection from '@/components/project/EditorNotesSection';
 import AddEditorNote from '@/components/project/AddEditorNote';
 import ExtraSessionsSection from '@/components/project/ExtraSessionsSection';
 import InvoiceDialog from '@/components/project/InvoiceDialog';
-            {/* A. FACTUURGEGEVENS */}
+      <InvoiceDialog
+        open={invoiceDialogOpen}
+        onOpenChange={setInvoiceDialogOpen}
+        isEditing={isEditingInvoice}
+        invoiceData={invoiceData}
+        setInvoiceData={setInvoiceData}
+        invoiceTemplates={invoiceTemplates}
+        project={project}
+        user={user}
+        client={client}
+        allClients={allClients}
+        onSave={() => isEditingInvoice ? updateInvoiceMutation.mutate(invoiceData) : createInvoiceMutation.mutate(invoiceData)}
+        isSaving={createInvoiceMutation.isPending || updateInvoiceMutation.isPending}
+      />
+    </div>
+  );
+}
+
+// DEAD CODE BELOW - kept for reference only, will never render
+function _DeadCode_InvoiceDialogContent() { return (
+            <>{/* A. FACTUURGEGEVENS */}
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-gray-900">Factuurgegevens</h3>
               <div className="grid grid-cols-2 gap-4">
