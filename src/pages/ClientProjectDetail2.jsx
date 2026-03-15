@@ -992,6 +992,9 @@ Open project: ${window.location.origin}${link}
           )}
         </div>
         <div className="mt-6 pt-6 border-t border-gray-100">
+          <ClientNotesSection projectId={projectId} initialNotes={project.client_notes} />
+        </div>
+        <div className="mt-4 pt-4 border-t border-gray-100">
           <Button
             variant="outline"
             onClick={() => setRevisionOpen(true)}
