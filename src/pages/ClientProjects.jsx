@@ -108,7 +108,7 @@ export default function ClientProjects() {
           />
         </div>
         <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-          <TabsList>
+          <TabsList className="overflow-x-auto flex-nowrap w-full sm:w-auto">
             <TabsTrigger value="all">Alle ({statusCounts.all})</TabsTrigger>
             <TabsTrigger value="geboekt">Geboekt ({statusCounts.geboekt})</TabsTrigger>
             <TabsTrigger value="wordt_bewerkt">In bewerking ({statusCounts.wordt_bewerkt})</TabsTrigger>
