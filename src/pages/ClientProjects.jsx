@@ -75,7 +75,7 @@ export default function ClientProjects() {
   });
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-screen-xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Projecten</h1>
@@ -87,7 +87,7 @@ export default function ClientProjects() {
       </div>
 
       {/* Search */}
-      <div className="relative mb-4">
+      <div className="relative mb-4 md:max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <Input
           placeholder="Zoeken..."
@@ -115,7 +115,7 @@ export default function ClientProjects() {
         ))}
       </div>
 
-      {/* Projects List */}
+      {/* Projects */}
       {isLoading ? (
         <div className="space-y-3">
           {[1,2,3].map(i => (
@@ -136,52 +136,104 @@ export default function ClientProjects() {
           )}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm divide-y divide-gray-50">
-          {filteredProjects.map((project, idx) => {
-            const status = statusConfig[project.status];
-            const dateValue = project.shoot_date || project.created_date;
-            return (
-              <Link
-                key={project.id}
-                to={`${createPageUrl('ClientProjectDetail2')}?id=${project.id}`}
-                className="flex items-center gap-4 px-4 py-4 active:bg-gray-50 transition-colors"
-              >
-                {/* Date Badge */}
-                <div className="w-12 h-12 rounded-xl bg-[#F0F3EE] flex flex-col items-center justify-center flex-shrink-0">
-                  {dateValue ? (
-                    <>
-                      <span className="text-[10px] font-semibold text-[#5C6B52] uppercase leading-none">
-                        {format(new Date(dateValue), 'MMM', { locale: nl })}
-                      </span>
-                      <span className="text-lg font-bold text-[#3D4D35] leading-tight">
-                        {format(new Date(dateValue), 'd')}
-                      </span>
-                    </>
-                  ) : (
-                    <Calendar className="w-5 h-5 text-[#5C6B52]" />
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm truncate">{project.title}</p>
-                  {project.address && (
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                      <p className="text-xs text-gray-400 truncate">{project.address}</p>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", status?.dot)} />
-                    <span className="text-xs text-gray-500">{status?.label}</span>
+        <>
+          {/* Mobile: list view */}
+          <div className="block md:hidden bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm divide-y divide-gray-50">
+            {filteredProjects.map((project) => {
+              const status = statusConfig[project.status];
+              const dateValue = project.shoot_date || project.created_date;
+              return (
+                <Link
+                  key={project.id}
+                  to={`${createPageUrl('ClientProjectDetail2')}?id=${project.id}`}
+                  className="flex items-center gap-4 px-4 py-4 active:bg-gray-50 transition-colors"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-[#F0F3EE] flex flex-col items-center justify-center flex-shrink-0">
+                    {dateValue ? (
+                      <>
+                        <span className="text-[10px] font-semibold text-[#5C6B52] uppercase leading-none">
+                          {format(new Date(dateValue), 'MMM', { locale: nl })}
+                        </span>
+                        <span className="text-lg font-bold text-[#3D4D35] leading-tight">
+                          {format(new Date(dateValue), 'd')}
+                        </span>
+                      </>
+                    ) : (
+                      <Calendar className="w-5 h-5 text-[#5C6B52]" />
+                    )}
                   </div>
-                </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 text-sm truncate">{project.title}</p>
+                    {project.address && (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                        <p className="text-xs text-gray-400 truncate">{project.address}</p>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", status?.dot)} />
+                      <span className="text-xs text-gray-500">{status?.label}</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                </Link>
+              );
+            })}
+          </div>
 
-                <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
-              </Link>
-            );
-          })}
-        </div>
+          {/* Desktop: card grid */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredProjects.map((project) => {
+              const status = statusConfig[project.status];
+              const dateValue = project.shoot_date || project.created_date;
+              return (
+                <Link
+                  key={project.id}
+                  to={`${createPageUrl('ClientProjectDetail2')}?id=${project.id}`}
+                  className="bg-white rounded-lg border border-gray-100 p-5 hover:shadow-sm transition-all block"
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-11 h-11 rounded-xl bg-[#F0F3EE] flex flex-col items-center justify-center flex-shrink-0">
+                      {dateValue ? (
+                        <>
+                          <span className="text-[9px] font-semibold text-[#5C6B52] uppercase leading-none">
+                            {format(new Date(dateValue), 'MMM', { locale: nl })}
+                          </span>
+                          <span className="text-base font-bold text-[#3D4D35] leading-tight">
+                            {format(new Date(dateValue), 'd')}
+                          </span>
+                        </>
+                      ) : (
+                        <Calendar className="w-4 h-4 text-[#5C6B52]" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{project.title}</p>
+                      {project.address && (
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                          <p className="text-xs text-gray-400 truncate">{project.address}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", status?.dot)} />
+                      <span className="text-xs text-gray-500">{status?.label}</span>
+                    </div>
+                    {project.shoot_date && (
+                      <span className="text-xs text-gray-400">
+                        {format(new Date(project.shoot_date), 'd MMM yyyy', { locale: nl })}
+                        {project.shoot_time && ` • ${project.shoot_time}`}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
