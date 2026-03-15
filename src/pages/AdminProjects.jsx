@@ -12,7 +12,8 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
-  User
+  User,
+  ChevronRight
 } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/button';
