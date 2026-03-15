@@ -1008,27 +1008,32 @@ Open project: ${window.location.origin}${link}
           to={createPageUrl(`ProjectGalleryView?id=${projectId}`)}
           className="block bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow mb-8"
         >
-          <div className="p-8">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Galerij</h2>
-            <div className="flex items-center gap-6">
-              <div className="w-32 h-32 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                {(galleries[0]?.cover_image_url || deliveryFiles.find(f => f.mime_type?.startsWith('image/'))?.file_url) ? (
-                  <img
-                    src={galleries[0]?.cover_image_url || deliveryFiles.find(f => f.mime_type?.startsWith('image/'))?.file_url}
-                    alt="Gallery preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <FileText className="w-12 h-12 text-gray-300" />
-                )}
+          {/* Cover image full width */}
+          {(galleries[0]?.cover_image_url || deliveryFiles.find(f => f.mime_type?.startsWith('image/'))?.file_url) ? (
+            <div className="w-full h-44 bg-gray-100 overflow-hidden">
+              <img
+                src={galleries[0]?.cover_image_url || deliveryFiles.find(f => f.mime_type?.startsWith('image/'))?.file_url}
+                alt="Gallery preview"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-full h-32 bg-gray-50 flex items-center justify-center">
+              <FileText className="w-10 h-10 text-gray-300" />
+            </div>
+          )}
+          <div className="p-5">
+            <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Galerij</p>
+            <p className="font-semibold text-gray-900 text-base">{galleries[0]?.title || project.title}</p>
+            {project.address && (
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <p className="text-sm text-gray-400 truncate">{project.address}{project.city && `, ${project.city}`}</p>
               </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-900 mb-2">{galleries[0]?.title || project.title}</p>
-                <p className="text-sm text-gray-500 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-gray-400" />
-                  {project.title}
-                </p>
-              </div>
+            )}
+            <div className="mt-3 flex items-center gap-1 text-[#5C6B52] text-sm font-medium">
+              <span>Bekijk galerij</span>
+              <ChevronDown className="w-4 h-4 -rotate-90" />
             </div>
           </div>
         </Link>
