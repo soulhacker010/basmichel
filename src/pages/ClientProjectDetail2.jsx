@@ -729,7 +729,35 @@ Open project: ${window.location.origin}${link}
           </div>
         )}
 
-        <div className="relative pt-2">
+        {/* Mobile progress: compact pill */}
+        <div className="block md:hidden">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">Voortgang</span>
+            <span className="text-xs font-semibold text-[#5C6B52]">
+              Stap {currentStepIndex + 1} van {statusSteps.length} · {statusSteps[currentStepIndex]?.label}
+            </span>
+          </div>
+          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#5C6B52] rounded-full transition-all duration-700"
+              style={{ width: `${(currentStepIndex / (statusSteps.length - 1)) * 100}%` }}
+            />
+          </div>
+          <div className="flex justify-between mt-2">
+            {statusSteps.map((step, index) => {
+              const isCompleted = index <= currentStepIndex;
+              return (
+                <div key={step.key} className={cn(
+                  "w-2 h-2 rounded-full transition-all",
+                  isCompleted ? "bg-[#5C6B52]" : "bg-gray-200"
+                )} />
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Desktop progress: full stepper */}
+        <div className="hidden md:block relative pt-2">
           <div className="absolute top-7 left-6 right-6 h-0.5 bg-gray-100">
             <div
               className="h-full bg-[#5C6B52] transition-all duration-700"
