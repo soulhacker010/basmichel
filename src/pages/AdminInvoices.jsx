@@ -205,8 +205,8 @@ export default function AdminInvoices() {
           <p className={cn("text-sm", darkMode ? "text-gray-500" : "text-gray-400")}>Probeer je filters aan te passen</p>
         </div>
       ) : (
-        <div className={cn("rounded-lg border", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100")}>
-          <table className="w-full">
+        <div className={cn("rounded-lg border overflow-x-auto", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100")}>
+          <table className="w-full min-w-[600px]">
             <thead>
               <tr className={cn("border-b", darkMode ? "border-gray-700" : "border-gray-100")}>
                 <th className={cn("text-left px-6 py-3 text-xs font-medium uppercase tracking-wide", darkMode ? "text-gray-400" : "text-gray-500")}>Factuur #</th>
