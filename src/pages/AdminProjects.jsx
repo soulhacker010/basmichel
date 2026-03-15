@@ -331,8 +331,8 @@ export default function AdminProjects() {
       </div>
 
       {/* Search and Filters */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="mb-6 flex flex-col gap-4">
+        <div className="relative w-full sm:max-w-md">
           <Search className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />
           <Input
             placeholder="Zoek project of contactnaam"
@@ -341,15 +341,17 @@ export default function AdminProjects() {
             className="pl-10 h-10 rounded border-gray-200"
           />
         </div>
-        <Tabs value={statusFilter} onValueChange={setStatusFilter} className="shrink-0">
-          <TabsList className={cn("h-10 border", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200")}>
-            <TabsTrigger value="all" className="text-sm">Alle Projecten</TabsTrigger>
-            <TabsTrigger value="geboekt" className="text-sm">Geboekt</TabsTrigger>
-            <TabsTrigger value="shoot_uitgevoerd" className="text-sm">Shoot uitgevoerd</TabsTrigger>
-            <TabsTrigger value="wordt_bewerkt" className="text-sm">Wordt bewerkt</TabsTrigger>
-            <TabsTrigger value="klaar" className="text-sm">Klaar</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="overflow-x-auto -mx-1 px-1">
+          <Tabs value={statusFilter} onValueChange={setStatusFilter}>
+            <TabsList className={cn("h-10 border w-max", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200")}>
+              <TabsTrigger value="all" className="text-sm whitespace-nowrap">Alle Projecten</TabsTrigger>
+              <TabsTrigger value="geboekt" className="text-sm whitespace-nowrap">Geboekt</TabsTrigger>
+              <TabsTrigger value="shoot_uitgevoerd" className="text-sm whitespace-nowrap">Shoot uitgevoerd</TabsTrigger>
+              <TabsTrigger value="wordt_bewerkt" className="text-sm whitespace-nowrap">Wordt bewerkt</TabsTrigger>
+              <TabsTrigger value="klaar" className="text-sm whitespace-nowrap">Klaar</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {/* Projects Grid */}
