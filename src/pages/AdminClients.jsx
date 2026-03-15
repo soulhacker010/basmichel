@@ -187,7 +187,7 @@ export default function AdminClients() {
           </div>
 
           {/* Search */}
-          <div className="relative max-w-md">
+          <div className="relative w-full sm:max-w-md">
             <Search className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />
             <Input
               placeholder="Zoek op naam, e-mail of bedrijf..."
