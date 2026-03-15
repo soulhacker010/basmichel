@@ -247,8 +247,8 @@ export default function AdminGalleries() {
       />
 
       {/* Filters */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="mb-6 flex flex-col gap-4">
+        <div className="relative w-full sm:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
             placeholder="Zoek op titel..."
@@ -257,14 +257,16 @@ export default function AdminGalleries() {
             className="pl-10"
           />
         </div>
-        <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-          <TabsList className="bg-gray-100">
-            <TabsTrigger value="all">Alle ({statusCounts.all})</TabsTrigger>
-            <TabsTrigger value="concept">Concept ({statusCounts.concept})</TabsTrigger>
-            <TabsTrigger value="gepubliceerd">Gepubliceerd ({statusCounts.gepubliceerd})</TabsTrigger>
-            <TabsTrigger value="gearchiveerd">Gearchiveerd ({statusCounts.gearchiveerd})</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="overflow-x-auto -mx-1 px-1">
+          <Tabs value={statusFilter} onValueChange={setStatusFilter}>
+            <TabsList className="bg-gray-100 w-max">
+              <TabsTrigger value="all" className="whitespace-nowrap">Alle ({statusCounts.all})</TabsTrigger>
+              <TabsTrigger value="concept" className="whitespace-nowrap">Concept ({statusCounts.concept})</TabsTrigger>
+              <TabsTrigger value="gepubliceerd" className="whitespace-nowrap">Gepubliceerd ({statusCounts.gepubliceerd})</TabsTrigger>
+              <TabsTrigger value="gearchiveerd" className="whitespace-nowrap">Gearchiveerd ({statusCounts.gearchiveerd})</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {/* Galleries */}
