@@ -29,9 +29,6 @@ import EditorNotesSection from '@/components/project/EditorNotesSection';
 import AddEditorNote from '@/components/project/AddEditorNote';
 import ExtraSessionsSection from '@/components/project/ExtraSessionsSection';
 import InvoiceDialog from '@/components/project/InvoiceDialog';
-...
-      {/* Invoice Dialog */}
-      <InvoiceDialogPlaceholder
             {/* A. FACTUURGEGEVENS */}
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-gray-900">Factuurgegevens</h3>
