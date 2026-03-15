@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import ProjectTimeline from '@/components/project/ProjectTimeline';
+import ClientNotesSection from '@/components/project/ClientNotesSection';
 
 const statusSteps = [
   { key: 'geboekt', label: 'Geboekt' },
