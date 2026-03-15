@@ -354,7 +354,7 @@ export default function AdminProjects() {
         </div>
       </div>
 
-      {/* Projects Grid */}
+      {/* Projects */}
       {filteredProjects.length === 0 ? (
         <div className={cn("rounded-lg p-16 text-center border", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100")}>
           <FolderKanban className={cn("w-12 h-12 mx-auto mb-4", darkMode ? "text-gray-600" : "text-gray-300")} />
@@ -362,74 +362,133 @@ export default function AdminProjects() {
           <p className={cn("text-sm", darkMode ? "text-gray-500" : "text-gray-400")}>Probeer je filters aan te passen</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredProjects.map(project => (
-            <Link
-              key={project.id}
-              to={`${createPageUrl('AdminProjectDetail')}?id=${project.id}`}
-              className={cn("rounded-lg border p-5 hover:shadow-sm transition-all group block",
-                darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
-              )}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className={cn("font-medium truncate", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h3>
-                  <p className={cn("text-sm truncate", darkMode ? "text-gray-400" : "text-gray-500")}>{getClientName(project.client_id)}</p>
-                  {(() => {
-                    const client = clients.find(c => c.id === project.client_id);
-                    return client?.company_name && (
-                      <p className={cn("text-xs truncate", darkMode ? "text-gray-500" : "text-gray-400")}>{client.company_name}</p>
-                    );
-                  })()}
+        <>
+          {/* Mobile/Tablet: iOS-style list */}
+          <div className={cn("block md:hidden rounded-2xl border overflow-hidden shadow-sm divide-y",
+            darkMode ? "bg-gray-800 border-gray-700 divide-gray-700" : "bg-white border-gray-100 divide-gray-50"
+          )}>
+            {filteredProjects.map(project => {
+              const dateValue = project.shoot_date;
+              const clientName = getClientName(project.client_id);
+              const clientObj = clients.find(c => c.id === project.client_id);
+              return (
+                <div key={project.id} className="flex items-center group">
+                  <Link
+                    to={`${createPageUrl('AdminProjectDetail')}?id=${project.id}`}
+                    className="flex items-center gap-3 px-4 py-3.5 flex-1 min-w-0"
+                  >
+                    {/* Date Badge */}
+                    <div className={cn("w-11 h-11 rounded-xl flex flex-col items-center justify-center flex-shrink-0",
+                      darkMode ? "bg-gray-700" : "bg-[#F0F3EE]"
+                    )}>
+                      {dateValue ? (
+                        <>
+                          <span className="text-[9px] font-semibold text-[#5C6B52] uppercase leading-none">
+                            {format(new Date(dateValue), 'MMM', { locale: nl })}
+                          </span>
+                          <span className="text-base font-bold text-[#3D4D35] leading-tight">
+                            {format(new Date(dateValue), 'd')}
+                          </span>
+                        </>
+                      ) : (
+                        <CalendarIcon className="w-4 h-4 text-[#5C6B52]" />
+                      )}
+                    </div>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className={cn("font-semibold text-sm truncate", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</p>
+                      <p className={cn("text-xs truncate", darkMode ? "text-gray-400" : "text-gray-500")}>{clientName}{clientObj?.company_name ? ` · ${clientObj.company_name}` : ''}</p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <StatusBadge status={project.status} />
+                        {project.shoot_time && (
+                          <span className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>{project.shoot_time}</span>
+                        )}
+                      </div>
+                    </div>
+                    <ChevronRight className={cn("w-4 h-4 flex-shrink-0", darkMode ? "text-gray-600" : "text-gray-300")} />
+                  </Link>
+                  {/* Actions */}
+                  <div className="pr-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => { setEditingProject(project); setIsDialogOpen(true); }}>
+                          <Pencil className="w-4 h-4 mr-2" />Bewerken
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setDeleteId(project.id)} className="text-red-600">
+                          <Trash2 className="w-4 h-4 mr-2" />Verwijderen
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={(e) => {
-                      e.preventDefault();
-                      setEditingProject(project);
-                      setIsDialogOpen(true);
-                    }}>
-                      <Pencil className="w-4 h-4 mr-2" />
-                      Bewerken
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setDeleteId(project.id);
-                      }}
-                      className="text-red-600"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Verwijderen
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              );
+            })}
+          </div>
 
-              <div className="flex items-center justify-between">
-                <StatusBadge status={project.status} />
-                {project.shoot_date && (
-                  <span className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
-                    {format(new Date(project.shoot_date), 'd MMM yyyy', { locale: nl })}
-                    {project.shoot_time && ` • ${project.shoot_time}`}
-                  </span>
+          {/* Desktop: card grid */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredProjects.map(project => (
+              <Link
+                key={project.id}
+                to={`${createPageUrl('AdminProjectDetail')}?id=${project.id}`}
+                className={cn("rounded-lg border p-5 hover:shadow-sm transition-all group block",
+                  darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
                 )}
-              </div>
-
-
-            </Link>
-          ))}
-        </div>
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className={cn("font-medium truncate", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h3>
+                    <p className={cn("text-sm truncate", darkMode ? "text-gray-400" : "text-gray-500")}>{getClientName(project.client_id)}</p>
+                    {(() => {
+                      const client = clients.find(c => c.id === project.client_id);
+                      return client?.company_name && (
+                        <p className={cn("text-xs truncate", darkMode ? "text-gray-500" : "text-gray-400")}>{client.company_name}</p>
+                      );
+                    })()}
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={(e) => {
+                        e.preventDefault();
+                        setEditingProject(project);
+                        setIsDialogOpen(true);
+                      }}>
+                        <Pencil className="w-4 h-4 mr-2" />Bewerken
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.preventDefault(); setDeleteId(project.id); }} className="text-red-600">
+                        <Trash2 className="w-4 h-4 mr-2" />Verwijderen
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                <div className="flex items-center justify-between">
+                  <StatusBadge status={project.status} />
+                  {project.shoot_date && (
+                    <span className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
+                      {format(new Date(project.shoot_date), 'd MMM yyyy', { locale: nl })}
+                      {project.shoot_time && ` • ${project.shoot_time}`}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Create/Edit Dialog */}
