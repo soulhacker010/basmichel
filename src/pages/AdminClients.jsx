@@ -159,12 +159,12 @@ export default function AdminClients() {
     <div>
       <div className="max-w-screen-2xl mx-auto">
         <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h1 className={cn("text-3xl font-light mb-2", darkMode ? "text-gray-100" : "text-gray-900")}>Klanten</h1>
               <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Beheer je klanten en hun gegevens</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               <Button 
                 variant="outline"
                 onClick={() => setIsInviteDialogOpen(true)}
