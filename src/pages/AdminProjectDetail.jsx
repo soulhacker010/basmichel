@@ -246,12 +246,52 @@ export default function AdminProjectDetail() {
         }
 
         if (user?.email) {
+          // Project klaar e-mail
           await base44.integrations.Core.SendEmail({
             to: user.email,
             from_name: 'Bas Michel Fotografie',
             subject: `Je project is klaar - ${project.title}`,
             body: `<p>Beste ${user.full_name || 'klant'},</p><p>Goed nieuws! Je project <strong>${project.title}</strong> is klaar en staat voor je klaar in het portaal.</p><p><em>Dit is een automatische e-mail — reageren heeft geen effect. Log in via het portaal om je bestanden te bekijken of een revisie aan te vragen.</em></p><p>Met vriendelijke groet,<br/>Bas Michel Fotografie</p>`,
           });
+
+          // Factuur e-mail sturen als er een factuur klaarstaat
+          if (projectInvoice) {
+            const invoiceDate = format(new Date(), 'd MMMM yyyy', { locale: nl });
+            const dueDate = format(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), 'd MMMM yyyy', { locale: nl });
+            const totalAmount = projectInvoice.total_amount ? `€ ${projectInvoice.total_amount.toFixed(2)}` : '-';
+            const invoiceNumber = projectInvoice.invoice_number || project.project_number || '-';
+
+            await base44.integrations.Core.SendEmail({
+              to: user.email,
+              from_name: 'Bas Michel Fotografie',
+              subject: `Nieuwe factuur ${invoiceNumber} – ${project.title}`,
+              body: `
+                <p>Beste ${user.full_name || 'klant'},</p>
+                <p>Hierbij ontvangt u de factuur voor het project <strong>${project.title}</strong>.</p>
+                <table style="border-collapse: collapse; margin: 16px 0;">
+                  <tr>
+                    <td style="padding: 4px 16px 4px 0; color: #666;">Factuurnummer:</td>
+                    <td style="padding: 4px 0;"><strong>${invoiceNumber}</strong></td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 16px 4px 0; color: #666;">Factuurdatum:</td>
+                    <td style="padding: 4px 0;"><strong>${invoiceDate}</strong></td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 16px 4px 0; color: #666;">Vervaldatum:</td>
+                    <td style="padding: 4px 0;"><strong>${dueDate}</strong></td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 16px 4px 0; color: #666;">Totaalbedrag:</td>
+                    <td style="padding: 4px 0;"><strong>${totalAmount}</strong></td>
+                  </tr>
+                </table>
+                <p>Log in via het portaal om de factuur te bekijken en te betalen.</p>
+                <p><em>Dit is een automatische e-mail — reageren heeft geen effect.</em></p>
+                <p>Met vriendelijke groet,<br/>Bas Michel Fotografie</p>
+              `,
+            });
+          }
         }
       }
 
