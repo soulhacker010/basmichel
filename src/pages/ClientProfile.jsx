@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { User, Mail, Building2, Phone, MapPin, Save, Camera, Loader2 } from 'lucide-react';
+import { User, Mail, Building2, Phone, MapPin, Save } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 
@@ -63,18 +63,6 @@ export default function ClientProfile() {
 
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingClient, setIsSavingClient] = useState(false);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-
-  const handleAvatarUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploadingAvatar(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    await base44.auth.updateMe({ avatar_url: file_url });
-    await queryClient.refetchQueries({ queryKey: ['currentUser'] });
-    setIsUploadingAvatar(false);
-    toast.success('Profielfoto bijgewerkt');
-  };
 
   const handleSaveProfile = async () => {
     if (!formData.first_name || formData.first_name.trim() === '' || !formData.last_name || formData.last_name.trim() === '') {
@@ -162,27 +150,6 @@ export default function ClientProfile() {
             <User className="w-5 h-5 text-[#5C6B52]" />
           </div>
           <h2 className="text-lg font-medium text-gray-900">Persoonlijke gegevens</h2>
-        </div>
-
-        {/* Avatar upload */}
-        <div className="flex items-center gap-5 mb-6 pb-6 border-b border-gray-100">
-          <div className="relative group">
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-[#E8EDE5] flex items-center justify-center border-2 border-white shadow">
-              {userData?.avatar_url ? (
-                <img src={userData.avatar_url} alt="Profielfoto" className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-8 h-8 text-[#5C6B52]" />
-              )}
-            </div>
-            <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-              {isUploadingAvatar ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Camera className="w-5 h-5 text-white" />}
-              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={isUploadingAvatar} />
-            </label>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-900">{userData?.full_name || 'Profielfoto'}</p>
-            <p className="text-xs text-gray-400 mt-0.5">Klik op de foto om te wijzigen</p>
-          </div>
         </div>
 
         <div className="space-y-5">
