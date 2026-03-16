@@ -119,14 +119,16 @@ export default function AdminPortalShell({ children, currentPageName }) {
         >
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
-        <img 
-          src={darkMode 
-            ? "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/fefc16c37_BasMichel_K102.png"
-            : "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/9370b8342_BasMichel_K152.png"
-          }
-          alt="Basmichel Logo" 
-          className="h-10"
-        />
+        <button onClick={() => window.location.reload()} className="focus:outline-none">
+          <img 
+            src={darkMode 
+              ? "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/fefc16c37_BasMichel_K102.png"
+              : "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/9370b8342_BasMichel_K152.png"
+            }
+            alt="Basmichel Logo" 
+            className="h-10"
+          />
+        </button>
         {user && (
           <NotificationCenter userId={user.id} isAdmin={true} />
         )}
