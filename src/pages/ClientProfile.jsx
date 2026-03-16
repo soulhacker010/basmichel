@@ -63,6 +63,18 @@ export default function ClientProfile() {
 
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingClient, setIsSavingClient] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingAvatar(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    await base44.auth.updateMe({ avatar_url: file_url });
+    await queryClient.refetchQueries({ queryKey: ['currentUser'] });
+    setIsUploadingAvatar(false);
+    toast.success('Profielfoto bijgewerkt');
+  };
 
   const handleSaveProfile = async () => {
     if (!formData.first_name || formData.first_name.trim() === '' || !formData.last_name || formData.last_name.trim() === '') {
