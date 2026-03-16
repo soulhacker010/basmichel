@@ -250,7 +250,7 @@ export default function AdminProjectDetail() {
             to: user.email,
             from_name: 'Bas Michel Fotografie',
             subject: `Je project is klaar - ${project.title}`,
-            body: `<p>Beste ${user.full_name || 'klant'},</p><p>Goed nieuws! Je project <strong>${project.title}</strong> is klaar en staat voor je klaar in het portaal.</p><p><strong>Reageer niet op deze e-mail</strong> — log in via het portaal om je bestanden te bekijken of een revisie aan te vragen.</p><p>Met vriendelijke groet,<br/>Bas Michel Fotografie</p>`,
+            body: `<p>Beste ${user.full_name || 'klant'},</p><p>Goed nieuws! Je project <strong>${project.title}</strong> is klaar en staat voor je klaar in het portaal.</p><p><em>Dit is een automatische e-mail — reageren heeft geen effect. Log in via het portaal om je bestanden te bekijken of een revisie aan te vragen.</em></p><p>Met vriendelijke groet,<br/>Bas Michel Fotografie</p>`,
           });
         }
       }
