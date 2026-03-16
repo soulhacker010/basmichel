@@ -248,8 +248,9 @@ export default function AdminProjectDetail() {
         if (user?.email) {
           await base44.integrations.Core.SendEmail({
             to: user.email,
+            from_name: 'Bas Michel Fotografie',
             subject: `Je project is klaar - ${project.title}`,
-            body: `Beste ${user.full_name || 'klant'}, je project ${project.title} is klaar. Log in op de portal om het te bekijken.`,
+            body: `<p>Beste ${user.full_name || 'klant'},</p><p>Goed nieuws! Je project <strong>${project.title}</strong> is klaar en staat voor je klaar in het portaal.</p><p><strong>Reageer niet op deze e-mail</strong> — log in via het portaal om je bestanden te bekijken of een revisie aan te vragen.</p><p>Met vriendelijke groet,<br/>Bas Michel Fotografie</p>`,
           });
         }
       }
