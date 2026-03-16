@@ -164,6 +164,27 @@ export default function ClientProfile() {
           <h2 className="text-lg font-medium text-gray-900">Persoonlijke gegevens</h2>
         </div>
 
+        {/* Avatar upload */}
+        <div className="flex items-center gap-5 mb-6 pb-6 border-b border-gray-100">
+          <div className="relative group">
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-[#E8EDE5] flex items-center justify-center border-2 border-white shadow">
+              {userData?.avatar_url ? (
+                <img src={userData.avatar_url} alt="Profielfoto" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-8 h-8 text-[#5C6B52]" />
+              )}
+            </div>
+            <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+              {isUploadingAvatar ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Camera className="w-5 h-5 text-white" />}
+              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={isUploadingAvatar} />
+            </label>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900">{userData?.full_name || 'Profielfoto'}</p>
+            <p className="text-xs text-gray-400 mt-0.5">Klik op de foto om te wijzigen</p>
+          </div>
+        </div>
+
         <div className="space-y-5">
           <div>
             <Label htmlFor="first_name">Voornaam *</Label>
