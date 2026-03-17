@@ -166,7 +166,7 @@ export default function AdminProjects() {
 
       return project;
     },
-    onSuccess: () => {
+    onSuccess: async (project, variables) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['clientProjects'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
@@ -174,6 +174,95 @@ export default function AdminProjects() {
       setIsDialogOpen(false);
       setEditingProject(null);
       toast.success('Project aangemaakt');
+
+      // Send confirmation email to client
+      try {
+        const client = clients.find(c => c.id === variables.client_id);
+        const user = users.find(u => u.id === client?.user_id);
+        const clientEmail = user?.email;
+        const clientName = user?.full_name || client?.company_name || 'klant';
+        const sessionType = sessionTypes.find(s => s.id === variables.session_type_id);
+        const sessionTypeName = sessionType?.name || '-';
+
+        if (clientEmail) {
+          const shootDate = variables.shoot_date
+            ? new Date(variables.shoot_date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+            : '-';
+          const shootTime = variables.shoot_time || '-';
+          const address = `${variables.address || ''}${variables.city ? ', ' + variables.city : ''}` || '-';
+          const projectNumber = project.project_number || '-';
+
+          await base44.integrations.Core.SendEmail({
+            to: clientEmail,
+            from_name: 'Bas Michel Photography',
+            subject: `Boeking bevestigd – ${project.title}`,
+            body: `
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background-color:#f0f0f0;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f0f0;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#5C6B52;padding:32px 36px;">
+              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">Boeking bevestigd</h1>
+              <p style="margin:6px 0 0;color:#d4dccf;font-size:14px;">Bas Michel Photography</p>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:32px 36px;">
+              <p style="margin:0 0 8px;font-size:15px;color:#1a1a1a;"><strong>Beste ${clientName},</strong></p>
+              <p style="margin:0 0 24px;font-size:14px;color:#444;">Je fotoshoot is bevestigd. Hieronder staan de details:</p>
+
+              <!-- Details table -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;font-size:14px;">
+                <tr style="border-bottom:1px solid #e5e7eb;">
+                  <td style="padding:12px 16px;color:#888;width:140px;background:#fafafa;">Dienst</td>
+                  <td style="padding:12px 16px;color:#1a1a1a;font-weight:600;">${sessionTypeName}</td>
+                </tr>
+                <tr style="border-bottom:1px solid #e5e7eb;">
+                  <td style="padding:12px 16px;color:#888;background:#fafafa;">Datum</td>
+                  <td style="padding:12px 16px;color:#1a1a1a;font-weight:600;">${shootDate}</td>
+                </tr>
+                <tr style="border-bottom:1px solid #e5e7eb;">
+                  <td style="padding:12px 16px;color:#888;background:#fafafa;">Tijd</td>
+                  <td style="padding:12px 16px;color:#1a1a1a;font-weight:600;">${shootTime}</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px;color:#888;background:#fafafa;">Adres</td>
+                  <td style="padding:12px 16px;color:#1a1a1a;font-weight:600;">${address}</td>
+                </tr>
+              </table>
+
+              <!-- Button -->
+              <div style="margin-top:28px;">
+                <a href="https://basmichel.base44.app/ClientProjects" style="display:inline-block;background-color:#5C6B52;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;">Bekijk project</a>
+              </div>
+
+              <p style="margin-top:24px;font-size:13px;color:#888;">Vragen? Reageer gerust op deze e-mail.</p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 36px;border-top:1px solid #f0f0f0;text-align:center;">
+              <p style="margin:0;font-size:12px;color:#aaa;">Bas Michel Photography &bull; <a href="mailto:basmichelsite@gmail.com" style="color:#5C6B52;text-decoration:none;">basmichelsite@gmail.com</a></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+            `,
+          });
+        }
+      } catch (emailError) {
+        console.error('Failed to send client confirmation email:', emailError);
+      }
     },
   });
 
