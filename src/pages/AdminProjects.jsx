@@ -242,6 +242,9 @@ export default function AdminProjects() {
                 <a href="https://basmichel.base44.app/ClientProjects" style="display:inline-block;background-color:#5C6B52;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;">Bekijk project</a>
               </div>
 
+              <!-- Styling tips -->
+              <p style="margin-top:24px;font-size:14px;color:#444;">📸 Vergeet niet onze styling tips te checken voor een optimaal resultaat: <a href="https://www.basmichel.com/styling-tips" style="color:#5C6B52;text-decoration:none;font-weight:600;">www.basmichel.com/styling-tips</a></p>
+
 
             </td>
           </tr>
