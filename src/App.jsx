@@ -64,6 +64,7 @@ const AuthenticatedApp = () => {
         />
       ))}
       <Route path="/styling-tips" element={<StylingTips />} />
+      <Route path="/StylingTips" element={<StylingTips />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
