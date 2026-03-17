@@ -242,7 +242,7 @@ export default function AdminProjects() {
                 <a href="https://basmichel.base44.app/ClientProjects" style="display:inline-block;background-color:#5C6B52;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;">Bekijk project</a>
               </div>
 
-              <p style="margin-top:24px;font-size:13px;color:#888;">Vragen? Reageer gerust op deze e-mail.</p>
+
             </td>
           </tr>
           <!-- Footer -->
