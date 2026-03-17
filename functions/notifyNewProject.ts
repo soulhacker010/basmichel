@@ -36,41 +36,81 @@ Deno.serve(async (req) => {
 
         await base44.asServiceRole.integrations.Core.SendEmail({
             to: 'basmichelsite@gmail.com',
-            from_name: 'Bas Michel Fotografie',
+            from_name: 'Bas Michel Photography',
             subject: `Nieuw project aangemaakt: ${projectTitle}`,
             body: `
-                <p>Er is een nieuw project aangemaakt in het portaal.</p>
-                <table style="border-collapse: collapse; margin: 16px 0;">
-                    <tr>
-                        <td style="padding: 4px 16px 4px 0; color: #666;">Projectnummer:</td>
-                        <td style="padding: 4px 0;"><strong>${projectNumber}</strong></td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px 16px 4px 0; color: #666;">Projecttitel:</td>
-                        <td style="padding: 4px 0;"><strong>${projectTitle}</strong></td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px 16px 4px 0; color: #666;">Klant:</td>
-                        <td style="padding: 4px 0;"><strong>${clientName}</strong></td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px 16px 4px 0; color: #666;">Bedrijf:</td>
-                        <td style="padding: 4px 0;"><strong>${companyName}</strong></td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px 16px 4px 0; color: #666;">E-mail klant:</td>
-                        <td style="padding: 4px 0;"><strong>${clientEmail}</strong></td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px 16px 4px 0; color: #666;">Adres:</td>
-                        <td style="padding: 4px 0;"><strong>${address}${city !== '-' ? ', ' + city : ''}</strong></td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px 16px 4px 0; color: #666;">Shootdatum:</td>
-                        <td style="padding: 4px 0;"><strong>${shootDate}</strong></td>
-                    </tr>
-                </table>
-                <p>Log in via het adminportaal om het project te bekijken en te beheren.</p>
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background-color:#f0f0f0;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f0f0;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#5C6B52;padding:32px 36px;">
+              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">Nieuw project aangemaakt</h1>
+              <p style="margin:6px 0 0;color:#d4dccf;font-size:14px;">Bas Michel Photography</p>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:32px 36px;">
+              <p style="margin:0 0 8px;font-size:15px;color:#1a1a1a;"><strong>Beste Bas,</strong></p>
+              <p style="margin:0 0 24px;font-size:14px;color:#444;">Er is een nieuw project aangemaakt in het portaal. Hieronder staan de details:</p>
+
+              <!-- Details table -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;font-size:14px;">
+                <tr style="border-bottom:1px solid #e5e7eb;">
+                  <td style="padding:12px 16px;color:#888;width:140px;background:#fafafa;">Projectnummer</td>
+                  <td style="padding:12px 16px;color:#1a1a1a;font-weight:600;">${projectNumber}</td>
+                </tr>
+                <tr style="border-bottom:1px solid #e5e7eb;">
+                  <td style="padding:12px 16px;color:#888;background:#fafafa;">Project</td>
+                  <td style="padding:12px 16px;color:#1a1a1a;font-weight:600;">${projectTitle}</td>
+                </tr>
+                <tr style="border-bottom:1px solid #e5e7eb;">
+                  <td style="padding:12px 16px;color:#888;background:#fafafa;">Klant</td>
+                  <td style="padding:12px 16px;color:#1a1a1a;font-weight:600;">${clientName}</td>
+                </tr>
+                <tr style="border-bottom:1px solid #e5e7eb;">
+                  <td style="padding:12px 16px;color:#888;background:#fafafa;">Bedrijf</td>
+                  <td style="padding:12px 16px;color:#1a1a1a;font-weight:600;">${companyName}</td>
+                </tr>
+                <tr style="border-bottom:1px solid #e5e7eb;">
+                  <td style="padding:12px 16px;color:#888;background:#fafafa;">E-mail</td>
+                  <td style="padding:12px 16px;color:#1a1a1a;font-weight:600;">${clientEmail}</td>
+                </tr>
+                <tr style="border-bottom:1px solid #e5e7eb;">
+                  <td style="padding:12px 16px;color:#888;background:#fafafa;">Adres</td>
+                  <td style="padding:12px 16px;color:#1a1a1a;font-weight:600;">${address}${city !== '-' ? ', ' + city : ''}</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px;color:#888;background:#fafafa;">Shootdatum</td>
+                  <td style="padding:12px 16px;color:#1a1a1a;font-weight:600;">${shootDate}</td>
+                </tr>
+              </table>
+
+              <!-- Button -->
+              <div style="margin-top:28px;">
+                <a href="https://app.base44.com/AdminProjects" style="display:inline-block;background-color:#5C6B52;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;">Bekijk project</a>
+              </div>
+
+              <p style="margin-top:24px;font-size:13px;color:#888;">Vragen? Reageer gerust op deze e-mail.</p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 36px;border-top:1px solid #f0f0f0;text-align:center;">
+              <p style="margin:0;font-size:12px;color:#aaa;">Bas Michel Photography &bull; <a href="mailto:basmichelsite@gmail.com" style="color:#5C6B52;text-decoration:none;">basmichelsite@gmail.com</a></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
             `,
         });
 
