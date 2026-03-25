@@ -46,7 +46,6 @@ Deno.serve(async (req) => {
             }
 
             // Calculate end time based on duration (default 60 minutes if not specified)
-            // If durationMinutes not passed, try to get from project's linked session
             let duration = durationMinutes;
             if (!duration && projectId) {
                 try {
@@ -63,14 +62,42 @@ Deno.serve(async (req) => {
                 }
             }
             duration = duration || 60;
-            const startDate = new Date(startDateTime);
-            const endDate = new Date(startDate.getTime() + (duration * 60 * 1000));
-            const endDateTime = endDate.toISOString().replace('Z', '').split('.')[0];
+
+            // Calculate end time by adding duration minutes to local datetime string
+            // Do NOT use new Date().toISOString() — that converts to UTC and shifts the time
+            const [datePart, timePart] = startDateTime.split('T');
+            const [hours, minutes, seconds] = timePart.split(':').map(Number);
+            const totalMinutes = hours * 60 + minutes + duration;
+            const endHours = Math.floor(totalMinutes / 60) % 24;
+            const endMins = totalMinutes % 60;
+            const endDateTime = `${datePart}T${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}:${String(seconds || 0).padStart(2, '0')}`;
+
+            // Fetch client name from DB for accurate display
+            let resolvedClientName = clientName || 'N/A';
+            if (projectId) {
+                try {
+                    const project = await base44.asServiceRole.entities.Project.get(projectId);
+                    if (project?.client_id) {
+                        const client = await base44.asServiceRole.entities.Client.get(project.client_id);
+                        if (client?.user_id) {
+                            const clientUser = await base44.asServiceRole.entities.User.get(client.user_id);
+                            resolvedClientName = clientUser?.full_name || client.company_name || resolvedClientName;
+                        } else {
+                            resolvedClientName = client?.company_name || resolvedClientName;
+                        }
+                        if (client?.company_name && resolvedClientName !== client.company_name) {
+                            resolvedClientName = `${resolvedClientName} (${client.company_name})`;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch client name:', e);
+                }
+            }
 
             const eventData = {
-                summary: projectTitle, // Just the project title
-                location: location || '', // Address/location for the shoot
-                description: `Client: ${clientName || 'N/A'}\nProject ID: ${projectId}\nDirect link: ${req.headers.get('origin')}/AdminProjectDetail?id=${projectId}`,
+                summary: projectTitle,
+                location: location || '',
+                description: `Klant: ${resolvedClientName}\nProject ID: ${projectId}\nDirect link: https://basmichel.base44.app/AdminProjectDetail?id=${projectId}`,
                 start: {
                     dateTime: startDateTime,
                     timeZone: 'Europe/Amsterdam', // Netherlands timezone
