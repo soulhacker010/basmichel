@@ -44,47 +44,41 @@ Deno.serve(async (req) => {
             }
             const durationMinutes = sessionType?.duration_minutes || 60;
 
-            // Calculate end time based on duration, unless end_datetime is explicitly provided
-            const startDate = new Date(sessionData.start_datetime);
-            const endDate = sessionData.end_datetime
-                ? new Date(sessionData.end_datetime)
-                : new Date(startDate.getTime() + (durationMinutes * 60 * 1000));
-
             // Pass the original datetime string directly (Amsterdam local time)
-            // Do NOT use toISOString() as that converts to UTC causing 1-2h offset
             const startISO = sessionData.start_datetime.includes('T') ? sessionData.start_datetime : `${sessionData.start_datetime}T00:00:00`;
             const endISO = sessionData.end_datetime
                 ? (sessionData.end_datetime.includes('T') ? sessionData.end_datetime : `${sessionData.end_datetime}T00:00:00`)
                 : new Date(new Date(startISO.replace(' ', 'T')).getTime() + durationMinutes * 60000).toISOString().slice(0, 19);
 
-            // Get client name
+            // Get client name and company name
             let clientName = 'Geen klant';
+            let companyName = null;
             if (sessionData.client_id) {
                 let client = null;
                 try { client = await base44.asServiceRole.entities.Client.get(sessionData.client_id); } catch(e) {}
                 if (client) {
+                    companyName = client.company_name || null;
                     if (client.user_id) {
-                        const user = await base44.asServiceRole.entities.User.get(client.user_id);
-                        // Try full_name first, then first_name + last_name, then company_name
-                        const fullName = user?.full_name ||
-                            (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : null) ||
-                            user?.first_name || user?.last_name;
-                        clientName = fullName || client.company_name || 'Onbekend';
+                        try {
+                            const clientUser = await base44.asServiceRole.entities.User.get(client.user_id);
+                            const fullName = clientUser?.full_name ||
+                                (clientUser?.first_name && clientUser?.last_name ? `${clientUser.first_name} ${clientUser.last_name}` : null) ||
+                                clientUser?.first_name || clientUser?.last_name;
+                            clientName = fullName || client.company_name || 'Onbekend';
+                        } catch(e) {
+                            clientName = client.company_name || 'Onbekend';
+                        }
                     } else {
                         clientName = client.company_name || 'Onbekend';
+                    }
+                    // Use contact_name if available
+                    if (client.contact_name) {
+                        clientName = client.contact_name;
                     }
                 }
             }
 
-            // Get company name separately for description
-            let companyName = null;
-            if (sessionData.client_id) {
-                try {
-                    const clientForCompany = await base44.asServiceRole.entities.Client.get(sessionData.client_id);
-                    companyName = clientForCompany?.company_name || null;
-                } catch(e) {}
-            }
-
+            // Build description
             const descriptionLines = [
                 `Pakket: ${sessionType?.name || 'Onbekend'}`,
                 companyName ? `Klant: ${clientName} (${companyName})` : `Klant: ${clientName}`,
@@ -108,7 +102,6 @@ Deno.serve(async (req) => {
 
             let response;
             if (calendarEventId) {
-                // Update existing event
                 response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${calendarEventId}`, {
                     method: 'PUT',
                     headers: {
@@ -118,17 +111,6 @@ Deno.serve(async (req) => {
                     body: JSON.stringify(eventData)
                 });
             } else {
-                // Create new event
-                response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(eventData)
-                });
-            } else {
-                // Create new event
                 response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
                     method: 'POST',
                     headers: {
@@ -175,15 +157,13 @@ Deno.serve(async (req) => {
             return Response.json({ success: true });
         }
 
-        // Check Calendar Availability using Events List API
-        // (FreeBusy API requires extra scopes that Base44 connector doesn't provide)
+        // Check Calendar Availability
         if (action === 'checkAvailability') {
             if (!timeMin || !timeMax) {
                 return Response.json({ error: 'timeMin and timeMax are required' }, { status: 400 });
             }
 
             try {
-                // Use Events List API instead of FreeBusy (same permissions as event creation)
                 const params = new URLSearchParams({
                     timeMin: timeMin,
                     timeMax: timeMax,
@@ -191,8 +171,6 @@ Deno.serve(async (req) => {
                     orderBy: 'startTime',
                     fields: 'items(summary,start,end,status,transparency)'
                 });
-
-                console.log('Fetching calendar events for:', timeMin, 'to', timeMax);
 
                 const response = await fetch(
                     `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params.toString()}`,
@@ -205,11 +183,8 @@ Deno.serve(async (req) => {
                     }
                 );
 
-                console.log('Events List response status:', response.status);
-
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error('Events List API Error:', errorText);
                     return Response.json({
                         success: false,
                         busyTimes: [],
@@ -219,10 +194,7 @@ Deno.serve(async (req) => {
 
                 const data = await response.json();
                 const events = data.items || [];
-                console.log('Calendar events found:', events.length);
 
-                // Convert events to busy time ranges
-                // Skip transparent events (events that don't block time) and cancelled events
                 const busyTimes = events
                     .filter((event) => event.status !== 'cancelled' && event.transparency !== 'transparent')
                     .map((event) => {
@@ -236,15 +208,12 @@ Deno.serve(async (req) => {
                     })
                     .filter((busy) => busy.start && busy.end);
 
-                console.log('Busy times from events:', JSON.stringify(busyTimes));
-
                 return Response.json({
                     success: true,
                     busyTimes: busyTimes
                 });
 
             } catch (eventsError) {
-                console.error('Events List internal error:', eventsError);
                 return Response.json({
                     success: false,
                     busyTimes: [],
@@ -268,29 +237,47 @@ Deno.serve(async (req) => {
 
             for (const session of unsynced) {
                 try {
-                    // Get session type
                     let sessionType = null;
                     if (session.session_type_id) {
                         try { sessionType = await base44.asServiceRole.entities.SessionType.get(session.session_type_id); } catch(e) {}
                     }
                     const durationMinutes = sessionType?.duration_minutes || 60;
 
-                    // Use datetime string directly to avoid UTC conversion
                     const startISO = session.start_datetime.includes('T') ? session.start_datetime.slice(0, 19) : `${session.start_datetime}T00:00:00`;
                     let endISO;
                     if (session.end_datetime) {
                         endISO = session.end_datetime.includes('T') ? session.end_datetime.slice(0, 19) : `${session.end_datetime}T00:00:00`;
                     } else {
-                        const startMs = new Date(startISO).getTime();
-                        const endMs = startMs + durationMinutes * 60000;
-                        endISO = new Date(endMs).toISOString().slice(0, 19);
+                        endISO = new Date(new Date(startISO).getTime() + durationMinutes * 60000).toISOString().slice(0, 19);
                     }
 
+                    // Get client info
+                    let bulkClientName = 'Geen klant';
+                    let bulkCompanyName = null;
+                    if (session.client_id) {
+                        try {
+                            const c = await base44.asServiceRole.entities.Client.get(session.client_id);
+                            bulkCompanyName = c?.company_name || null;
+                            bulkClientName = c?.contact_name || c?.company_name || 'Onbekend';
+                            if (c?.user_id) {
+                                const u = await base44.asServiceRole.entities.User.get(c.user_id);
+                                if (u?.full_name) bulkClientName = c?.contact_name || u.full_name;
+                            }
+                        } catch(e) {}
+                    }
+
+                    const bulkDesc = [
+                        `Pakket: ${sessionType?.name || 'Onbekend'}`,
+                        bulkCompanyName ? `Klant: ${bulkClientName} (${bulkCompanyName})` : `Klant: ${bulkClientName}`,
+                        session.notes ? `Notities: ${session.notes}` : null,
+                    ].filter(Boolean).join('\n');
+
                     const eventData = {
-                        summary: `${sessionType?.name || 'Sessie'} - ${clientName}`,
-                        description: `Type: ${sessionType?.name || 'Onbekend'}\nKlant: ${clientName}\nLocatie: ${location || 'N/A'}`,
-                        start: { dateTime: startDate.toISOString(), timeZone: 'Europe/Amsterdam' },
-                        end: { dateTime: endDate.toISOString(), timeZone: 'Europe/Amsterdam' },
+                        summary: `${session.location || 'Sessie'} - ${bulkClientName}`,
+                        location: session.location || '',
+                        description: bulkDesc,
+                        start: { dateTime: startISO, timeZone: 'Europe/Amsterdam' },
+                        end: { dateTime: endISO, timeZone: 'Europe/Amsterdam' },
                         colorId: '10'
                     };
 
