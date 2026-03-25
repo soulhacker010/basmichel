@@ -102,7 +102,11 @@ export default function NotificationCenter({ userId, clientId, isAdmin = false }
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className={cn("w-96 p-0", darkMode && "bg-gray-800 border-gray-700")} align="end">
+      <PopoverContent
+        className={cn("w-80 sm:w-96 p-0 rounded-2xl overflow-hidden", darkMode && "bg-gray-800 border-gray-700")}
+        style={!darkMode ? { background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' } : {}}
+        align="end"
+      >
         <div className={cn("flex items-center justify-between p-4 border-b", darkMode ? "border-gray-700" : "border-gray-200")}>
           <h3 className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>Meldingen</h3>
           {unreadCount > 0 && (

@@ -156,15 +156,15 @@ export default function AdminClients() {
   };
 
   return (
-    <div className={cn("min-h-screen", darkMode ? "bg-gradient-to-b from-gray-900 to-gray-800" : "bg-gradient-to-b from-white to-gray-50")}>
-      <div className="max-w-7xl mx-auto px-6 py-12">
+    <div>
+      <div className="max-w-screen-2xl mx-auto">
         <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h1 className={cn("text-3xl font-light mb-2", darkMode ? "text-gray-100" : "text-gray-900")}>Klanten</h1>
               <p className={cn(darkMode ? "text-gray-400" : "text-gray-500")}>Beheer je klanten en hun gegevens</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               <Button 
                 variant="outline"
                 onClick={() => setIsInviteDialogOpen(true)}
@@ -187,7 +187,7 @@ export default function AdminClients() {
           </div>
 
           {/* Search */}
-          <div className="relative max-w-md">
+          <div className="relative w-full sm:max-w-md">
             <Search className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />
             <Input
               placeholder="Zoek op naam, e-mail of bedrijf..."

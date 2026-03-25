@@ -148,7 +148,7 @@ export default function AdminTemplates() {
   }, { all: templates.length });
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-screen-2xl mx-auto">
       <PageHeader 
         title="Sjablonen"
         description="Beheer je document- en e-mailsjablonen"

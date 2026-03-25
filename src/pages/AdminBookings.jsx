@@ -500,7 +500,7 @@ export default function AdminBookings() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-screen-2xl mx-auto">
       <PageHeader 
         title="Boekingen"
         description="Beheer je sessies en kalender"
@@ -532,33 +532,36 @@ export default function AdminBookings() {
       />
 
       {/* Calendar Navigation */}
-      <div className={cn("rounded-xl mb-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
-        <div className={cn("p-4 flex items-center justify-between border-b", darkMode ? "border-gray-700" : "border-gray-50")}>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-            <h2 className={cn("text-lg font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
+      <div className={cn("rounded-xl mb-6 overflow-hidden", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
+        <div className={cn("p-3 border-b", darkMode ? "border-gray-700" : "border-gray-50")}>
+          {/* Top row: nav + month title */}
+          <div className="flex items-center gap-2 mb-2">
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={() => setCurrentDate(subMonths(currentDate, 1))}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+            <h2 className={cn("text-base font-semibold flex-1", darkMode ? "text-gray-100" : "text-gray-900")}>
               {format(currentDate, 'MMMM yyyy', { locale: nl })}
             </h2>
           </div>
+          {/* Bottom row: action buttons */}
           <div className="flex items-center gap-2">
             <Button 
               variant="outline" 
               size="sm"
+              className="flex-1 text-xs h-8"
               onClick={() => setCurrentDate(new Date())}
             >
               Vandaag
@@ -566,6 +569,7 @@ export default function AdminBookings() {
             <Button 
               variant="outline" 
               size="sm"
+              className="flex-1 text-xs h-8"
               onClick={() => setIsBlockedDialogOpen(true)}
             >
               Tijd Blokkeren
@@ -574,107 +578,132 @@ export default function AdminBookings() {
         </div>
 
         {/* Calendar Grid */}
-        <div className="p-4">
+        <div className="p-0 sm:p-2">
           {/* Weekday Headers */}
-          <div className="grid grid-cols-7 mb-2">
-            {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map(day => (
-              <div key={day} className={cn("text-center text-xs font-medium py-2", darkMode ? "text-gray-400" : "text-gray-500")}>
+          <div className="grid grid-cols-7 mb-1">
+            {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map((day, i) => (
+              <div key={day} className={cn(
+                "text-center text-xs font-semibold py-2 uppercase tracking-wide",
+                i >= 5
+                  ? darkMode ? "text-gray-500" : "text-gray-400"
+                  : darkMode ? "text-gray-400" : "text-gray-500"
+              )}>
                 {day}
               </div>
             ))}
           </div>
 
           {/* Calendar Days */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7">
             {calendarDays.map(day => {
               const daySessions = getSessionsForDay(day);
               const dayBlocked = getBlockedForDay(day);
+              const dayCalendarEvents = getCalendarEventsForDay(day);
               const isCurrentMonth = isSameMonth(day, currentDate);
               const isToday = isSameDay(day, new Date());
+              const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+
+              const allItems = [
+                ...daySessions.map(s => ({ ...s, _type: 'session' })),
+                ...dayBlocked.map(b => ({ ...b, _type: 'blocked' })),
+                ...dayCalendarEvents.map(c => ({ ...c, _type: 'calendar' }))
+              ].sort((a, b) => new Date(a.start_datetime || a.start) - new Date(b.start_datetime || b.start));
 
               return (
                 <div
                   key={day.toISOString()}
-                  onClick={() => {
-                    setSelectedDate(day);
-                    setIsDayOverviewOpen(true);
-                  }}
+                  onClick={() => { setSelectedDate(day); setIsDayOverviewOpen(true); }}
                   className={cn(
-                    "min-h-24 p-1.5 rounded-lg border cursor-pointer transition-colors",
-                    darkMode 
-                      ? isCurrentMonth 
-                        ? "bg-gray-700 border-gray-600" 
-                        : "bg-gray-800 border-gray-700"
-                      : isCurrentMonth 
-                        ? "bg-white border-gray-100" 
-                        : "bg-gray-50 border-gray-50",
-                    isToday && "ring-2 ring-[#A8B5A0]",
-                    "hover:border-[#A8B5A0]"
+                    "relative cursor-pointer border-t py-1 px-0.5 min-h-[60px] sm:min-h-[90px] transition-colors",
+                    darkMode
+                      ? "border-gray-700 hover:bg-gray-700/50"
+                      : "border-gray-100 hover:bg-gray-50/80",
+                    !isCurrentMonth && (darkMode ? "opacity-30" : "opacity-40"),
                   )}
                 >
-                  <div className={cn(
-                    "text-sm font-medium mb-1",
-                    darkMode 
-                      ? isCurrentMonth ? "text-gray-100" : "text-gray-600"
-                      : isCurrentMonth ? "text-gray-900" : "text-gray-400"
-                  )}>
-                    {format(day, 'd')}
+                  {/* Day Number */}
+                  <div className="flex justify-center mb-1">
+                    <span className={cn(
+                      "w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium transition-colors",
+                      isToday
+                      ? "bg-[#A8B5A0] text-white font-semibold"
+                        : isWeekend
+                          ? darkMode ? "text-gray-400" : "text-gray-400"
+                          : darkMode ? "text-gray-100" : "text-gray-800"
+                    )}>
+                      {format(day, 'd')}
+                    </span>
                   </div>
-                  <div className="space-y-0.5">
-                    {(() => {
-                      const dayCalendarEvents = getCalendarEventsForDay(day);
-                      const allItems = [
-                        ...daySessions.map(s => ({ ...s, _type: 'session' })),
-                        ...dayBlocked.map(b => ({ ...b, _type: 'blocked' })),
-                        ...dayCalendarEvents.map(c => ({ ...c, _type: 'calendar' }))
-                      ].sort((a, b) => {
-                        const dateA = new Date(a.start_datetime || a.start);
-                        const dateB = new Date(b.start_datetime || b.start);
-                        return dateA.getTime() - dateB.getTime();
-                      });
 
-                      return (
-                        <>
-                          {allItems.slice(0, 3).map((item, idx) => {
-                            if (item._type === 'session') {
-                              const type = sessionTypes.find(t => t.id === item.session_type_id);
-                              return (
-                                <div
-                                  key={`session-${item.id}`}
-                                  className="text-xs px-1.5 py-0.5 rounded truncate"
-                                  style={{ backgroundColor: type?.color || '#E8EDE5', color: '#5C6B52' }}
-                                >
-                                  {item.start_datetime && format(new Date(item.start_datetime), 'HH:mm')} {item.location || 'Sessie'}
-                                </div>
-                              );
-                            } else if (item._type === 'blocked') {
-                              return (
-                                <div
-                                  key={`blocked-${item.id}`}
-                                  className={cn("text-xs px-1.5 py-0.5 rounded truncate", darkMode ? "bg-gray-600/50 text-gray-300" : "bg-gray-100/80 text-gray-600")}
-                                >
-                                  {item.start_datetime && format(new Date(item.start_datetime), 'HH:mm')} Geblokkeerd
-                                </div>
-                              );
-                            } else {
-                              return (
-                                <div
-                                  key={`cal-${idx}`}
-                                  className="text-xs px-1.5 py-0.5 rounded truncate bg-blue-100/50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                                >
-                                  {item.start && format(new Date(item.start), 'HH:mm')} {item.summary || 'Externe afspraak'}
-                                </div>
-                              );
-                            }
-                          })}
-                          {allItems.length > 3 && (
-                            <div className={cn("text-xs px-1.5", darkMode ? "text-gray-500" : "text-gray-400")}>
-                              +{allItems.length - 3} meer
+                  {/* Event Bars - desktop shows text, mobile shows colored bars */}
+                  <div className="space-y-0.5 px-0.5">
+                    {/* Mobile: colored dots/bars */}
+                    <div className="flex flex-col gap-0.5 sm:hidden">
+                      {allItems.slice(0, 3).map((item, idx) => {
+                        let color = '#A8B5A0';
+                        if (item._type === 'session') {
+                          const type = sessionTypes.find(t => t.id === item.session_type_id);
+                          color = type?.color || '#A8B5A0';
+                        } else if (item._type === 'blocked') {
+                          color = '#9CA3AF';
+                        } else {
+                          color = '#3B82F6';
+                        }
+                        return (
+                          <div
+                            key={idx}
+                            className="h-1 rounded-full w-full"
+                            style={{ backgroundColor: color }}
+                          />
+                        );
+                      })}
+                      {allItems.length > 3 && (
+                        <div className={cn("text-center text-[9px] leading-none", darkMode ? "text-gray-500" : "text-gray-400")}>
+                          +{allItems.length - 3}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Desktop: text labels */}
+                    <div className="hidden sm:flex flex-col gap-0.5">
+                      {allItems.slice(0, 3).map((item, idx) => {
+                        if (item._type === 'session') {
+                          const type = sessionTypes.find(t => t.id === item.session_type_id);
+                          return (
+                            <div
+                              key={`session-${item.id}`}
+                              className="text-xs px-1.5 py-0.5 rounded truncate font-medium"
+                              style={{ backgroundColor: (type?.color || '#A8B5A0') + '30', color: type?.color || '#5C6B52', border: `1px solid ${(type?.color || '#A8B5A0')}50` }}
+                            >
+                              {item.start_datetime && format(new Date(item.start_datetime), 'HH:mm')} {item.location || 'Sessie'}
                             </div>
-                          )}
-                        </>
-                      );
-                    })()}
+                          );
+                        } else if (item._type === 'blocked') {
+                          return (
+                            <div
+                              key={`blocked-${item.id}`}
+                              className={cn("text-xs px-1.5 py-0.5 rounded truncate", darkMode ? "bg-gray-600/50 text-gray-300" : "bg-gray-200/80 text-gray-500")}
+                            >
+                              {item.start_datetime && format(new Date(item.start_datetime), 'HH:mm')} Geblokkeerd
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <div
+                              key={`cal-${idx}`}
+                              className="text-xs px-1.5 py-0.5 rounded truncate bg-blue-50 text-blue-600 border border-blue-100"
+                            >
+                              {item.start && format(new Date(item.start), 'HH:mm')} {item.summary || 'Extern'}
+                            </div>
+                          );
+                        }
+                      })}
+                      {allItems.length > 3 && (
+                        <div className={cn("text-xs px-1.5", darkMode ? "text-gray-500" : "text-gray-400")}>
+                          +{allItems.length - 3} meer
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

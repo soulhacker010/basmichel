@@ -350,7 +350,7 @@ export default function AdminDocuments() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-screen-2xl mx-auto">
       <PageHeader 
         title="Documenten"
         description="Beheer contracten, vragenlijsten en offertes"
@@ -360,20 +360,22 @@ export default function AdminDocuments() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className={cn("border-b px-4 pt-4", darkMode ? "border-gray-700" : "border-gray-100")}>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-              <TabsList className={cn(darkMode ? "bg-gray-700" : "bg-gray-100")}>
-                <TabsTrigger value="contracts">
-                  <FileText className="w-4 h-4 mr-2" />
-                  Contracten ({contracts.length})
-                </TabsTrigger>
-                <TabsTrigger value="questionnaires">
-                  <FileQuestion className="w-4 h-4 mr-2" />
-                  Vragenlijsten ({questionnaires.length})
-                </TabsTrigger>
-                <TabsTrigger value="quotes">
-                  <FileCheck className="w-4 h-4 mr-2" />
-                  Offertes ({quotes.length})
-                </TabsTrigger>
-              </TabsList>
+              <div className="overflow-x-auto -mx-1 px-1">
+                <TabsList className={cn("w-max", darkMode ? "bg-gray-700" : "bg-gray-100")}>
+                  <TabsTrigger value="contracts" className="whitespace-nowrap">
+                    <FileText className="w-4 h-4 mr-2" />
+                    Contracten ({contracts.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="questionnaires" className="whitespace-nowrap">
+                    <FileQuestion className="w-4 h-4 mr-2" />
+                    Vragenlijsten ({questionnaires.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="quotes" className="whitespace-nowrap">
+                    <FileCheck className="w-4 h-4 mr-2" />
+                    Offertes ({quotes.length})
+                  </TabsTrigger>
+                </TabsList>
+              </div>
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <Search className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />

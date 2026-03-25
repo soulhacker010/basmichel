@@ -5,7 +5,10 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { 
   FolderKanban, 
-  Images
+  Images,
+  CalendarCheck,
+  Clock,
+  MapPin
 } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from 'date-fns';
@@ -41,6 +44,16 @@ export default function AdminDashboard() {
   const { data: projects = [] } = useQuery({
     queryKey: ['projects'],
     queryFn: () => base44.entities.Project.list('-created_date', 4),
+  });
+
+  const { data: allSessions = [] } = useQuery({
+    queryKey: ['sessions'],
+    queryFn: () => base44.entities.Session.list(),
+  });
+
+  const { data: sessionTypes = [] } = useQuery({
+    queryKey: ['sessionTypes'],
+    queryFn: () => base44.entities.SessionType.list(),
   });
 
   const { data: clients = [] } = useQuery({
@@ -98,7 +111,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-screen-2xl mx-auto">
       {/* Header - Pixieset style */}
       <div className="mb-10">
         <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>
@@ -118,7 +131,7 @@ export default function AdminDashboard() {
         </div>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={revenueData}>
+            <AreaChart data={revenueData} margin={{ left: -30, right: 10, top: 5, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#A8B5A0" stopOpacity={0.2}/>
@@ -135,6 +148,7 @@ export default function AdminDashboard() {
                 tick={{ fill: darkMode ? '#9ca3af' : '#9ca3af', fontSize: 12 }}
                 axisLine={{ stroke: darkMode ? '#374151' : '#e5e7eb' }}
                 tickFormatter={(value) => `€${value}`}
+                width={55}
               />
               <Tooltip 
                 contentStyle={{ 
@@ -163,6 +177,75 @@ export default function AdminDashboard() {
           Bekijk facturen
         </Link>
       </div>
+
+      {/* Today's Sessions */}
+      {(() => {
+        const today = new Date();
+        const todaySessions = allSessions.filter(s =>
+          s.start_datetime && 
+          new Date(s.start_datetime).toDateString() === today.toDateString() &&
+          s.status !== 'geannuleerd'
+        ).sort((a, b) => new Date(a.start_datetime) - new Date(b.start_datetime));
+
+        return (
+          <div className={cn("rounded-lg p-6 mb-6", darkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-100")}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className={cn("text-xs uppercase tracking-wide mb-1", darkMode ? "text-gray-500" : "text-gray-400")}>Vandaag</p>
+                <h2 className={cn("text-base font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
+                  {today.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </h2>
+              </div>
+              <Link to={createPageUrl('AdminBookings')} className={cn("text-sm", darkMode ? "text-gray-400 hover:text-gray-200" : "text-gray-500 hover:text-gray-700")}>
+                Bekijk agenda
+              </Link>
+            </div>
+            {todaySessions.length === 0 ? (
+              <div className="flex items-center gap-3 py-4">
+                <CalendarCheck className={cn("w-8 h-8", darkMode ? "text-gray-600" : "text-gray-300")} />
+                <p className={cn("text-sm", darkMode ? "text-gray-500" : "text-gray-400")}>Geen opdrachten gepland voor vandaag</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {todaySessions.map(session => {
+                  const type = sessionTypes.find(t => t.id === session.session_type_id);
+                  const client = clients.find(c => c.id === session.client_id);
+                  return (
+                    <div key={session.id} className={cn("flex items-start gap-3 p-3 rounded-lg", darkMode ? "bg-gray-700/50" : "bg-gray-50")}>
+                      <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: type?.color || '#A8B5A0' }} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={cn("font-medium text-sm", darkMode ? "text-gray-100" : "text-gray-900")}>
+                            {type?.name || 'Sessie'}
+                          </span>
+                          {client && (
+                            <span className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
+                              — {client.company_name || client.contact_name}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 mt-1 flex-wrap">
+                          <span className={cn("flex items-center gap-1 text-xs", darkMode ? "text-gray-400" : "text-gray-500")}>
+                            <Clock className="w-3 h-3" />
+                            {format(new Date(session.start_datetime), 'HH:mm')} – {format(new Date(session.end_datetime), 'HH:mm')}
+                          </span>
+                          {session.location && (
+                            <span className={cn("flex items-center gap-1 text-xs", darkMode ? "text-gray-400" : "text-gray-500")}>
+                              <MapPin className="w-3 h-3" />
+                              {session.location}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <StatusBadge status={session.status} />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Projects */}

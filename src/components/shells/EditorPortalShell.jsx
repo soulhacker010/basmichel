@@ -99,8 +99,12 @@ export default function EditorPortalShell({ children, currentPageName }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FCFCFB] flex items-center justify-center">
-        <div className="animate-pulse text-[#A8B5A0]">Loading...</div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <img
+          src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/9370b8342_BasMichel_K152.png"
+          alt="Bas Michel"
+          className="h-16 animate-pulse"
+        />
       </div>
     );
   }

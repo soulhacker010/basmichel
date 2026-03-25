@@ -17,7 +17,7 @@ import {
   Check } from
 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const services = [
 {
@@ -239,20 +239,44 @@ export default function Home() {
         </div>
 
         {/* Mobile Menu */}
+        <AnimatePresence>
         {menuOpen &&
-        <div className="md:hidden bg-white border-t border-gray-100 px-6 py-6 space-y-4">
-            <a href="#diensten" className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
-              Diensten
-            </a>
-            <a href="#portfolio" className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
-              Portfolio
-            </a>
-            <Link to={createPageUrl('Contact')} className="block text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
-              Contact
-            </Link>
-          </div>
-        }
-      </nav>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: -8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: -8 }}
+          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          className="md:hidden mx-3 mb-3 rounded-2xl overflow-hidden"
+          style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
+            <div className="px-4 py-3 space-y-1">
+              <a href="#diensten" className="flex items-center px-3 py-3 rounded-xl text-gray-700 text-sm font-medium hover:bg-black/5 transition-colors" onClick={() => setMenuOpen(false)}>
+                Diensten
+              </a>
+              <a href="#portfolio" className="flex items-center px-3 py-3 rounded-xl text-gray-700 text-sm font-medium hover:bg-black/5 transition-colors" onClick={() => setMenuOpen(false)}>
+                Portfolio
+              </a>
+              <Link to={createPageUrl('Contact')} className="flex items-center px-3 py-3 rounded-xl text-gray-700 text-sm font-medium hover:bg-black/5 transition-colors" onClick={() => setMenuOpen(false)}>
+                Contact
+              </Link>
+            </div>
+            <div className="px-4 pb-4" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+              <div className="pt-3">
+                {isAuthenticated ?
+                  <Link to={createPageUrl(user?.role === 'admin' ? 'AdminDashboard' : 'ClientDashboard')} onClick={() => setMenuOpen(false)}>
+                    <Button className="w-full rounded-xl text-sm font-medium" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)' }}>
+                      Mijn Account
+                    </Button>
+                  </Link> :
+                  <Button onClick={() => { setMenuOpen(false); handleLogin(); }} className="w-full rounded-xl text-sm font-medium" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)' }}>
+                    Inloggen voor Makelaars
+                  </Button>
+                }
+              </div>
+            </div>
+            </motion.div>
+            }
+            </AnimatePresence>
+            </nav>
 
       {/* Hero Slider */}
       <section className="relative h-screen overflow-hidden">

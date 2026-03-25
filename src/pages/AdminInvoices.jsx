@@ -151,7 +151,7 @@ export default function AdminInvoices() {
 
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-screen-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>Facturen</h1>
@@ -175,8 +175,8 @@ export default function AdminInvoices() {
       </div>
 
       {/* Search and Filters */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="mb-6 flex flex-col gap-4">
+        <div className="relative w-full sm:max-w-md">
           <Search className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />
           <Input
             placeholder="Zoek e-mail of contactnaam"
@@ -185,14 +185,16 @@ export default function AdminInvoices() {
             className="pl-10 h-10 rounded border-gray-200"
           />
         </div>
-        <Tabs value={statusFilter} onValueChange={setStatusFilter} className="shrink-0">
-          <TabsList className={cn("h-10 border", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200")}>
-            <TabsTrigger value="all" className="text-sm">Alle Facturen</TabsTrigger>
-            <TabsTrigger value="concept" className="text-sm">Concept</TabsTrigger>
-            <TabsTrigger value="verzonden" className="text-sm">Onbetaald</TabsTrigger>
-            <TabsTrigger value="betaald" className="text-sm">Betaald</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="overflow-x-auto -mx-1 px-1">
+          <Tabs value={statusFilter} onValueChange={setStatusFilter}>
+            <TabsList className={cn("h-10 border w-max", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200")}>
+              <TabsTrigger value="all" className="text-sm whitespace-nowrap">Alle Facturen</TabsTrigger>
+              <TabsTrigger value="concept" className="text-sm whitespace-nowrap">Concept</TabsTrigger>
+              <TabsTrigger value="verzonden" className="text-sm whitespace-nowrap">Onbetaald</TabsTrigger>
+              <TabsTrigger value="betaald" className="text-sm whitespace-nowrap">Betaald</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {/* Invoices Table */}
@@ -203,8 +205,8 @@ export default function AdminInvoices() {
           <p className={cn("text-sm", darkMode ? "text-gray-500" : "text-gray-400")}>Probeer je filters aan te passen</p>
         </div>
       ) : (
-        <div className={cn("rounded-lg border", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100")}>
-          <table className="w-full">
+        <div className={cn("rounded-lg border overflow-x-auto", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100")}>
+          <table className="w-full min-w-[600px]">
             <thead>
               <tr className={cn("border-b", darkMode ? "border-gray-700" : "border-gray-100")}>
                 <th className={cn("text-left px-6 py-3 text-xs font-medium uppercase tracking-wide", darkMode ? "text-gray-400" : "text-gray-500")}>Factuur #</th>

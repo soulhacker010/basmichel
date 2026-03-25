@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import ProjectTimeline from '@/components/project/ProjectTimeline';
+import ClientNotesSection from '@/components/project/ClientNotesSection';
 
 const statusSteps = [
   { key: 'geboekt', label: 'Geboekt' },
@@ -809,7 +810,35 @@ Open project: ${window.location.origin}${link}
           </div>
         )}
 
-        <div className="relative pt-2">
+        {/* Mobile progress: compact pill */}
+        <div className="block md:hidden">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">Voortgang</span>
+            <span className="text-xs font-semibold text-[#5C6B52]">
+              Stap {currentStepIndex + 1} van {statusSteps.length} · {statusSteps[currentStepIndex]?.label}
+            </span>
+          </div>
+          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#5C6B52] rounded-full transition-all duration-700"
+              style={{ width: `${(currentStepIndex / (statusSteps.length - 1)) * 100}%` }}
+            />
+          </div>
+          <div className="flex justify-between mt-2">
+            {statusSteps.map((step, index) => {
+              const isCompleted = index <= currentStepIndex;
+              return (
+                <div key={step.key} className={cn(
+                  "w-2 h-2 rounded-full transition-all",
+                  isCompleted ? "bg-[#5C6B52]" : "bg-gray-200"
+                )} />
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Desktop progress: full stepper */}
+        <div className="hidden md:block relative pt-2">
           <div className="absolute top-7 left-6 right-6 h-0.5 bg-gray-100">
             <div
               className="h-full bg-[#5C6B52] transition-all duration-700"
@@ -1049,14 +1078,19 @@ Open project: ${window.location.origin}${link}
           )}
         </div>
         <div className="mt-6 pt-6 border-t border-gray-100">
-          <Button
-            variant="outline"
-            onClick={() => setRevisionOpen(true)}
-            className="w-full"
-          >
-            Revisie aanvragen
-          </Button>
+          <ClientNotesSection projectId={projectId} initialNotes={project.client_notes} />
         </div>
+        {project.status === 'klaar' && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <Button
+              variant="outline"
+              onClick={() => setRevisionOpen(true)}
+              className="w-full"
+            >
+              Revisie aanvragen
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Gallery Link - when status is "klaar" and gallery exists OR delivery files exist */}
@@ -1065,27 +1099,32 @@ Open project: ${window.location.origin}${link}
           to={createPageUrl(`ProjectGalleryView?id=${projectId}`)}
           className="block bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow mb-8"
         >
-          <div className="p-8">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Galerij</h2>
-            <div className="flex items-center gap-6">
-              <div className="w-32 h-32 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                {(galleries[0]?.cover_image_url || deliveryFiles.find(f => f.mime_type?.startsWith('image/'))?.file_url) ? (
-                  <img
-                    src={galleries[0]?.cover_image_url || deliveryFiles.find(f => f.mime_type?.startsWith('image/'))?.file_url}
-                    alt="Gallery preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <FileText className="w-12 h-12 text-gray-300" />
-                )}
+          {/* Cover image full width */}
+          {(galleries[0]?.cover_image_url || deliveryFiles.find(f => f.mime_type?.startsWith('image/'))?.file_url) ? (
+            <div className="w-full h-44 bg-gray-100 overflow-hidden">
+              <img
+                src={galleries[0]?.cover_image_url || deliveryFiles.find(f => f.mime_type?.startsWith('image/'))?.file_url}
+                alt="Gallery preview"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-full h-32 bg-gray-50 flex items-center justify-center">
+              <FileText className="w-10 h-10 text-gray-300" />
+            </div>
+          )}
+          <div className="p-5">
+            <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Galerij</p>
+            <p className="font-semibold text-gray-900 text-base">{galleries[0]?.title || project.title}</p>
+            {project.address && (
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <p className="text-sm text-gray-400 truncate">{project.address}{project.city && `, ${project.city}`}</p>
               </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-900 mb-2">{galleries[0]?.title || project.title}</p>
-                <p className="text-sm text-gray-500 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-gray-400" />
-                  {project.title}
-                </p>
-              </div>
+            )}
+            <div className="mt-3 flex items-center gap-1 text-[#5C6B52] text-sm font-medium">
+              <span>Bekijk galerij</span>
+              <ChevronDown className="w-4 h-4 -rotate-90" />
             </div>
           </div>
         </Link>

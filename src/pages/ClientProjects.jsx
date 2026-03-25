@@ -4,25 +4,30 @@ import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { 
-  FolderKanban, 
   Search,
-  MapPin,
   Calendar,
-  ArrowRight
+  ChevronRight,
+  MapPin,
+  Plus
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 const statusConfig = {
-  geboekt: { label: 'Geboekt', color: 'bg-blue-500', bgLight: 'bg-blue-50', textColor: 'text-blue-700' },
-  shoot_uitgevoerd: { label: 'Wordt bewerkt', color: 'bg-purple-500', bgLight: 'bg-purple-50', textColor: 'text-purple-700' },
-  wordt_bewerkt: { label: 'Wordt bewerkt', color: 'bg-purple-500', bgLight: 'bg-purple-50', textColor: 'text-purple-700' },
-  klaar: { label: 'Klaar', color: 'bg-green-500', bgLight: 'bg-green-50', textColor: 'text-green-700' },
+  geboekt: { label: 'Geboekt', dot: 'bg-blue-400', pill: 'bg-blue-50 text-blue-600' },
+  shoot_uitgevoerd: { label: 'Wordt bewerkt', dot: 'bg-purple-400', pill: 'bg-purple-50 text-purple-600' },
+  wordt_bewerkt: { label: 'Wordt bewerkt', dot: 'bg-purple-400', pill: 'bg-purple-50 text-purple-600' },
+  klaar: { label: 'Klaar', dot: 'bg-green-400', pill: 'bg-green-50 text-green-600' },
 };
+
+const filterTabs = [
+  { value: 'all', label: 'Alle' },
+  { value: 'geboekt', label: 'Geboekt' },
+  { value: 'wordt_bewerkt', label: 'Bewerking' },
+  { value: 'klaar', label: 'Klaar' },
+];
 
 export default function ClientProjects() {
   const [user, setUser] = useState(null);
@@ -36,9 +41,7 @@ export default function ClientProjects() {
   });
 
   useEffect(() => {
-    if (userData) {
-      setUser(userData);
-    }
+    if (userData) setUser(userData);
   }, [userData]);
 
   const { data: clients = [] } = useQuery({
@@ -58,148 +61,179 @@ export default function ClientProjects() {
     queryKey: ['clientProjects', clientId],
     queryFn: () => base44.entities.Project.filter({ client_id: clientId }, '-created_date'),
     enabled: !!clientId,
-    refetchInterval: false,
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
 
   const filteredProjects = projects.filter(project => {
-    const matchesSearch = 
+    const matchesSearch =
       project.title?.toLowerCase().includes(search.toLowerCase()) ||
       project.address?.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const statusCounts = {
-    all: projects.length,
-    geboekt: projects.filter(p => p.status === 'geboekt').length,
-    shoot_uitgevoerd: projects.filter(p => p.status === 'shoot_uitgevoerd').length,
-    wordt_bewerkt: projects.filter(p => p.status === 'wordt_bewerkt').length,
-    klaar: projects.filter(p => p.status === 'klaar').length,
-  };
-
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-light text-gray-900">Mijn Projecten</h1>
-          <p className="text-gray-500 mt-1">Bekijk al uw projecten en hun status</p>
-        </div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Projecten</h1>
         <Link to={createPageUrl('ClientBooking')}>
-          <Button className="bg-[#A8B5A0] hover:bg-[#97A690] text-white">
-            <Calendar className="w-4 h-4 mr-2" />
-            Nieuwe Shoot Boeken
-          </Button>
+          <button className="w-9 h-9 rounded-full bg-[#5C6B52] flex items-center justify-center shadow-sm active:scale-95 transition-transform">
+            <Plus className="w-5 h-5 text-white" />
+          </button>
         </Link>
       </div>
 
-      {/* Filters */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            placeholder="Zoek op adres of titel..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-          <TabsList>
-            <TabsTrigger value="all">Alle ({statusCounts.all})</TabsTrigger>
-            <TabsTrigger value="geboekt">Geboekt ({statusCounts.geboekt})</TabsTrigger>
-            <TabsTrigger value="wordt_bewerkt">In bewerking ({statusCounts.wordt_bewerkt})</TabsTrigger>
-            <TabsTrigger value="klaar">Klaar ({statusCounts.klaar})</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      {/* Search */}
+      <div className="relative mb-4 md:max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Input
+          placeholder="Zoeken..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9 h-10 rounded-xl bg-gray-100 border-0 focus-visible:ring-1 text-sm"
+        />
       </div>
 
-      {/* Projects Grid */}
-      {filteredProjects.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 py-16 text-center">
-          <FolderKanban className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-lg font-medium text-gray-900 mb-2">
+      {/* Filter Tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-1 mb-5 scrollbar-hide">
+        {filterTabs.map(tab => (
+          <button
+            key={tab.value}
+            onClick={() => setStatusFilter(tab.value)}
+            className={cn(
+              "flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all",
+              statusFilter === tab.value
+                ? "bg-[#5C6B52] text-white shadow-sm"
+                : "bg-gray-100 text-gray-500"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Projects */}
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1,2,3].map(i => (
+            <div key={i} className="h-20 bg-gray-100 rounded-2xl animate-pulse" />
+          ))}
+        </div>
+      ) : filteredProjects.length === 0 ? (
+        <div className="py-20 text-center">
+          <p className="text-gray-400 text-sm">
             {search || statusFilter !== 'all' ? 'Geen projecten gevonden' : 'Nog geen projecten'}
-          </h2>
-          <p className="text-gray-500 mb-6">
-            {search || statusFilter !== 'all' 
-              ? 'Probeer een andere zoekopdracht of filter'
-              : 'Boek uw eerste shoot om te beginnen'
-            }
           </p>
           {!search && statusFilter === 'all' && (
             <Link to={createPageUrl('ClientBooking')}>
-              <Button className="bg-[#A8B5A0] hover:bg-[#97A690] text-white">
-                Shoot Boeken
-              </Button>
+              <button className="mt-4 px-5 py-2.5 bg-[#5C6B52] text-white text-sm font-medium rounded-full">
+                Shoot boeken
+              </button>
             </Link>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map(project => {
-            const status = statusConfig[project.status];
-            return (
-              <Link
-                key={project.id}
-                to={`${createPageUrl('ClientProjectDetail2')}?id=${project.id}`}
-                className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group"
-              >
-                {/* Status Bar */}
-                <div className="h-2 w-full">
-                  <div 
-                    className={cn("h-full transition-all", status?.color)}
-                    style={{ 
-                      width: project.status === 'geboekt' ? '25%' :
-                             project.status === 'shoot_uitgevoerd' ? '50%' :
-                             project.status === 'wordt_bewerkt' ? '75%' : '100%'
-                    }}
-                  />
-                </div>
-
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="font-medium text-gray-900 group-hover:text-[#5C6B52] transition-colors">
-                        {project.title}
-                      </h3>
-                      {(() => {
-                        const clientData = clients.find(c => c.id === project.client_id);
-                        return clientData?.company_name && (
-                          <div className="text-xs text-gray-400 mt-1">
-                            {clientData.company_name}
-                          </div>
-                        );
-                      })()}
+        <>
+          {/* Mobile: list view */}
+          <div className="block md:hidden bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm divide-y divide-gray-50">
+            {filteredProjects.map((project) => {
+              const status = statusConfig[project.status];
+              const dateValue = project.shoot_date || project.created_date;
+              return (
+                <Link
+                  key={project.id}
+                  to={`${createPageUrl('ClientProjectDetail2')}?id=${project.id}`}
+                  className="flex items-center gap-4 px-4 py-4 active:bg-gray-50 transition-colors"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-[#F0F3EE] flex flex-col items-center justify-center flex-shrink-0">
+                    {dateValue ? (
+                      <>
+                        <span className="text-[10px] font-semibold text-[#5C6B52] uppercase leading-none">
+                          {format(new Date(dateValue), 'MMM', { locale: nl })}
+                        </span>
+                        <span className="text-lg font-bold text-[#3D4D35] leading-tight">
+                          {format(new Date(dateValue), 'd')}
+                        </span>
+                      </>
+                    ) : (
+                      <Calendar className="w-5 h-5 text-[#5C6B52]" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 text-sm truncate">{project.title}</p>
+                    {project.address && (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                        <p className="text-xs text-gray-400 truncate">{project.address}</p>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", status?.dot)} />
+                      <span className="text-xs text-gray-500">{status?.label}</span>
                     </div>
-                    <span className={cn(
-                      "px-2.5 py-1 rounded-full text-xs font-medium",
-                      status?.bgLight,
-                      status?.textColor
-                    )}>
-                      {status?.label}
-                    </span>
                   </div>
+                  <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                </Link>
+              );
+            })}
+          </div>
 
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-400">
-                      {(() => {
-                        const dateValue = project.shoot_date || project.created_date;
-                        return dateValue ? format(new Date(dateValue), 'd MMMM yyyy', { locale: nl }) : '-';
-                      })()}
-                    </span>
-                    <span className="text-[#5C6B52] group-hover:translate-x-1 transition-transform flex items-center gap-1">
-                      Bekijk <ArrowRight className="w-4 h-4" />
-                    </span>
+          {/* Desktop: card grid */}
+          <div className="hidden md:grid md:grid-cols-2 xl:grid-cols-3 gap-4 max-w-4xl">
+            {filteredProjects.map((project) => {
+              const status = statusConfig[project.status];
+              const dateValue = project.shoot_date || project.created_date;
+              return (
+                <Link
+                  key={project.id}
+                  to={`${createPageUrl('ClientProjectDetail2')}?id=${project.id}`}
+                  className="bg-white rounded-lg border border-gray-100 p-5 hover:shadow-sm transition-all block"
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-11 h-11 rounded-xl bg-[#F0F3EE] flex flex-col items-center justify-center flex-shrink-0">
+                      {dateValue ? (
+                        <>
+                          <span className="text-[9px] font-semibold text-[#5C6B52] uppercase leading-none">
+                            {format(new Date(dateValue), 'MMM', { locale: nl })}
+                          </span>
+                          <span className="text-base font-bold text-[#3D4D35] leading-tight">
+                            {format(new Date(dateValue), 'd')}
+                          </span>
+                        </>
+                      ) : (
+                        <Calendar className="w-4 h-4 text-[#5C6B52]" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{project.title}</p>
+                      {project.address && (
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                          <p className="text-xs text-gray-400 truncate">{project.address}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", status?.dot)} />
+                      <span className="text-xs text-gray-500">{status?.label}</span>
+                    </div>
+                    {project.shoot_date && (
+                      <span className="text-xs text-gray-400">
+                        {format(new Date(project.shoot_date), 'd MMM yyyy', { locale: nl })}
+                        {project.shoot_time && ` • ${project.shoot_time}`}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );

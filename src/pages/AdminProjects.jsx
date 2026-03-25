@@ -12,7 +12,8 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
-  User
+  User,
+  ChevronRight
 } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -165,7 +166,7 @@ export default function AdminProjects() {
 
       return project;
     },
-    onSuccess: () => {
+    onSuccess: async (project, variables) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['clientProjects'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
@@ -173,6 +174,99 @@ export default function AdminProjects() {
       setIsDialogOpen(false);
       setEditingProject(null);
       toast.success('Project aangemaakt');
+
+      // Send confirmation email to client
+      try {
+        const client = clients.find(c => c.id === variables.client_id);
+        const user = users.find(u => u.id === client?.user_id);
+        const clientEmail = user?.email;
+        const clientName = user?.full_name || client?.company_name || 'klant';
+        const sessionType = sessionTypes.find(s => s.id === variables.session_type_id);
+        const sessionTypeName = sessionType?.name || '-';
+
+        if (clientEmail) {
+          const shootDate = variables.shoot_date
+            ? new Date(variables.shoot_date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+            : '-';
+          const shootTime = variables.shoot_time || '-';
+          const address = `${variables.address || ''}${variables.city ? ', ' + variables.city : ''}` || '-';
+          const projectNumber = project.project_number || '-';
+
+          await base44.integrations.Core.SendEmail({
+            to: clientEmail,
+            from_name: 'Bas Michel Photography',
+            subject: `Boeking bevestigd – ${project.title}`,
+            body: `
+<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background-color:#f0f0f0;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f0f0;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#5C6B52;padding:32px 36px;">
+              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">Boeking bevestigd</h1>
+              <p style="margin:6px 0 0;color:#d4dccf;font-size:14px;">Bas Michel Photography</p>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:32px 36px;">
+              <p style="margin:0 0 8px;font-size:15px;color:#1a1a1a;"><strong>Beste ${clientName},</strong></p>
+              <p style="margin:0 0 24px;font-size:14px;color:#444;">Je fotoshoot is bevestigd. Hieronder staan de details:</p>
+
+              <!-- Details table -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;font-size:14px;">
+                <tr style="border-bottom:1px solid #e5e7eb;">
+                  <td style="padding:12px 16px;color:#888;width:140px;background:#fafafa;">Dienst</td>
+                  <td style="padding:12px 16px;color:#1a1a1a;font-weight:600;">${sessionTypeName}</td>
+                </tr>
+                <tr style="border-bottom:1px solid #e5e7eb;">
+                  <td style="padding:12px 16px;color:#888;background:#fafafa;">Datum</td>
+                  <td style="padding:12px 16px;color:#1a1a1a;font-weight:600;">${shootDate}</td>
+                </tr>
+                <tr style="border-bottom:1px solid #e5e7eb;">
+                  <td style="padding:12px 16px;color:#888;background:#fafafa;">Tijd</td>
+                  <td style="padding:12px 16px;color:#1a1a1a;font-weight:600;">${shootTime}</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px;color:#888;background:#fafafa;">Adres</td>
+                  <td style="padding:12px 16px;color:#1a1a1a;font-weight:600;">${address}</td>
+                </tr>
+              </table>
+
+              <!-- Button -->
+              <div style="margin-top:28px;">
+                <a href="https://basmichel.base44.app/ClientProjects" style="display:inline-block;background-color:#5C6B52;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:600;">Bekijk project</a>
+              </div>
+
+              <!-- Styling Tips -->
+              <div style="margin-top:24px;padding:16px 20px;background-color:#f7f8f6;border-radius:8px;border-left:3px solid #5C6B52;">
+                <p style="margin:0;font-size:14px;color:#444;">💡 <strong>Tip:</strong> Vergeet niet onze styling tips te bekijken voor de beste resultaten tijdens de fotoshoot: <a href="https://www.basmichel.com/styling-tips" style="color:#5C6B52;font-weight:600;">www.basmichel.com/styling-tips</a></p>
+              </div>
+
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 36px;border-top:1px solid #f0f0f0;text-align:center;">
+              <p style="margin:0;font-size:12px;color:#aaa;">Bas Michel Photography &bull; <a href="mailto:basmichelsite@gmail.com" style="color:#5C6B52;text-decoration:none;">basmichelsite@gmail.com</a></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+            `,
+          });
+        }
+      } catch (emailError) {
+        console.error('Failed to send client confirmation email:', emailError);
+      }
     },
   });
 
@@ -314,7 +408,7 @@ export default function AdminProjects() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-screen-2xl mx-auto">
       {/* Header - Pixieset style */}
       <div className="flex items-center justify-between mb-8">
         <h1 className={cn("text-2xl font-light", darkMode ? "text-gray-100" : "text-gray-900")}>Projecten</h1>
@@ -331,8 +425,8 @@ export default function AdminProjects() {
       </div>
 
       {/* Search and Filters */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="mb-6 flex flex-col gap-4">
+        <div className="relative w-full sm:max-w-md">
           <Search className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4", darkMode ? "text-gray-500" : "text-gray-400")} />
           <Input
             placeholder="Zoek project of contactnaam"
@@ -341,18 +435,20 @@ export default function AdminProjects() {
             className="pl-10 h-10 rounded border-gray-200"
           />
         </div>
-        <Tabs value={statusFilter} onValueChange={setStatusFilter} className="shrink-0">
-          <TabsList className={cn("h-10 border", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200")}>
-            <TabsTrigger value="all" className="text-sm">Alle Projecten</TabsTrigger>
-            <TabsTrigger value="geboekt" className="text-sm">Geboekt</TabsTrigger>
-            <TabsTrigger value="shoot_uitgevoerd" className="text-sm">Shoot uitgevoerd</TabsTrigger>
-            <TabsTrigger value="wordt_bewerkt" className="text-sm">Wordt bewerkt</TabsTrigger>
-            <TabsTrigger value="klaar" className="text-sm">Klaar</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="overflow-x-auto -mx-1 px-1">
+          <Tabs value={statusFilter} onValueChange={setStatusFilter}>
+            <TabsList className={cn("h-10 border w-max", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200")}>
+              <TabsTrigger value="all" className="text-sm whitespace-nowrap">Alle Projecten</TabsTrigger>
+              <TabsTrigger value="geboekt" className="text-sm whitespace-nowrap">Geboekt</TabsTrigger>
+              <TabsTrigger value="shoot_uitgevoerd" className="text-sm whitespace-nowrap">Shoot uitgevoerd</TabsTrigger>
+              <TabsTrigger value="wordt_bewerkt" className="text-sm whitespace-nowrap">Wordt bewerkt</TabsTrigger>
+              <TabsTrigger value="klaar" className="text-sm whitespace-nowrap">Klaar</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
-      {/* Projects Grid */}
+      {/* Projects */}
       {filteredProjects.length === 0 ? (
         <div className={cn("rounded-lg p-16 text-center border", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100")}>
           <FolderKanban className={cn("w-12 h-12 mx-auto mb-4", darkMode ? "text-gray-600" : "text-gray-300")} />
@@ -360,79 +456,138 @@ export default function AdminProjects() {
           <p className={cn("text-sm", darkMode ? "text-gray-500" : "text-gray-400")}>Probeer je filters aan te passen</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredProjects.map(project => (
-            <Link
-              key={project.id}
-              to={`${createPageUrl('AdminProjectDetail')}?id=${project.id}`}
-              className={cn("rounded-lg border p-5 hover:shadow-sm transition-all group block",
-                darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
-              )}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className={cn("font-medium truncate", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h3>
-                  <p className={cn("text-sm truncate", darkMode ? "text-gray-400" : "text-gray-500")}>{getClientName(project.client_id)}</p>
-                  {(() => {
-                    const client = clients.find(c => c.id === project.client_id);
-                    return client?.company_name && (
-                      <p className={cn("text-xs truncate", darkMode ? "text-gray-500" : "text-gray-400")}>{client.company_name}</p>
-                    );
-                  })()}
+        <>
+          {/* Mobile/Tablet: iOS-style list */}
+          <div className={cn("block md:hidden rounded-2xl border overflow-hidden shadow-sm divide-y",
+            darkMode ? "bg-gray-800 border-gray-700 divide-gray-700" : "bg-white border-gray-100 divide-gray-50"
+          )}>
+            {filteredProjects.map(project => {
+              const dateValue = project.shoot_date;
+              const clientName = getClientName(project.client_id);
+              const clientObj = clients.find(c => c.id === project.client_id);
+              return (
+                <div key={project.id} className="flex items-center group">
+                  <Link
+                    to={`${createPageUrl('AdminProjectDetail')}?id=${project.id}`}
+                    className="flex items-center gap-3 px-4 py-3.5 flex-1 min-w-0"
+                  >
+                    {/* Date Badge */}
+                    <div className={cn("w-11 h-11 rounded-xl flex flex-col items-center justify-center flex-shrink-0",
+                      darkMode ? "bg-gray-700" : "bg-[#F0F3EE]"
+                    )}>
+                      {dateValue ? (
+                        <>
+                          <span className="text-[9px] font-semibold text-[#5C6B52] uppercase leading-none">
+                            {format(new Date(dateValue), 'MMM', { locale: nl })}
+                          </span>
+                          <span className="text-base font-bold text-[#3D4D35] leading-tight">
+                            {format(new Date(dateValue), 'd')}
+                          </span>
+                        </>
+                      ) : (
+                        <CalendarIcon className="w-4 h-4 text-[#5C6B52]" />
+                      )}
+                    </div>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className={cn("font-semibold text-sm truncate", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</p>
+                      <p className={cn("text-xs truncate", darkMode ? "text-gray-400" : "text-gray-500")}>{clientName}{clientObj?.company_name ? ` · ${clientObj.company_name}` : ''}</p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <StatusBadge status={project.status} />
+                        {project.shoot_time && (
+                          <span className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>{project.shoot_time}</span>
+                        )}
+                      </div>
+                    </div>
+                    <ChevronRight className={cn("w-4 h-4 flex-shrink-0", darkMode ? "text-gray-600" : "text-gray-300")} />
+                  </Link>
+                  {/* Actions */}
+                  <div className="pr-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => { setEditingProject(project); setIsDialogOpen(true); }}>
+                          <Pencil className="w-4 h-4 mr-2" />Bewerken
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setDeleteId(project.id)} className="text-red-600">
+                          <Trash2 className="w-4 h-4 mr-2" />Verwijderen
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={(e) => {
-                      e.preventDefault();
-                      setEditingProject(project);
-                      setIsDialogOpen(true);
-                    }}>
-                      <Pencil className="w-4 h-4 mr-2" />
-                      Bewerken
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setDeleteId(project.id);
-                      }}
-                      className="text-red-600"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Verwijderen
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              );
+            })}
+          </div>
 
-              <div className="flex items-center justify-between">
-                <StatusBadge status={project.status} />
-                {project.shoot_date && (
-                  <span className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
-                    {format(new Date(project.shoot_date), 'd MMM yyyy', { locale: nl })}
-                    {project.shoot_time && ` • ${project.shoot_time}`}
-                  </span>
+          {/* Desktop: card grid */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredProjects.map(project => (
+              <Link
+                key={project.id}
+                to={`${createPageUrl('AdminProjectDetail')}?id=${project.id}`}
+                className={cn("rounded-lg border p-5 hover:shadow-sm transition-all group block",
+                  darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
                 )}
-              </div>
-
-
-            </Link>
-          ))}
-        </div>
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className={cn("font-medium truncate", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h3>
+                    <p className={cn("text-sm truncate", darkMode ? "text-gray-400" : "text-gray-500")}>{getClientName(project.client_id)}</p>
+                    {(() => {
+                      const client = clients.find(c => c.id === project.client_id);
+                      return client?.company_name && (
+                        <p className={cn("text-xs truncate", darkMode ? "text-gray-500" : "text-gray-400")}>{client.company_name}</p>
+                      );
+                    })()}
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={(e) => {
+                        e.preventDefault();
+                        setEditingProject(project);
+                        setIsDialogOpen(true);
+                      }}>
+                        <Pencil className="w-4 h-4 mr-2" />Bewerken
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.preventDefault(); setDeleteId(project.id); }} className="text-red-600">
+                        <Trash2 className="w-4 h-4 mr-2" />Verwijderen
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                <div className="flex items-center justify-between">
+                  <StatusBadge status={project.status} />
+                  {project.shoot_date && (
+                    <span className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
+                      {format(new Date(project.shoot_date), 'd MMM yyyy', { locale: nl })}
+                      {project.shoot_time && ` • ${project.shoot_time}`}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingProject ? 'Project Bewerken' : 'Nieuw Project'}

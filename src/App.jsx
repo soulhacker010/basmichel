@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/toaster"
+import StylingTips from './pages/StylingTips';
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
@@ -22,8 +23,12 @@ const AuthenticatedApp = () => {
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
+        <img
+          src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/696d131f67e4f7236fb13603/9370b8342_BasMichel_K152.png"
+          alt="Bas Michel"
+          className="h-16 animate-pulse"
+        />
       </div>
     );
   }
@@ -58,6 +63,8 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
+      <Route path="/styling-tips" element={<StylingTips />} />
+      <Route path="/StylingTips" element={<StylingTips />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
