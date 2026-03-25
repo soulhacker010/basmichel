@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
             const eventData = {
                 summary: projectTitle,
                 location: location || '',
-                description: `Klant: ${resolvedClientName}\nProject ID: ${projectId}\nDirect link: https://basmichel.base44.app/AdminProjectDetail?id=${projectId}`,
+                description: `Klant: ${resolvedClientName}\nProject ID: ${projectId}\nDirect link: https://basmichel.com/AdminProjectDetail?id=${projectId}`,
                 start: {
                     dateTime: startDateTime,
                     timeZone: 'Europe/Amsterdam', // Netherlands timezone
