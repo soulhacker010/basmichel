@@ -53,6 +53,7 @@ export default function AdminProjects() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('geboekt');
   const [clientFilter, setClientFilter] = useState('all');
+  const [sortAsc, setSortAsc] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
@@ -357,7 +358,9 @@ export default function AdminProjects() {
       if (!a.shoot_date && !b.shoot_date) return 0;
       if (!a.shoot_date) return 1;
       if (!b.shoot_date) return -1;
-      return new Date(a.shoot_date) - new Date(b.shoot_date);
+      return sortAsc
+        ? new Date(a.shoot_date) - new Date(b.shoot_date)
+        : new Date(b.shoot_date) - new Date(a.shoot_date);
     });
 
   const handleSubmit = (e) => {
@@ -451,16 +454,27 @@ export default function AdminProjects() {
             className="pl-10 h-10 rounded border-gray-200"
           />
         </div>
-        <div className="overflow-x-auto -mx-1 px-1">
-          <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-            <TabsList className={cn("h-10 border w-max", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200")}>
-              <TabsTrigger value="geboekt" className="text-sm whitespace-nowrap">Geboekt <span className="ml-1.5 text-xs opacity-60">({statusCounts.geboekt})</span></TabsTrigger>
-              <TabsTrigger value="shoot_uitgevoerd" className="text-sm whitespace-nowrap">Shoot uitgevoerd <span className="ml-1.5 text-xs opacity-60">({statusCounts.shoot_uitgevoerd})</span></TabsTrigger>
-              <TabsTrigger value="wordt_bewerkt" className="text-sm whitespace-nowrap">Wordt bewerkt <span className="ml-1.5 text-xs opacity-60">({statusCounts.wordt_bewerkt})</span></TabsTrigger>
-              <TabsTrigger value="klaar" className="text-sm whitespace-nowrap">Klaar <span className="ml-1.5 text-xs opacity-60">({statusCounts.klaar})</span></TabsTrigger>
-              <TabsTrigger value="all" className="text-sm whitespace-nowrap">Alle Projecten <span className="ml-1.5 text-xs opacity-60">({statusCounts.all})</span></TabsTrigger>
-            </TabsList>
-          </Tabs>
+        <div className="flex items-center gap-2">
+          <div className="overflow-x-auto flex-1">
+            <Tabs value={statusFilter} onValueChange={setStatusFilter}>
+              <TabsList className={cn("h-10 border w-max", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200")}>
+                <TabsTrigger value="geboekt" className="text-sm whitespace-nowrap">Geboekt <span className="ml-1.5 text-xs opacity-60">({statusCounts.geboekt})</span></TabsTrigger>
+                <TabsTrigger value="shoot_uitgevoerd" className="text-sm whitespace-nowrap">Shoot uitgevoerd <span className="ml-1.5 text-xs opacity-60">({statusCounts.shoot_uitgevoerd})</span></TabsTrigger>
+                <TabsTrigger value="wordt_bewerkt" className="text-sm whitespace-nowrap">Wordt bewerkt <span className="ml-1.5 text-xs opacity-60">({statusCounts.wordt_bewerkt})</span></TabsTrigger>
+                <TabsTrigger value="klaar" className="text-sm whitespace-nowrap">Klaar <span className="ml-1.5 text-xs opacity-60">({statusCounts.klaar})</span></TabsTrigger>
+                <TabsTrigger value="all" className="text-sm whitespace-nowrap">Alle Projecten <span className="ml-1.5 text-xs opacity-60">({statusCounts.all})</span></TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          <button
+            onClick={() => setSortAsc(v => !v)}
+            className={cn("flex-shrink-0 flex items-center gap-1 px-3 h-10 rounded border text-sm font-medium transition-colors",
+              darkMode ? "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700" : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+            )}
+          >
+            <CalendarIcon className="w-3.5 h-3.5" />
+            {sortAsc ? '↑' : '↓'}
+          </button>
         </div>
         <div className="w-full sm:max-w-xs">
           <select
