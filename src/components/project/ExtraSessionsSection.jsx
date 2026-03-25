@@ -129,27 +129,10 @@ export default function ExtraSessionsSection({ projectId }) {
     </div>
 
     <p style="color: #888; font-size: 13px; border-top: 1px solid #eee; padding-top: 24px;">Heeft u vragen? Neem gerust contact op.</p>
-  </div>
-</body>
-</html>`,
-          }
-        } catch (error) {
-          console.error('Failed to send confirmation email:', error);
-        }
-      }
-
-      return session;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['extraSessions', projectId] });
-      setDialogOpen(false);
-      setFormData({
-        start_datetime: '',
-        end_datetime: '',
-        location: '',
-        notes: '',
-        status: 'bevestigd',
-      });
+    </div>
+    </body>
+    </html>`,
+            });
       toast.success('Extra sessie toegevoegd');
     },
   });
