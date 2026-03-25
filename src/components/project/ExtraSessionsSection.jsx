@@ -99,6 +99,21 @@ export default function ExtraSessionsSection({ projectId }) {
               clientEmail = clientUser?.email;
             } catch (e) {}
           }
+          const clientName = client?.contact_name || client?.company_name || 'Klant';
+          if (clientEmail) {
+            const startDate = new Date(data.start_datetime);
+            const dateStr = startDate.toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const timeStr = startDate.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+            await base44.integrations.Core.SendEmail({
+              to: clientEmail,
+              subject: `Bevestiging extra sessie – ${data.location || 'Onbekende locatie'}`,
+              body: `Beste ${clientName},\n\nEr is een extra sessie ingepland voor uw project.\n\nDatum: ${dateStr}\nTijd: ${timeStr}\nLocatie: ${data.location || 'N/A'}${data.notes ? `\nNotities: ${data.notes}` : ''}\n\nMet vriendelijke groet,\nBas Michel Fotografie`,
+            });
+          }
+        } catch (error) {
+          console.error('Failed to send confirmation email:', error);
+        }
+      }
 
       return session;
     },
