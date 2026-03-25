@@ -441,9 +441,22 @@ export default function AdminBookings() {
   };
 
   const getCalendarEventsForDay = (day) => {
-    return calendarBusyTimes.filter(busy => 
-      busy.start && isSameDay(new Date(busy.start), day)
-    );
+    return calendarBusyTimes.filter(busy => {
+      if (!busy.start) return false;
+      // All-day events have date strings without time (YYYY-MM-DD)
+      const isAllDay = busy.isAllDay || (!busy.start.includes('T') && !busy.end?.includes('T'));
+      if (isAllDay) {
+        const startDate = new Date(busy.start + (busy.start.includes('T') ? '' : 'T00:00:00'));
+        // Google all-day end date is exclusive, so subtract 1 day
+        const endDateRaw = new Date(busy.end + (busy.end?.includes('T') ? '' : 'T00:00:00'));
+        const endDate = new Date(endDateRaw.getTime() - 1); // make inclusive
+        const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+        const eventStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        const eventEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+        return dayStart >= eventStart && dayStart <= eventEnd;
+      }
+      return isSameDay(new Date(busy.start), day);
+    });
   };
 
   const getClientName = (clientId) => {
