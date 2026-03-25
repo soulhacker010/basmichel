@@ -32,6 +32,11 @@ export default function EditorInProgress() {
     queryFn: () => base44.entities.Project.filter({ status: 'wordt_bewerkt' }, 'shoot_date'),
   });
 
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => base44.entities.Client.list(),
+  });
+
   const filteredProjects = projects
     .filter(project =>
       project.title?.toLowerCase().includes(search.toLowerCase()) &&
@@ -67,9 +72,10 @@ export default function EditorInProgress() {
           className={cn("h-9 rounded-md border px-3 text-sm", darkMode ? "bg-gray-800 border-gray-700 text-gray-100" : "bg-white border-gray-200 text-gray-900")}
         >
           <option value="all">Alle klanten</option>
-          {clients.map(client => (
-            <option key={client.id} value={client.id}>{client.company_name || 'Onbekend'}</option>
-          ))}
+          {clients.map(client => {
+            const label = [client.contact_name, client.company_name].filter(Boolean).join(' · ') || 'Onbekend';
+            return <option key={client.id} value={client.id}>{label}</option>;
+          })}
         </select>
       </div>
 
