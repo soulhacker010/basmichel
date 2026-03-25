@@ -463,10 +463,8 @@ export default function AdminProjects() {
           >
             <option value="all">Alle klanten</option>
             {clients.map(client => {
-              const user = users.find(u => u.id === client.user_id);
-              const name = user?.full_name || client.company_name || 'Onbekend';
-              return <option key={client.id} value={client.id}>{name}{client.company_name && user?.full_name ? ` · ${client.company_name}` : ''}</option>;
-            })}
+              const label = [client.contact_name, client.company_name].filter(Boolean).join(' · ') || 'Onbekend';
+              return <option key={client.id} value={client.id}>{label}</option>;
           </select>
         </div>
       </div>
