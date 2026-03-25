@@ -62,13 +62,16 @@ export default function ExtraSessionsSection({ projectId }) {
       const session = await base44.entities.Session.create(data);
 
       try {
+        const startISO = data.start_datetime.includes('T') ? data.start_datetime : `${data.start_datetime}T00:00:00`;
+        const endISO = data.end_datetime ? (data.end_datetime.includes('T') ? data.end_datetime : `${data.end_datetime}T00:00:00`) : null;
+        
         const response = await base44.functions.invoke('calendarSession', {
           action: 'syncSessionEvent',
           sessionData: {
             session_type_id: data.session_type_id,
             client_id: data.client_id,
-            start_datetime: data.start_datetime,
-            end_datetime: data.end_datetime || null,
+            start_datetime: startISO,
+            end_datetime: endISO,
             location: data.location || '',
             notes: data.notes || '',
           },
