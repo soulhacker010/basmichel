@@ -152,6 +152,49 @@ export default function ClientProjectDetail2() {
     enabled: showReschedule,
   });
 
+  const { data: blockedTimes = [] } = useQuery({
+    queryKey: ['blockedTimes'],
+    queryFn: () => base44.entities.BlockedTime.list(),
+    enabled: showReschedule,
+  });
+
+  const [calendarBusyTimes, setCalendarBusyTimes] = useState([]);
+  const [loadingBusyTimes, setLoadingBusyTimes] = useState(false);
+
+  useEffect(() => {
+    const fetchBusyTimes = async () => {
+      if (!showReschedule) return;
+      const start = addWeeks(startOfWeek(new Date(), { weekStartsOn: 1 }), weekOffset);
+      const end = addDays(start, 6);
+
+      setLoadingBusyTimes(true);
+      try {
+        const weekStart = new Date(start);
+        weekStart.setHours(0, 0, 0, 0);
+        const weekEnd = new Date(end);
+        weekEnd.setHours(23, 59, 59, 999);
+
+        const response = await base44.functions.invoke('calendarSession', {
+          action: 'checkAvailability',
+          timeMin: weekStart.toISOString(),
+          timeMax: weekEnd.toISOString(),
+        });
+        const data = response?.data || response;
+        if (data?.success && data?.busyTimes) {
+          setCalendarBusyTimes(data.busyTimes);
+        } else {
+          setCalendarBusyTimes([]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch calendar busy times:', error);
+        setCalendarBusyTimes([]);
+      } finally {
+        setLoadingBusyTimes(false);
+      }
+    };
+    fetchBusyTimes();
+  }, [showReschedule, weekOffset]);
+
   const markSoldMutation = useMutation({
     mutationFn: () => base44.entities.Project.update(projectId, {
       status: 'sold',
@@ -548,24 +591,36 @@ Open project: ${window.location.origin}${link}
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
   };
 
+  const isDayAvailable = (date) => {
+    const dayOfWeek = date.getDay();
+    return availability.some(a => a.type === 'werkdag' && a.day_of_week === dayOfWeek && a.is_active);
+  };
+
   const getTimeSlots = (date) => {
     if (!date) return [];
 
     const dayOfWeek = date.getDay();
-    const workdayConfig = availability.find(a => a.type === 'werkdag' && a.day_of_week === dayOfWeek);
+    const workdayConfig = availability.find(a => a.type === 'werkdag' && a.day_of_week === dayOfWeek && a.is_active);
 
-    const startHour = workdayConfig?.start_time ? parseInt(workdayConfig.start_time.split(':')[0]) : 9;
-    const endHour = workdayConfig?.end_time ? parseInt(workdayConfig.end_time.split(':')[0]) : 17;
+    if (!workdayConfig) return [];
+
+    const startHour = workdayConfig.start_time ? parseInt(workdayConfig.start_time.split(':')[0]) : 9;
+    const endHour = workdayConfig.end_time ? parseInt(workdayConfig.end_time.split(':')[0]) : 17;
+    const startMinute = workdayConfig.start_time ? parseInt(workdayConfig.start_time.split(':')[1]) : 0;
+    const endMinute = workdayConfig.end_time ? parseInt(workdayConfig.end_time.split(':')[1]) : 0;
 
     const slots = [];
-    const duration = 60;
+    const duration = 60; // default 60 mins for reschedule
 
-    let currentTime = setMinutes(setHours(date, startHour), 0);
-    const endTime = setMinutes(setHours(date, endHour), 0);
+    let currentTime = setMinutes(setHours(date, startHour), startMinute || 0);
+    const endTime = setMinutes(setHours(date, endHour), endMinute || 0);
 
-    while (isBefore(addMinutes(currentTime, duration), endTime) || isSameDay(addMinutes(currentTime, duration), endTime)) {
+    while (isBefore(currentTime, endTime)) {
       const slotEnd = addMinutes(currentTime, duration);
-      const hasConflict = existingSessions.some(session => {
+
+      if (isAfter(slotEnd, endTime)) break;
+
+      const hasSessionConflict = existingSessions.some(session => {
         const sessionStart = new Date(session.start_datetime);
         const sessionEnd = new Date(session.end_datetime);
         return (
@@ -575,6 +630,31 @@ Open project: ${window.location.origin}${link}
           isSameDay(currentTime, sessionStart) && format(currentTime, 'HH:mm') === format(sessionStart, 'HH:mm')
         );
       });
+
+      const hasCalendarConflict = calendarBusyTimes.some(busy => {
+        const busyStart = new Date(busy.start);
+        const busyEnd = new Date(busy.end);
+        return (
+          (isAfter(currentTime, busyStart) && isBefore(currentTime, busyEnd)) ||
+          (isAfter(slotEnd, busyStart) && isBefore(slotEnd, busyEnd)) ||
+          (isBefore(currentTime, busyStart) && isAfter(slotEnd, busyEnd)) ||
+          (currentTime.getTime() >= busyStart.getTime() && currentTime.getTime() < busyEnd.getTime())
+        );
+      });
+
+      const hasBlockedTimeConflict = blockedTimes.some(blocked => {
+        if (!blocked.start_datetime || !blocked.end_datetime) return false;
+        const blockedStart = new Date(blocked.start_datetime);
+        const blockedEnd = new Date(blocked.end_datetime);
+        return (
+          (isAfter(currentTime, blockedStart) && isBefore(currentTime, blockedEnd)) ||
+          (isAfter(slotEnd, blockedStart) && isBefore(slotEnd, blockedEnd)) ||
+          (isBefore(currentTime, blockedStart) && isAfter(slotEnd, blockedEnd)) ||
+          (currentTime.getTime() >= blockedStart.getTime() && currentTime.getTime() < blockedEnd.getTime())
+        );
+      });
+
+      const hasConflict = hasSessionConflict || hasCalendarConflict || hasBlockedTimeConflict;
 
       if (!hasConflict && isAfter(currentTime, new Date())) {
         slots.push(new Date(currentTime));
@@ -852,18 +932,23 @@ Open project: ${window.location.origin}${link}
                 const isToday = isSameDay(day, new Date());
                 const isPast = isBefore(day, new Date()) && !isToday;
                 const isSelected = selectedDate && isSameDay(day, selectedDate);
+                const isAvailable = isDayAvailable(day);
+                const hasSlots = isAvailable && !isPast ? getTimeSlots(day).length > 0 : false;
+                const isDisabled = isPast || !isAvailable || (!isPast && isAvailable && !hasSlots);
 
                 return (
                   <button
                     key={day.toISOString()}
                     onClick={() => {
-                      setSelectedDate(day);
-                      setSelectedTime(null);
+                      if (!isDisabled) {
+                        setSelectedDate(day);
+                        setSelectedTime(null);
+                      }
                     }}
-                    disabled={isPast}
+                    disabled={isDisabled}
                     className={cn(
                       "py-3 px-2 rounded-lg text-center transition-all text-sm",
-                      isPast ? "opacity-30 cursor-not-allowed" :
+                      isDisabled ? "opacity-30 cursor-not-allowed" :
                         isSelected ? "bg-[#5C6B52] text-white" :
                           isToday ? "bg-[#F8FAF7] text-[#5C6B52] ring-1 ring-[#A8B5A0]" :
                             "hover:bg-gray-50"

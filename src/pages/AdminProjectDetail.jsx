@@ -1718,49 +1718,47 @@ export default function AdminProjectDetail() {
             </div>
 
             {/* Factuursjablonen */}
-            {invoiceTemplates.length > 0 && (
-              <div className="space-y-3">
-                <Label htmlFor="template">Gebruik factuursjabloon (optioneel)</Label>
-                <select
-                  id="template"
-                  value={invoiceData.template_id}
-                  onChange={(e) => {
-                    const templateId = e.target.value;
-                    setInvoiceData({ ...invoiceData, template_id: templateId });
+            <div className="space-y-3">
+              <Label htmlFor="template">Gebruik factuursjabloon (optioneel)</Label>
+              <select
+                id="template"
+                value={invoiceData.template_id}
+                onChange={(e) => {
+                  const templateId = e.target.value;
+                  setInvoiceData({ ...invoiceData, template_id: templateId });
 
-                    if (templateId) {
-                      const template = invoiceTemplates.find(t => t.id === templateId);
-                      if (template && template.content) {
-                        try {
-                          const content = typeof template.content === 'string' ?
-                            JSON.parse(template.content) : template.content;
+                  if (templateId) {
+                    const template = invoiceTemplates.find(t => t.id === templateId);
+                    if (template && template.content) {
+                      try {
+                        const content = typeof template.content === 'string' ?
+                          JSON.parse(template.content) : template.content;
 
-                          if (content.items) {
-                            setInvoiceData({
-                              ...invoiceData,
-                              template_id: templateId,
-                              items: content.items,
-                              vat_percentage: content.vat_percentage || 21,
-                              discount_amount: content.discount_amount || 0,
-                            });
-                          }
-                        } catch (e) {
-                          console.error('Error parsing template', e);
+                        if (content.items) {
+                          setInvoiceData({
+                            ...invoiceData,
+                            template_id: templateId,
+                            items: content.items,
+                            vat_percentage: content.vat_percentage || 21,
+                            discount_amount: content.discount_amount || 0,
+                          });
                         }
+                      } catch (e) {
+                        console.error('Error parsing template', e);
                       }
                     }
-                  }}
-                  className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
-                >
-                  <option value="">Geen sjabloon</option>
-                  {invoiceTemplates.map(template => (
-                    <option key={template.id} value={template.id}>
-                      {template.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+                  }
+                }}
+                className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
+              >
+                <option value="">{invoiceTemplates.length === 0 ? 'Geen sjablonen - maak er een via "Opslaan als sjabloon"' : 'Geen sjabloon'}</option>
+                {invoiceTemplates.map(template => (
+                  <option key={template.id} value={template.id}>
+                    {template.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {/* B. FACTUURONTVANGER */}
             <div className="space-y-4 pt-4 border-t">
@@ -1983,6 +1981,34 @@ export default function AdminProjectDetail() {
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Item toevoegen
+              </Button>
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  const name = prompt('Naam voor dit sjabloon:');
+                  if (!name) return;
+                  try {
+                    await base44.entities.Template.create({
+                      name,
+                      type: 'factuur',
+                      content: JSON.stringify({
+                        items: invoiceData.items,
+                        vat_percentage: invoiceData.vat_percentage,
+                        discount_amount: invoiceData.discount_amount,
+                      }),
+                      is_default: false,
+                    });
+                    queryClient.invalidateQueries({ queryKey: ['invoiceTemplates'] });
+                    toast.success('Sjabloon opgeslagen!');
+                  } catch (err) {
+                    console.error('Save template error:', err);
+                    toast.error('Kon sjabloon niet opslaan');
+                  }
+                }}
+                disabled={invoiceData.items.every(item => !item.title && !item.unit_price)}
+                className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+              >
+                Opslaan als sjabloon
               </Button>
             </div>
 
