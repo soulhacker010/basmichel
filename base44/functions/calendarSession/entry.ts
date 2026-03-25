@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
 
         const { action, sessionId, sessionData, calendarEventId, timeMin, timeMax } = await req.json();
 
-        const { accessToken } = await base44.asServiceRole.connectors.getConnection("googlecalendar");
+        const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
 
         if (!accessToken) {
             return Response.json({ error: 'Google Calendar not connected' }, { status: 400 });
@@ -45,7 +45,10 @@ Deno.serve(async (req) => {
             const durationMinutes = sessionType?.duration_minutes || 60;
 
             // Pass the original datetime string directly (Amsterdam local time)
-            const startISO = sessionData.start_datetime.includes('T') ? sessionData.start_datetime : `${sessionData.start_datetime}T00:00:00`;
+            const startISO = sessionData.start_datetime.replace(' ', 'T').slice(0, 19);
+            if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(startISO)) {
+                return Response.json({ error: 'Ongeldig start_datetime formaat' }, { status: 400 });
+            }
             const endISO = sessionData.end_datetime
                 ? (sessionData.end_datetime.includes('T') ? sessionData.end_datetime : `${sessionData.end_datetime}T00:00:00`)
                 : new Date(new Date(startISO.replace(' ', 'T')).getTime() + durationMinutes * 60000).toISOString().slice(0, 19);
