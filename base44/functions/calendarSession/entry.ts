@@ -95,12 +95,32 @@ Deno.serve(async (req) => {
                 summary: `${sessionData.location || 'Sessie'} - ${clientName}`,
                 location: sessionData.location || '',
                 description: descriptionLines,
+                start: {
+                    dateTime: startISO,
+                    timeZone: 'Europe/Amsterdam',
+                },
+                end: {
+                    dateTime: endISO,
+                    timeZone: 'Europe/Amsterdam',
+                },
+                colorId: '10'
+            };
 
             let response;
             if (calendarEventId) {
                 // Update existing event
                 response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${calendarEventId}`, {
                     method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(eventData)
+                });
+            } else {
+                // Create new event
+                response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+                    method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${accessToken}`,
                         'Content-Type': 'application/json'
