@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
 
         const { action, sessionId, sessionData, calendarEventId, timeMin, timeMax } = await req.json();
 
-        const accessToken = await base44.asServiceRole.connectors.getAccessToken("googlecalendar");
+        const { accessToken } = await base44.asServiceRole.connectors.getConnection("googlecalendar");
 
         if (!accessToken) {
             return Response.json({ error: 'Google Calendar not connected' }, { status: 400 });
