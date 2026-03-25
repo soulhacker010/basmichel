@@ -311,6 +311,7 @@ export default function AdminDashboard() {
                   <p className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
                     {gallery.created_date ? format(new Date(gallery.created_date), 'd MMM yyyy', { locale: nl }) : '-'}
                   </p>
+                </div>
               ))}
             </div>
           )}
