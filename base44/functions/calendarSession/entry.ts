@@ -34,7 +34,14 @@ Deno.serve(async (req) => {
             }
 
             // Get session type for duration
-            const sessionType = await base44.asServiceRole.entities.SessionType.get(sessionData.session_type_id);
+            let sessionType = null;
+            if (sessionData.session_type_id) {
+                try {
+                    sessionType = await base44.asServiceRole.entities.SessionType.get(sessionData.session_type_id);
+                } catch (e) {
+                    console.warn('SessionType not found:', sessionData.session_type_id);
+                }
+            }
             const durationMinutes = sessionType?.duration_minutes || 60;
 
             // Calculate end time based on duration, unless end_datetime is explicitly provided
