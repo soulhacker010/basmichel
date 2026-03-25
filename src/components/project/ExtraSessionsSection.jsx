@@ -61,7 +61,6 @@ export default function ExtraSessionsSection({ projectId }) {
     mutationFn: async (data) => {
       const session = await base44.entities.Session.create(data);
 
-      // Sync to Google Calendar
       try {
         const response = await base44.functions.invoke('calendarSession', {
           action: 'syncSessionEvent',
@@ -84,10 +83,7 @@ export default function ExtraSessionsSection({ projectId }) {
         }
       } catch (error) {
         console.error('Failed to sync extra session to calendar:', error);
-        toast.error('Kon sessie niet synchroniseren met Google Agenda');
       }
-
-
 
       return session;
     },
@@ -112,13 +108,13 @@ export default function ExtraSessionsSection({ projectId }) {
 
       // Delete from Google Calendar first
       if (session?.google_calendar_event_id) {
-        const calResponse = await base44.functions.invoke('calendarSession', {
-          action: 'deleteSessionEvent',
-          calendarEventId: session.google_calendar_event_id,
-        });
-        const calData = calResponse?.data || calResponse;
-        if (!calData?.success) {
-          toast.error('Kon agenda-afspraak niet verwijderen uit Google Agenda');
+        try {
+          await base44.functions.invoke('calendarSession', {
+            action: 'deleteSessionEvent',
+            calendarEventId: session.google_calendar_event_id
+          });
+        } catch (error) {
+          console.error('Failed to delete from calendar:', error);
         }
       }
 
