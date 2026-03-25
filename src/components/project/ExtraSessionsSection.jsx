@@ -87,35 +87,7 @@ export default function ExtraSessionsSection({ projectId }) {
         toast.error('Kon sessie niet synchroniseren met Google Agenda');
       }
 
-      // Send email confirmation to client
-      if (data.client_id) {
-        try {
-          const client = await base44.entities.Client.get(data.client_id);
-          let clientEmail = client?.invoice_admin_email;
-          if (!clientEmail && client?.user_id) {
-            try {
-              const clientUser = await base44.entities.User.get(client.user_id);
-              clientEmail = clientUser?.email;
-            } catch (e) {}
-          }
-          const clientName = client?.contact_name || client?.company_name || 'Klant';
-          if (clientEmail) {
-            const startDate = new Date(data.start_datetime);
-            const dateStr = startDate.toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            const timeStr = startDate.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-            await base44.functions.invoke('sendSessionConfirmationEmail', {
-              to: clientEmail,
-              clientName: clientName,
-              dateStr: dateStr,
-              timeStr: timeStr,
-              location: data.location || '',
-              notes: data.notes || '',
-            });
-          }
-        } catch (error) {
-          console.error('Failed to send confirmation email:', error);
-        }
-      }
+
 
       return session;
     },
