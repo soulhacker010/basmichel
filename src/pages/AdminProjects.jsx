@@ -466,7 +466,7 @@ export default function AdminProjects() {
               const label = [client.contact_name, client.company_name].filter(Boolean).join(' · ') || 'Onbekend';
               return <option key={client.id} value={client.id}>{label}</option>;
             })}
-          </div>
+          </select>
 
           {/* Desktop: card grid */}
           <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
