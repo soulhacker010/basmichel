@@ -53,6 +53,9 @@ export default function AdminProjects() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
 
   const queryClient = useQueryClient();
