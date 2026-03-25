@@ -472,6 +472,63 @@ export default function AdminProjects() {
 
       {/* Desktop: card grid */}
       <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredProjects.map(project => {
+          const client = clients.find(c => c.id === project.client_id);
+          return (
+            <Link
+              key={project.id}
+              to={`${createPageUrl('AdminProjectDetail')}?id=${project.id}`}
+              className={cn("rounded-lg border p-5 hover:shadow-sm transition-all group block",
+                darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
+              )}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1 min-w-0">
+                  <h3 className={cn("font-medium truncate", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h3>
+                  <p className={cn("text-sm truncate", darkMode ? "text-gray-400" : "text-gray-500")}>
+                    {[client?.contact_name, client?.company_name].filter(Boolean).join(' · ') || '-'}
+                  </p>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={(e) => {
+                      e.preventDefault();
+                      setEditingProject(project);
+                      setIsDialogOpen(true);
+                    }}>
+                      <Pencil className="w-4 h-4 mr-2" />Bewerken
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => { e.preventDefault(); setDeleteId(project.id); }} className="text-red-600">
+                      <Trash2 className="w-4 h-4 mr-2" />Verwijderen
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="flex items-center justify-between">
+                <StatusBadge status={project.status} />
+                {project.shoot_date && (
+                  <span className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
+                    {format(new Date(project.shoot_date), 'd MMM yyyy', { locale: nl })}
+                    {project.shoot_time && ` • ${project.shoot_time}`}
+                  </span>
+                )}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -480,174 +537,83 @@ export default function AdminProjects() {
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Address and City Fields - Required for new projects */}
             {!editingProject && (
               <>
                 <div>
                   <Label htmlFor="address">Straat + Huisnummer *</Label>
-                  <Input
-                    id="address"
-                    name="address"
-                    placeholder="Straatnaam huisnummer"
-                    className="mt-1.5"
-                    required
-                  />
+                  <Input id="address" name="address" placeholder="Straatnaam huisnummer" className="mt-1.5" required />
                 </div>
                 <div>
                   <Label htmlFor="city">Plaats *</Label>
-                  <Input
-                    id="city"
-                    name="city"
-                    placeholder="Plaatsnaam"
-                    className="mt-1.5"
-                    required
-                  />
+                  <Input id="city" name="city" placeholder="Plaatsnaam" className="mt-1.5" required />
                   <p className="text-xs text-gray-500 mt-1">Dit wordt samen de projecttitel</p>
                 </div>
               </>
             )}
-
-            {/* Title - Only for editing */}
             {editingProject && (
               <div>
                 <Label htmlFor="title">Titel *</Label>
-                <Input
-                  id="title"
-                  name="title"
-                  defaultValue={editingProject?.title || ''}
-                  className="mt-1.5"
-                  required
-                />
+                <Input id="title" name="title" defaultValue={editingProject?.title || ''} className="mt-1.5" required />
               </div>
             )}
-
-            {/* Session Type - Only for new projects */}
             {!editingProject && (
               <div>
                 <Label htmlFor="session_type_id">Sessietype *</Label>
-                <select
-                  id="session_type_id"
-                  name="session_type_id"
-                  className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
-                  required
-                >
+                <select id="session_type_id" name="session_type_id" className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm" required>
                   <option value="">Selecteer sessietype</option>
                   {sessionTypes.map(type => (
-                    <option key={type.id} value={type.id}>
-                      {type.name} ({type.duration_minutes || 60} min)
-                    </option>
+                    <option key={type.id} value={type.id}>{type.name} ({type.duration_minutes || 60} min)</option>
                   ))}
                 </select>
               </div>
             )}
-
-            {/* Shoot Date and Time */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="shoot_date">Shootdatum {!editingProject && '*'}</Label>
-                <Input
-                  id="shoot_date"
-                  name="shoot_date"
-                  type="date"
-                  defaultValue={editingProject?.shoot_date || ''}
-                  className="mt-1.5"
-                  required={!editingProject}
-                />
+                <Input id="shoot_date" name="shoot_date" type="date" defaultValue={editingProject?.shoot_date || ''} className="mt-1.5" required={!editingProject} />
               </div>
               <div>
                 <Label htmlFor="shoot_time">Starttijd {!editingProject && '*'}</Label>
-                <Input
-                  id="shoot_time"
-                  name="shoot_time"
-                  type="time"
-                  defaultValue={editingProject?.shoot_time || ''}
-                  className="mt-1.5"
-                  required={!editingProject}
-                />
+                <Input id="shoot_time" name="shoot_time" type="time" defaultValue={editingProject?.shoot_time || ''} className="mt-1.5" required={!editingProject} />
               </div>
             </div>
-
-            {/* Client */}
             <div>
               <Label htmlFor="client_id">Klant *</Label>
-              <select
-                id="client_id"
-                name="client_id"
-                defaultValue={editingProject?.client_id || ''}
-                className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
-                required
-              >
+              <select id="client_id" name="client_id" defaultValue={editingProject?.client_id || ''} className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm" required>
                 <option value="">Selecteer klant</option>
                 {clients.map(client => {
-                  const user = users.find(u => u.id === client.user_id);
-                  const fullName = user?.first_name && user?.last_name
-                    ? `${user.first_name} ${user.last_name}`
-                    : user?.full_name;
-                  return (
-                    <option key={client.id} value={client.id}>
-                      {fullName || client.company_name || 'Onbekend'}
-                    </option>
-                  );
+                  const label = [client.contact_name, client.company_name].filter(Boolean).join(' · ') || 'Onbekend';
+                  return <option key={client.id} value={client.id}>{label}</option>;
                 })}
               </select>
             </div>
-
-            {/* Status */}
             <div>
               <Label htmlFor="status">Status</Label>
-              <select
-                id="status"
-                name="status"
-                defaultValue={editingProject?.status || 'geboekt'}
-                className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm"
-              >
+              <select id="status" name="status" defaultValue={editingProject?.status || 'geboekt'} className="w-full mt-1.5 rounded-md border border-gray-200 px-3 py-2 text-sm">
                 <option value="geboekt">Geboekt</option>
                 <option value="shoot_uitgevoerd">Shoot uitgevoerd</option>
                 <option value="wordt_bewerkt">Wordt bewerkt</option>
                 <option value="klaar">Klaar</option>
               </select>
             </div>
-
-            {/* Address and City - For editing only */}
             {editingProject && (
               <>
                 <div>
                   <Label htmlFor="address">Straat + Huisnummer</Label>
-                  <Input
-                    id="address"
-                    name="address"
-                    defaultValue={editingProject?.address || ''}
-                    className="mt-1.5"
-                  />
+                  <Input id="address" name="address" defaultValue={editingProject?.address || ''} className="mt-1.5" />
                 </div>
                 <div>
                   <Label htmlFor="city">Plaats</Label>
-                  <Input
-                    id="city"
-                    name="city"
-                    defaultValue={editingProject?.city || ''}
-                    className="mt-1.5"
-                  />
+                  <Input id="city" name="city" defaultValue={editingProject?.city || ''} className="mt-1.5" />
                 </div>
               </>
             )}
-
-            {/* Internal Notes */}
             <div>
               <Label htmlFor="notes">Interne notities</Label>
-              <Textarea
-                id="notes"
-                name="notes"
-                defaultValue={editingProject?.notes || ''}
-                className="mt-1.5"
-                rows={3}
-                placeholder="Notities voor intern gebruik..."
-              />
+              <Textarea id="notes" name="notes" defaultValue={editingProject?.notes || ''} className="mt-1.5" rows={3} placeholder="Notities voor intern gebruik..." />
             </div>
             <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Annuleren
-              </Button>
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Annuleren</Button>
               <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white">
                 {editingProject ? 'Opslaan' : 'Aanmaken'}
               </Button>
@@ -667,10 +633,7 @@ export default function AdminProjects() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteMutation.mutate(deleteId)}
-              className="bg-red-600 hover:bg-red-700"
-            >
+            <AlertDialogAction onClick={() => deleteMutation.mutate(deleteId)} className="bg-red-600 hover:bg-red-700">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
