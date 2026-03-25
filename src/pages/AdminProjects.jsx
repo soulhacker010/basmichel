@@ -467,6 +467,7 @@ export default function AdminProjects() {
               return <option key={client.id} value={client.id}>{label}</option>;
             })}
           </select>
+        </div>
 
           {/* Desktop: card grid */}
           <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
