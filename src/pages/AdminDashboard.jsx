@@ -227,7 +227,7 @@ export default function AdminDashboard() {
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
                           <span className={cn("flex items-center gap-1 text-xs", darkMode ? "text-gray-400" : "text-gray-500")}>
                             <Clock className="w-3 h-3" />
-                            {format(new Date(session.start_datetime), 'HH:mm')} – {format(new Date(session.end_datetime), 'HH:mm')}
+                            {session.start_datetime && format(new Date(session.start_datetime), 'HH:mm')} {session.end_datetime && `– ${format(new Date(session.end_datetime), 'HH:mm')}`}
                           </span>
                           {session.location && (
                             <span className={cn("flex items-center gap-1 text-xs", darkMode ? "text-gray-400" : "text-gray-500")}>
@@ -309,9 +309,8 @@ export default function AdminDashboard() {
                     <StatusBadge status={gallery.status} />
                   </div>
                   <p className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
-                    {gallery.created_date && format(new Date(gallery.created_date), 'd MMM yyyy', { locale: nl })}
+                    {gallery.created_date ? format(new Date(gallery.created_date), 'd MMM yyyy', { locale: nl }) : '-'}
                   </p>
-                </div>
               ))}
             </div>
           )}
