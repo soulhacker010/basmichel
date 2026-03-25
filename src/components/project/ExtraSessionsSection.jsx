@@ -91,22 +91,14 @@ export default function ExtraSessionsSection({ projectId }) {
       if (data.client_id) {
         try {
           const client = await base44.entities.Client.get(data.client_id);
-          const clientEmail = client?.invoice_admin_email;
-          const clientName = client?.contact_name || client?.company_name || 'Klant';
-          if (clientEmail) {
-            const startDate = new Date(data.start_datetime);
-            const dateStr = startDate.toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            const timeStr = startDate.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-            await base44.integrations.Core.SendEmail({
-              to: clientEmail,
-              subject: `Bevestiging extra sessie – ${data.location || 'Onbekende locatie'}`,
-              body: `Beste ${clientName},\n\nEr is een extra sessie ingepland voor uw project.\n\nDatum: ${dateStr}\nTijd: ${timeStr}\nLocatie: ${data.location || 'N/A'}${data.notes ? `\nNotities: ${data.notes}` : ''}\n\nMet vriendelijke groet,\nBas Michel Fotografie`,
-            });
+          let clientEmail = client?.invoice_admin_email;
+          // Fallback: use the linked user's email
+          if (!clientEmail && client?.user_id) {
+            try {
+              const clientUser = await base44.entities.User.get(client.user_id);
+              clientEmail = clientUser?.email;
+            } catch (e) {}
           }
-        } catch (error) {
-          console.error('Failed to send confirmation email:', error);
-        }
-      }
 
       return session;
     },
