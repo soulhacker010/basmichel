@@ -75,7 +75,7 @@ export default function EditorUpcoming() {
           {clients.map(client => {
             const label = [client.contact_name, client.company_name].filter(Boolean).join(' · ') || 'Onbekend';
             return <option key={client.id} value={client.id}>{label}</option>;
-          ))}
+          })}
         </select>
       </div>
 
