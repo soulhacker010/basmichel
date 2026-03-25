@@ -43,6 +43,10 @@ Deno.serve(async (req) => {
                 ? new Date(sessionData.end_datetime)
                 : new Date(startDate.getTime() + (durationMinutes * 60 * 1000));
 
+            // Ensure valid ISO strings for Google Calendar API
+            const startISO = startDate.toISOString();
+            const endISO = endDate.toISOString();
+
             // Get client name
             let clientName = 'Geen klant';
             if (sessionData.client_id) {
