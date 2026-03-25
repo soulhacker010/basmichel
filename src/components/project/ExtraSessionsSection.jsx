@@ -138,13 +138,13 @@ export default function ExtraSessionsSection({ projectId }) {
 
       // Delete from Google Calendar first
       if (session?.google_calendar_event_id) {
-        try {
-          await base44.functions.invoke('calendarSession', {
-            action: 'deleteSessionEvent',
-            calendarEventId: session.google_calendar_event_id
-          });
-        } catch (error) {
-          console.error('Failed to delete from calendar:', error);
+        const calResponse = await base44.functions.invoke('calendarSession', {
+          action: 'deleteSessionEvent',
+          calendarEventId: session.google_calendar_event_id,
+        });
+        const calData = calResponse?.data || calResponse;
+        if (!calData?.success) {
+          toast.error('Kon agenda-afspraak niet verwijderen uit Google Agenda');
         }
       }
 
