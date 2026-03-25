@@ -408,12 +408,19 @@ export default function AdminProjects() {
     return fullName || client.company_name || '-';
   };
 
+  const baseFiltered = projects.filter(project => {
+    const matchesSearch = project.title?.toLowerCase().includes(search.toLowerCase()) ||
+      project.address?.toLowerCase().includes(search.toLowerCase());
+    const matchesClient = clientFilter === 'all' || project.client_id === clientFilter;
+    return matchesSearch && matchesClient;
+  });
+
   const statusCounts = {
-    all: projects.length,
-    geboekt: projects.filter(p => p.status === 'geboekt').length,
-    shoot_uitgevoerd: projects.filter(p => p.status === 'shoot_uitgevoerd').length,
-    wordt_bewerkt: projects.filter(p => p.status === 'wordt_bewerkt').length,
-    klaar: projects.filter(p => p.status === 'klaar').length,
+    all: baseFiltered.length,
+    geboekt: baseFiltered.filter(p => p.status === 'geboekt').length,
+    shoot_uitgevoerd: baseFiltered.filter(p => p.status === 'shoot_uitgevoerd').length,
+    wordt_bewerkt: baseFiltered.filter(p => p.status === 'wordt_bewerkt').length,
+    klaar: baseFiltered.filter(p => p.status === 'klaar').length,
   };
 
   return (
