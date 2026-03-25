@@ -32,6 +32,11 @@ export default function EditorUpcoming() {
     queryFn: () => base44.entities.Project.filter({ status: 'geboekt' }, 'shoot_date'),
   });
 
+  const { data: clients = [] } = useQuery({
+    queryKey: ['clients'],
+    queryFn: () => base44.entities.Client.list(),
+  });
+
   const filteredProjects = projects
     .filter(project =>
       project.title?.toLowerCase().includes(search.toLowerCase()) &&
