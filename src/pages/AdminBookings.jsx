@@ -1298,7 +1298,10 @@ export default function AdminBookings() {
                     <div className="flex items-center gap-2 mb-1">
                       <Clock className="w-4 h-4 text-blue-500" />
                       <span className={cn("font-medium", darkMode ? "text-blue-300" : "text-blue-800")}>
-                        {format(new Date(calEvent.start), 'HH:mm')} - {format(new Date(calEvent.end), 'HH:mm')}
+                        {(calEvent.isAllDay || (!calEvent.start?.includes('T') && !calEvent.end?.includes('T')))
+                          ? 'Hele dag'
+                          : `${format(new Date(calEvent.start), 'HH:mm')} - ${format(new Date(calEvent.end), 'HH:mm')}`
+                        }
                       </span>
                       <span className={cn("text-sm px-2 py-0.5 rounded",
                         darkMode ? "bg-blue-900/40 text-blue-300" : "bg-blue-100 text-blue-700"
