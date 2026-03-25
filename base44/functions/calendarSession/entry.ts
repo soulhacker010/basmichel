@@ -76,19 +76,25 @@ Deno.serve(async (req) => {
                 }
             }
 
+            // Get company name separately for description
+            let companyName = null;
+            if (sessionData.client_id) {
+                try {
+                    const clientForCompany = await base44.asServiceRole.entities.Client.get(sessionData.client_id);
+                    companyName = clientForCompany?.company_name || null;
+                } catch(e) {}
+            }
+
+            const descriptionLines = [
+                `Pakket: ${sessionType?.name || 'Onbekend'}`,
+                companyName ? `Klant: ${clientName} (${companyName})` : `Klant: ${clientName}`,
+                sessionData.notes ? `Notities: ${sessionData.notes}` : null,
+            ].filter(Boolean).join('\n');
+
             const eventData = {
-                summary: `${sessionType?.name || 'Sessie'} - ${clientName}`,
-                description: `Type: ${sessionType?.name || 'Onbekend'}\nKlant: ${clientName}\nLocatie: ${sessionData.location || 'N/A'}\n${sessionData.notes ? `\nNotities: ${sessionData.notes}` : ''}`,
-                start: {
-                    dateTime: startISO,
-                    timeZone: 'Europe/Amsterdam',
-                },
-                end: {
-                    dateTime: endISO,
-                    timeZone: 'Europe/Amsterdam',
-                },
-                colorId: '10' // Green color for sessions
-            };
+                summary: `${sessionData.location || 'Sessie'} - ${clientName}`,
+                location: sessionData.location || '',
+                description: descriptionLines,
 
             let response;
             if (calendarEventId) {
