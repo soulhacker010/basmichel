@@ -51,7 +51,7 @@ import { useEffect } from 'react';
 
 export default function AdminProjects() {
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('geboekt');
   const [clientFilter, setClientFilter] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
@@ -454,11 +454,11 @@ export default function AdminProjects() {
         <div className="overflow-x-auto -mx-1 px-1">
           <Tabs value={statusFilter} onValueChange={setStatusFilter}>
             <TabsList className={cn("h-10 border w-max", darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200")}>
-              <TabsTrigger value="all" className="text-sm whitespace-nowrap">Alle Projecten <span className="ml-1.5 text-xs opacity-60">({statusCounts.all})</span></TabsTrigger>
               <TabsTrigger value="geboekt" className="text-sm whitespace-nowrap">Geboekt <span className="ml-1.5 text-xs opacity-60">({statusCounts.geboekt})</span></TabsTrigger>
               <TabsTrigger value="shoot_uitgevoerd" className="text-sm whitespace-nowrap">Shoot uitgevoerd <span className="ml-1.5 text-xs opacity-60">({statusCounts.shoot_uitgevoerd})</span></TabsTrigger>
               <TabsTrigger value="wordt_bewerkt" className="text-sm whitespace-nowrap">Wordt bewerkt <span className="ml-1.5 text-xs opacity-60">({statusCounts.wordt_bewerkt})</span></TabsTrigger>
               <TabsTrigger value="klaar" className="text-sm whitespace-nowrap">Klaar <span className="ml-1.5 text-xs opacity-60">({statusCounts.klaar})</span></TabsTrigger>
+              <TabsTrigger value="all" className="text-sm whitespace-nowrap">Alle Projecten <span className="ml-1.5 text-xs opacity-60">({statusCounts.all})</span></TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
