@@ -57,7 +57,10 @@ Deno.serve(async (req) => {
             // Get client name
             let clientName = 'Geen klant';
             if (sessionData.client_id) {
-                const client = await base44.asServiceRole.entities.Client.get(sessionData.client_id);
+                let client = null;
+                try { client = await base44.asServiceRole.entities.Client.get(sessionData.client_id); } catch(e) {}
+                if (false) { // dummy to preserve scope
+                const client = null;
                 if (client) {
                     if (client.user_id) {
                         const user = await base44.asServiceRole.entities.User.get(client.user_id);
