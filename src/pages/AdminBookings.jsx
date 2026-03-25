@@ -1148,7 +1148,7 @@ export default function AdminBookings() {
                             style={{ backgroundColor: type?.color || '#A8B5A0' }}
                           />
                           <span className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
-                            {format(new Date(session.start_datetime), 'HH:mm')} - {format(new Date(session.end_datetime), 'HH:mm')}
+                            {format(new Date(session.start_datetime), 'HH:mm')} - {session.end_datetime ? format(new Date(session.end_datetime), 'HH:mm') : '?'}
                           </span>
                           <span className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
                             ({type?.duration_minutes || 60} min)
@@ -1206,7 +1206,7 @@ export default function AdminBookings() {
                     <div className="flex items-center gap-2 mb-1">
                       <Clock className="w-4 h-4 text-gray-400" />
                       <span className={cn("font-medium", darkMode ? "text-gray-100" : "text-gray-900")}>
-                        {format(new Date(blocked.start_datetime), 'HH:mm')} - {format(new Date(blocked.end_datetime), 'HH:mm')}
+                        {format(new Date(blocked.start_datetime), 'HH:mm')} - {blocked.end_datetime ? format(new Date(blocked.end_datetime), 'HH:mm') : '?'}
                       </span>
                       <span className={cn("text-sm px-2 py-0.5 rounded",
                         darkMode ? "bg-gray-600 text-gray-300" : "bg-gray-200 text-gray-600"
