@@ -468,69 +468,10 @@ export default function AdminProjects() {
             })}
           </select>
         </div>
+      </div>
 
-          {/* Desktop: card grid */}
-          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredProjects.map(project => (
-              <Link
-                key={project.id}
-                to={`${createPageUrl('AdminProjectDetail')}?id=${project.id}`}
-                className={cn("rounded-lg border p-5 hover:shadow-sm transition-all group block",
-                  darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
-                )}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className={cn("font-medium truncate", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h3>
-                    <p className={cn("text-sm truncate", darkMode ? "text-gray-400" : "text-gray-500")}>{getClientName(project.client_id)}</p>
-                    {(() => {
-                      const client = clients.find(c => c.id === project.client_id);
-                      return client?.company_name && (
-                        <p className={cn("text-xs truncate", darkMode ? "text-gray-500" : "text-gray-400")}>{client.company_name}</p>
-                      );
-                    })()}
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={(e) => {
-                        e.preventDefault();
-                        setEditingProject(project);
-                        setIsDialogOpen(true);
-                      }}>
-                        <Pencil className="w-4 h-4 mr-2" />Bewerken
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={(e) => { e.preventDefault(); setDeleteId(project.id); }} className="text-red-600">
-                        <Trash2 className="w-4 h-4 mr-2" />Verwijderen
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                <div className="flex items-center justify-between">
-                  <StatusBadge status={project.status} />
-                  {project.shoot_date && (
-                    <span className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
-                      {format(new Date(project.shoot_date), 'd MMM yyyy', { locale: nl })}
-                      {project.shoot_time && ` • ${project.shoot_time}`}
-                    </span>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* Create/Edit Dialog */}
+      {/* Desktop: card grid */}
+      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
