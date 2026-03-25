@@ -204,9 +204,8 @@ export default function AdminBookings() {
       const session = await base44.entities.Session.create(data);
 
       const sessionType = sessionTypes.find(t => t.id === data.session_type_id);
-      const isExtraSession = sessionType?.name?.toLowerCase().includes('extra');
 
-      if (data.project_id && !isExtraSession) {
+             if (data.project_id) {
         try {
           const startDate = new Date(data.start_datetime);
           await base44.entities.Project.update(data.project_id, {
@@ -273,9 +272,8 @@ export default function AdminBookings() {
       const updatedSession = await base44.entities.Session.update(id, resolvedData);
 
       const sessionType = sessionTypes.find(t => t.id === resolvedSessionTypeId);
-      const isExtraSession = sessionType?.name?.toLowerCase().includes('extra');
 
-      if (resolvedProjectId && !isExtraSession) {
+             if (resolvedProjectId) {
         try {
           const startDate = new Date(resolvedData.start_datetime);
           await base44.entities.Project.update(resolvedProjectId, {
