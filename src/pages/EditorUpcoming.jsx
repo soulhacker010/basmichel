@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 
 export default function EditorUpcoming() {
   const [search, setSearch] = useState('');
+  const [clientFilter, setClientFilter] = useState('all');
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem('editorDarkMode') === 'true';
   });
@@ -28,17 +29,20 @@ export default function EditorUpcoming() {
 
   const { data: projects = [] } = useQuery({
     queryKey: ['upcomingProjects'],
-    queryFn: () => base44.entities.Project.filter({ status: 'geboekt' }, '-shoot_date'),
+    queryFn: () => base44.entities.Project.filter({ status: 'geboekt' }, 'shoot_date'),
   });
 
-  const { data: clients = [] } = useQuery({
-    queryKey: ['clients'],
-    queryFn: () => base44.entities.Client.list(),
-  });
-
-  const filteredProjects = projects.filter(project =>
-    project.title?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredProjects = projects
+    .filter(project =>
+      project.title?.toLowerCase().includes(search.toLowerCase()) &&
+      (clientFilter === 'all' || project.client_id === clientFilter)
+    )
+    .sort((a, b) => {
+      if (!a.shoot_date && !b.shoot_date) return 0;
+      if (!a.shoot_date) return 1;
+      if (!b.shoot_date) return -1;
+      return new Date(a.shoot_date) - new Date(b.shoot_date);
+    });
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -47,7 +51,7 @@ export default function EditorUpcoming() {
         <p className={cn("mt-1", darkMode ? "text-gray-400" : "text-gray-500")}>Projects waiting to be edited</p>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-6 flex gap-3 flex-wrap">
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
@@ -57,6 +61,16 @@ export default function EditorUpcoming() {
             className="pl-10"
           />
         </div>
+        <select
+          value={clientFilter}
+          onChange={(e) => setClientFilter(e.target.value)}
+          className={cn("h-9 rounded-md border px-3 text-sm", darkMode ? "bg-gray-800 border-gray-700 text-gray-100" : "bg-white border-gray-200 text-gray-900")}
+        >
+          <option value="all">Alle klanten</option>
+          {clients.map(client => (
+            <option key={client.id} value={client.id}>{client.company_name || 'Onbekend'}</option>
+          ))}
+        </select>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

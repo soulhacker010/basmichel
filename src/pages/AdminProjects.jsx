@@ -52,9 +52,7 @@ import { useEffect } from 'react';
 export default function AdminProjects() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState(null);
-  const [deleteId, setDeleteId] = useState(null);
+  const [clientFilter, setClientFilter] = useState('all');
   const [darkMode, setDarkMode] = useState(false);
 
   const queryClient = useQueryClient();
@@ -344,12 +342,20 @@ export default function AdminProjects() {
     },
   });
 
-  const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.title?.toLowerCase().includes(search.toLowerCase()) ||
-      project.address?.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredProjects = projects
+    .filter(project => {
+      const matchesSearch = project.title?.toLowerCase().includes(search.toLowerCase()) ||
+        project.address?.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+      const matchesClient = clientFilter === 'all' || project.client_id === clientFilter;
+      return matchesSearch && matchesStatus && matchesClient;
+    })
+    .sort((a, b) => {
+      if (!a.shoot_date && !b.shoot_date) return 0;
+      if (!a.shoot_date) return 1;
+      if (!b.shoot_date) return -1;
+      return new Date(a.shoot_date) - new Date(b.shoot_date);
+    });
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -445,6 +451,20 @@ export default function AdminProjects() {
               <TabsTrigger value="klaar" className="text-sm whitespace-nowrap">Klaar</TabsTrigger>
             </TabsList>
           </Tabs>
+        </div>
+        <div className="w-full sm:max-w-xs">
+          <select
+            value={clientFilter}
+            onChange={(e) => setClientFilter(e.target.value)}
+            className={cn("w-full h-10 rounded border px-3 text-sm", darkMode ? "bg-gray-800 border-gray-700 text-gray-100" : "bg-white border-gray-200 text-gray-900")}
+          >
+            <option value="all">Alle klanten</option>
+            {clients.map(client => {
+              const user = users.find(u => u.id === client.user_id);
+              const name = user?.full_name || client.company_name || 'Onbekend';
+              return <option key={client.id} value={client.id}>{name}{client.company_name && user?.full_name ? ` · ${client.company_name}` : ''}</option>;
+            })}
+          </select>
         </div>
       </div>
 
