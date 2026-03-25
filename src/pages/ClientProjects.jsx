@@ -66,13 +66,22 @@ export default function ClientProjects() {
     refetchOnWindowFocus: true,
   });
 
-  const filteredProjects = projects.filter(project => {
-    const matchesSearch =
-      project.title?.toLowerCase().includes(search.toLowerCase()) ||
-      project.address?.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredProjects = projects
+    .filter(project => {
+      const matchesSearch =
+        project.title?.toLowerCase().includes(search.toLowerCase()) ||
+        project.address?.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      const dateA = a.shoot_date ? new Date(a.shoot_date) : null;
+      const dateB = b.shoot_date ? new Date(b.shoot_date) : null;
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+      return dateA - dateB;
+    });
 
   return (
     <div className="max-w-4xl mx-auto">
