@@ -92,7 +92,6 @@ export default function ExtraSessionsSection({ projectId }) {
         try {
           const client = await base44.entities.Client.get(data.client_id);
           let clientEmail = client?.invoice_admin_email;
-          // Fallback: use the linked user's email
           if (!clientEmail && client?.user_id) {
             try {
               const clientUser = await base44.entities.User.get(client.user_id);
@@ -104,35 +103,32 @@ export default function ExtraSessionsSection({ projectId }) {
             const startDate = new Date(data.start_datetime);
             const dateStr = startDate.toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             const timeStr = startDate.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-            await base44.integrations.Core.SendEmail({
+            await base44.functions.invoke('sendSessionConfirmationEmail', {
               to: clientEmail,
-              subject: `Sessie bevestiging – ${data.location || 'Onbekende locatie'}`,
-              body: `<!DOCTYPE html>
-<html style="font-family: Georgia, serif;">
-<head><meta charset="UTF-8"></head>
-<body style="margin: 0; padding: 20px; background: #fff; color: #2d2d2d;">
-  <div style="max-width: 600px; margin: 0 auto;">
-    <div style="border-bottom: 2px solid #5C6B52; padding-bottom: 24px; margin-bottom: 32px;">
-      <h1 style="font-size: 22px; font-weight: 400; letter-spacing: 0.05em; color: #5C6B52; margin: 0;">BAS MICHEL FOTOGRAFIE</h1>
-    </div>
-
-    <h2 style="font-size: 20px; font-weight: 400; margin-bottom: 8px;">Sessie bevestiging</h2>
-    <p style="color: #666; margin-bottom: 32px; font-size: 15px;">Beste ${clientName},<br/><br/>Er is een sessie ingepland voor uw project.</p>
-
-    <div style="background: #f9f9f7; border-left: 3px solid #5C6B52; padding: 24px; border-radius: 4px; margin-bottom: 32px;">
-      <table style="width: 100%; border-collapse: collapse;">
-        <tr><td style="padding: 8px 0; color: #888; font-size: 13px; width: 120px;">DATUM</td><td style="padding: 8px 0; font-size: 15px;">${dateStr}</td></tr>
-        <tr><td style="padding: 8px 0; color: #888; font-size: 13px;">TIJD</td><td style="padding: 8px 0; font-size: 15px;">${timeStr}</td></tr>
-        <tr><td style="padding: 8px 0; color: #888; font-size: 13px;">LOCATIE</td><td style="padding: 8px 0; font-size: 15px;">${data.location || 'N/A'}</td></tr>
-        ${data.notes ? `<tr><td style="padding: 8px 0; color: #888; font-size: 13px;">NOTITIES</td><td style="padding: 8px 0; font-size: 15px;">${data.notes}</td></tr>` : ''}
-      </table>
-    </div>
-
-    <p style="color: #888; font-size: 13px; border-top: 1px solid #eee; padding-top: 24px;">Heeft u vragen? Neem gerust contact op.</p>
-    </div>
-    </body>
-    </html>`,
+              clientName: clientName,
+              dateStr: dateStr,
+              timeStr: timeStr,
+              location: data.location || '',
+              notes: data.notes || '',
             });
+          }
+        } catch (error) {
+          console.error('Failed to send confirmation email:', error);
+        }
+      }
+
+      return session;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['extraSessions', projectId] });
+      setDialogOpen(false);
+      setFormData({
+        start_datetime: '',
+        end_datetime: '',
+        location: '',
+        notes: '',
+        status: 'bevestigd',
+      });
       toast.success('Extra sessie toegevoegd');
     },
   });
