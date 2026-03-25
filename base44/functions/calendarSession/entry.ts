@@ -195,13 +195,17 @@ Deno.serve(async (req) => {
                 // Convert events to busy time ranges
                 // Skip transparent events (events that don't block time) and cancelled events
                 const busyTimes = events
-                    .filter((event: any) => event.status !== 'cancelled' && event.transparency !== 'transparent')
-                    .map((event: any) => ({
-                        summary: event.summary,
-                        start: event.start?.dateTime || event.start?.date,
-                        end: event.end?.dateTime || event.end?.date
-                    }))
-                    .filter((busy: any) => busy.start && busy.end);
+                    .filter((event) => event.status !== 'cancelled' && event.transparency !== 'transparent')
+                    .map((event) => {
+                        const isAllDay = !!event.start?.date && !event.start?.dateTime;
+                        return {
+                            summary: event.summary,
+                            start: event.start?.dateTime || event.start?.date,
+                            end: event.end?.dateTime || event.end?.date,
+                            isAllDay: isAllDay
+                        };
+                    })
+                    .filter((busy) => busy.start && busy.end);
 
                 console.log('Busy times from events:', JSON.stringify(busyTimes));
 
