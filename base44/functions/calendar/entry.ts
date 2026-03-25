@@ -72,11 +72,14 @@ Deno.serve(async (req) => {
             const endMins = totalMinutes % 60;
             const endDateTime = `${datePart}T${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}:${String(seconds || 0).padStart(2, '0')}`;
 
-            // Fetch client name from DB for accurate display
+            // Fetch client name, session type and notes from DB
             let resolvedClientName = clientName || 'N/A';
+            let sessionTypeName = null;
+            let clientNotes = null;
             if (projectId) {
                 try {
                     const project = await base44.asServiceRole.entities.Project.get(projectId);
+                    clientNotes = project?.client_notes || null;
                     if (project?.client_id) {
                         const client = await base44.asServiceRole.entities.Client.get(project.client_id);
                         if (client?.user_id) {
@@ -89,15 +92,28 @@ Deno.serve(async (req) => {
                             resolvedClientName = `${resolvedClientName} (${client.company_name})`;
                         }
                     }
+                    // Get session type name
+                    const sessions = await base44.asServiceRole.entities.Session.filter({ project_id: projectId });
+                    if (sessions.length > 0 && sessions[0].session_type_id) {
+                        const st = await base44.asServiceRole.entities.SessionType.get(sessions[0].session_type_id);
+                        sessionTypeName = st?.name || null;
+                    }
                 } catch (e) {
-                    console.error('Failed to fetch client name:', e);
+                    console.error('Failed to fetch project details:', e);
                 }
             }
+
+            const descriptionParts = [
+                `Klant: ${resolvedClientName}`,
+                sessionTypeName ? `Pakket: ${sessionTypeName}` : null,
+                clientNotes ? `Notities klant: ${clientNotes}` : null,
+                `Direct link: https://basmichel.com/AdminProjectDetail?id=${projectId}`,
+            ].filter(Boolean).join('\n');
 
             const eventData = {
                 summary: projectTitle,
                 location: location || '',
-                description: `Klant: ${resolvedClientName}\nProject ID: ${projectId}\nDirect link: https://basmichel.com/AdminProjectDetail?id=${projectId}`,
+                description: descriptionParts,
                 start: {
                     dateTime: startDateTime,
                     timeZone: 'Europe/Amsterdam', // Netherlands timezone
