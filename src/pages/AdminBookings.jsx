@@ -730,12 +730,13 @@ export default function AdminBookings() {
                             </div>
                           );
                         } else {
+                          const isAllDay = item.isAllDay || (!item.start?.includes('T') && !item.end?.includes('T'));
                           return (
                             <div
                               key={`cal-${idx}`}
                               className="text-xs px-1.5 py-0.5 rounded truncate bg-blue-50 text-blue-600 border border-blue-100"
                             >
-                              {item.start && format(new Date(item.start), 'HH:mm')} {item.summary || 'Extern'}
+                              {isAllDay ? 'Hele dag' : (item.start && format(new Date(item.start), 'HH:mm'))} {item.summary || 'Extern'}
                             </div>
                           );
                         }
