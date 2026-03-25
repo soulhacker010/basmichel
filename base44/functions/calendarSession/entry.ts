@@ -69,11 +69,11 @@ Deno.serve(async (req) => {
                 summary: `${sessionType?.name || 'Sessie'} - ${clientName}`,
                 description: `Type: ${sessionType?.name || 'Onbekend'}\nKlant: ${clientName}\nLocatie: ${sessionData.location || 'N/A'}\n${sessionData.notes ? `\nNotities: ${sessionData.notes}` : ''}`,
                 start: {
-                    dateTime: sessionData.start_datetime,
+                    dateTime: startISO,
                     timeZone: 'Europe/Amsterdam',
                 },
                 end: {
-                    dateTime: endDate.toISOString(),
+                    dateTime: endISO,
                     timeZone: 'Europe/Amsterdam',
                 },
                 colorId: '10' // Green color for sessions
