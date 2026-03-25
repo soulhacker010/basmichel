@@ -61,6 +61,7 @@ export default function ExtraSessionsSection({ projectId }) {
     mutationFn: async (data) => {
       const session = await base44.entities.Session.create(data);
 
+      // Sync to Google Calendar
       try {
         const response = await base44.functions.invoke('calendarSession', {
           action: 'syncSessionEvent',
@@ -83,6 +84,28 @@ export default function ExtraSessionsSection({ projectId }) {
         }
       } catch (error) {
         console.error('Failed to sync extra session to calendar:', error);
+        toast.error('Kon sessie niet synchroniseren met Google Agenda');
+      }
+
+      // Send email confirmation to client
+      if (data.client_id) {
+        try {
+          const client = await base44.entities.Client.get(data.client_id);
+          const clientEmail = client?.invoice_admin_email;
+          const clientName = client?.contact_name || client?.company_name || 'Klant';
+          if (clientEmail) {
+            const startDate = new Date(data.start_datetime);
+            const dateStr = startDate.toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const timeStr = startDate.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+            await base44.integrations.Core.SendEmail({
+              to: clientEmail,
+              subject: `Bevestiging extra sessie – ${data.location || 'Onbekende locatie'}`,
+              body: `Beste ${clientName},\n\nEr is een extra sessie ingepland voor uw project.\n\nDatum: ${dateStr}\nTijd: ${timeStr}\nLocatie: ${data.location || 'N/A'}${data.notes ? `\nNotities: ${data.notes}` : ''}\n\nMet vriendelijke groet,\nBas Michel Fotografie`,
+            });
+          }
+        } catch (error) {
+          console.error('Failed to send confirmation email:', error);
+        }
       }
 
       return session;
