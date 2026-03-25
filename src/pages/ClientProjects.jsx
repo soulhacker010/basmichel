@@ -89,21 +89,11 @@ export default function ClientProjects() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Projecten</h1>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setSortAsc(v => !v)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-gray-500 text-xs font-medium active:scale-95 transition-transform"
-            title={sortAsc ? 'Eerstvolgende bovenaan' : 'Laatste bovenaan'}
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            {sortAsc ? '↑ Vroegst eerst' : '↓ Laatste eerst'}
+        <Link to={createPageUrl('ClientBooking')}>
+          <button className="w-9 h-9 rounded-full bg-[#5C6B52] flex items-center justify-center shadow-sm active:scale-95 transition-transform">
+            <Plus className="w-5 h-5 text-white" />
           </button>
-          <Link to={createPageUrl('ClientBooking')}>
-            <button className="w-9 h-9 rounded-full bg-[#5C6B52] flex items-center justify-center shadow-sm active:scale-95 transition-transform">
-              <Plus className="w-5 h-5 text-white" />
-            </button>
-          </Link>
-        </div>
+        </Link>
       </div>
 
       {/* Search */}
@@ -118,21 +108,30 @@ export default function ClientProjects() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1 mb-5 scrollbar-hide">
-        {filterTabs.map(tab => (
-          <button
-            key={tab.value}
-            onClick={() => setStatusFilter(tab.value)}
-            className={cn(
-              "flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all",
-              statusFilter === tab.value
-                ? "bg-[#5C6B52] text-white shadow-sm"
-                : "bg-gray-100 text-gray-500"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 mb-5 scrollbar-hide">
+        <div className="flex gap-2 flex-1">
+          {filterTabs.map(tab => (
+            <button
+              key={tab.value}
+              onClick={() => setStatusFilter(tab.value)}
+              className={cn(
+                "flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all",
+                statusFilter === tab.value
+                  ? "bg-[#5C6B52] text-white shadow-sm"
+                  : "bg-gray-100 text-gray-500"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setSortAsc(v => !v)}
+          className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-500 text-sm font-medium active:scale-95 transition-transform"
+        >
+          <Calendar className="w-3.5 h-3.5" />
+          {sortAsc ? '↑' : '↓'}
+        </button>
       </div>
 
       {/* Projects */}
