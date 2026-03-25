@@ -220,6 +220,94 @@ Deno.serve(async (req) => {
             }
         }
 
+        // Bulk sync all sessions without a calendar event ID
+        if (action === 'bulkSyncSessions') {
+            if (user?.role !== 'admin') {
+                return Response.json({ error: 'Forbidden' }, { status: 403 });
+            }
+
+            const allSessions = await base44.asServiceRole.entities.Session.list();
+            const unsynced = allSessions.filter(s => !s.google_calendar_event_id && s.start_datetime);
+
+            let synced = 0;
+            let failed = 0;
+            const errors = [];
+
+            for (const session of unsynced) {
+                try {
+                    // Get session type
+                    let sessionType = null;
+                    if (session.session_type_id) {
+                        try { sessionType = await base44.asServiceRole.entities.SessionType.get(session.session_type_id); } catch(e) {}
+                    }
+                    const durationMinutes = sessionType?.duration_minutes || 60;
+
+                    const startDate = new Date(session.start_datetime);
+                    const endDate = session.end_datetime
+                        ? new Date(session.end_datetime)
+                        : new Date(startDate.getTime() + durationMinutes * 60000);
+
+                    // Get client name
+                    let clientName = 'Geen klant';
+                    if (session.client_id) {
+                        let client = null;
+                        try { client = await base44.asServiceRole.entities.Client.get(session.client_id); } catch(e) {}
+                        if (client) {
+                            if (client.user_id) {
+                                try {
+                                    const u = await base44.asServiceRole.entities.User.get(client.user_id);
+                                    clientName = u?.full_name || client.company_name || 'Onbekend';
+                                } catch(e) { clientName = client.company_name || 'Onbekend'; }
+                            } else {
+                                clientName = client.company_name || 'Onbekend';
+                            }
+                        }
+                    }
+
+                    // Get location from project if not on session
+                    let location = session.location;
+                    if (!location && session.project_id) {
+                        try {
+                            const project = await base44.asServiceRole.entities.Project.get(session.project_id);
+                            location = project?.title || null;
+                        } catch(e) {}
+                    }
+
+                    const eventData = {
+                        summary: `${sessionType?.name || 'Sessie'} - ${clientName}`,
+                        description: `Type: ${sessionType?.name || 'Onbekend'}\nKlant: ${clientName}\nLocatie: ${location || 'N/A'}`,
+                        start: { dateTime: startDate.toISOString(), timeZone: 'Europe/Amsterdam' },
+                        end: { dateTime: endDate.toISOString(), timeZone: 'Europe/Amsterdam' },
+                        colorId: '10'
+                    };
+
+                    const resp = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify(eventData)
+                    });
+
+                    if (!resp.ok) {
+                        const errText = await resp.text();
+                        errors.push(`Session ${session.id}: ${resp.status} ${errText.substring(0, 100)}`);
+                        failed++;
+                        continue;
+                    }
+
+                    const event = await resp.json();
+                    await base44.asServiceRole.entities.Session.update(session.id, {
+                        google_calendar_event_id: event.id
+                    });
+                    synced++;
+                } catch(err) {
+                    errors.push(`Session ${session.id}: ${String(err)}`);
+                    failed++;
+                }
+            }
+
+            return Response.json({ success: true, total: unsynced.length, synced, failed, errors });
+        }
+
         return Response.json({ error: 'Invalid action' }, { status: 400 });
 
     } catch (error) {

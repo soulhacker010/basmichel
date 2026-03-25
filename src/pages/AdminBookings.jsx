@@ -6,6 +6,7 @@ import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
+  RefreshCw,
   Clock,
   MapPin,
   MoreHorizontal,
@@ -62,7 +63,26 @@ export default function AdminBookings() {
   const [deleteBlockedId, setDeleteBlockedId] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const cleanupRunningRef = useRef(false);
+
+  const handleBulkSync = async () => {
+    setIsSyncing(true);
+    try {
+      const response = await base44.functions.invoke('calendarSession', { action: 'bulkSyncSessions' });
+      const data = response?.data || response;
+      if (data?.success) {
+        alert(`Sync klaar: ${data.synced} gesynchroniseerd, ${data.failed} mislukt (van ${data.total} sessies zonder agenda-event).`);
+        queryClient.invalidateQueries({ queryKey: ['sessions'] });
+      } else {
+        alert('Sync mislukt: ' + JSON.stringify(data));
+      }
+    } catch (err) {
+      alert('Sync fout: ' + String(err));
+    } finally {
+      setIsSyncing(false);
+    }
+  };
   
   const queryClient = useQueryClient();
 
@@ -506,6 +526,15 @@ export default function AdminBookings() {
         description="Beheer je sessies en kalender"
         actions={
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleBulkSync}
+              disabled={isSyncing}
+              className="border-[#A8B5A0] text-[#5C6B52] hover:bg-[#E8EDE5]"
+            >
+              <RefreshCw className={cn("w-4 h-4 mr-2", isSyncing && "animate-spin")} />
+              {isSyncing ? 'Syncing...' : 'Sync naar agenda'}
+            </Button>
             <Button 
               variant="outline"
               onClick={() => {
