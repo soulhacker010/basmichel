@@ -50,9 +50,12 @@ Deno.serve(async (req) => {
                 ? new Date(sessionData.end_datetime)
                 : new Date(startDate.getTime() + (durationMinutes * 60 * 1000));
 
-            // Ensure valid ISO strings for Google Calendar API
-            const startISO = startDate.toISOString();
-            const endISO = endDate.toISOString();
+            // Pass the original datetime string directly (Amsterdam local time)
+            // Do NOT use toISOString() as that converts to UTC causing 1-2h offset
+            const startISO = sessionData.start_datetime.includes('T') ? sessionData.start_datetime : `${sessionData.start_datetime}T00:00:00`;
+            const endISO = sessionData.end_datetime
+                ? (sessionData.end_datetime.includes('T') ? sessionData.end_datetime : `${sessionData.end_datetime}T00:00:00`)
+                : new Date(new Date(startISO.replace(' ', 'T')).getTime() + durationMinutes * 60000).toISOString().slice(0, 19);
 
             // Get client name
             let clientName = 'Geen klant';
@@ -246,35 +249,15 @@ Deno.serve(async (req) => {
                     }
                     const durationMinutes = sessionType?.duration_minutes || 60;
 
-                    const startDate = new Date(session.start_datetime);
-                    const endDate = session.end_datetime
-                        ? new Date(session.end_datetime)
-                        : new Date(startDate.getTime() + durationMinutes * 60000);
-
-                    // Get client name
-                    let clientName = 'Geen klant';
-                    if (session.client_id) {
-                        let client = null;
-                        try { client = await base44.asServiceRole.entities.Client.get(session.client_id); } catch(e) {}
-                        if (client) {
-                            if (client.user_id) {
-                                try {
-                                    const u = await base44.asServiceRole.entities.User.get(client.user_id);
-                                    clientName = u?.full_name || client.company_name || 'Onbekend';
-                                } catch(e) { clientName = client.company_name || 'Onbekend'; }
-                            } else {
-                                clientName = client.company_name || 'Onbekend';
-                            }
-                        }
-                    }
-
-                    // Get location from project if not on session
-                    let location = session.location;
-                    if (!location && session.project_id) {
-                        try {
-                            const project = await base44.asServiceRole.entities.Project.get(session.project_id);
-                            location = project?.title || null;
-                        } catch(e) {}
+                    // Use datetime string directly to avoid UTC conversion
+                    const startISO = session.start_datetime.includes('T') ? session.start_datetime.slice(0, 19) : `${session.start_datetime}T00:00:00`;
+                    let endISO;
+                    if (session.end_datetime) {
+                        endISO = session.end_datetime.includes('T') ? session.end_datetime.slice(0, 19) : `${session.end_datetime}T00:00:00`;
+                    } else {
+                        const startMs = new Date(startISO).getTime();
+                        const endMs = startMs + durationMinutes * 60000;
+                        endISO = new Date(endMs).toISOString().slice(0, 19);
                     }
 
                     const eventData = {
