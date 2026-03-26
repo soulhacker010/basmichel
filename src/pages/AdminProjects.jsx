@@ -491,6 +491,41 @@ export default function AdminProjects() {
         </div>
       </div>
 
+      {/* Mobile: list */}
+      <div className="md:hidden flex flex-col gap-3">
+        {filteredProjects.map(project => {
+          const client = clients.find(c => c.id === project.client_id);
+          return (
+            <Link
+              key={project.id}
+              to={`${createPageUrl('AdminProjectDetail')}?id=${project.id}`}
+              className={cn("rounded-lg border p-4 block",
+                darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"
+              )}
+            >
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex-1 min-w-0">
+                  <h3 className={cn("font-medium truncate text-sm", darkMode ? "text-gray-100" : "text-gray-900")}>{project.title}</h3>
+                  <p className={cn("text-xs truncate", darkMode ? "text-gray-400" : "text-gray-500")}>
+                    {[client?.contact_name, client?.company_name].filter(Boolean).join(' · ') || '-'}
+                  </p>
+                </div>
+                <StatusBadge status={project.status} />
+              </div>
+              {project.shoot_date && (
+                <p className={cn("text-xs", darkMode ? "text-gray-500" : "text-gray-400")}>
+                  {format(new Date(project.shoot_date), 'd MMM yyyy', { locale: nl })}
+                  {project.shoot_time && ` • ${project.shoot_time}`}
+                </p>
+              )}
+            </Link>
+          );
+        })}
+        {filteredProjects.length === 0 && (
+          <p className={cn("text-center py-12 text-sm", darkMode ? "text-gray-500" : "text-gray-400")}>Geen projecten gevonden</p>
+        )}
+      </div>
+
       {/* Desktop: card grid */}
       <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredProjects.map(project => {
