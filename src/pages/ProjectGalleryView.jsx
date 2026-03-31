@@ -535,14 +535,14 @@ Open project: ${window.location.origin}${link}
                 ) : (
                     <>
                         {galleryFiles.length > 0 && (
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                            <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
                                 {galleryFiles.map((file, index) => (
                                     <motion.div
                                         key={file.id}
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: index * 0.03 }}
-                                        className="aspect-[4/3] rounded-lg overflow-hidden relative group cursor-pointer"
+                                        className="relative group cursor-pointer overflow-hidden rounded-xl break-inside-avoid shadow-sm hover:shadow-lg transition-all duration-500 bg-white/5"
                                         onClick={() => {
                                             if (file.mime_type === 'text/url') {
                                                 window.open(file.file_url, '_blank');
@@ -553,11 +553,11 @@ Open project: ${window.location.origin}${link}
                                     >
                                         {/* Thumbnail */}
                                         {file.mime_type === 'text/url' ? (
-                                            <div className="w-full h-full bg-white/10 flex items-center justify-center">
+                                            <div className="w-full aspect-square bg-white/10 flex items-center justify-center">
                                                 <ExternalLink className="w-8 h-8 text-white/50" />
                                             </div>
                                         ) : file.mime_type?.startsWith('video/') ? (
-                                            <div className="relative w-full h-full">
+                                            <div className="relative w-full aspect-square">
                                                 <video
                                                     src={file.file_url}
                                                     className="w-full h-full object-cover"
@@ -570,13 +570,15 @@ Open project: ${window.location.origin}${link}
                                             <img
                                                 src={file.file_url}
                                                 alt={file.filename}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700 block"
                                                 loading="lazy"
+                                                onLoad={(e) => e.target.classList.add('opacity-100')}
+                                                style={{ opacity: 0, transition: 'opacity 0.5s ease-in-out, transform 0.7s ease-in-out' }}
                                             />
                                         )}
 
                                         {/* Hover overlay */}
-                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-gradient-to-t group-hover:from-black/50 group-hover:to-transparent transition-all duration-300" />
 
                                         {/* Selection checkbox */}
                                         {file.mime_type !== 'text/url' && (
@@ -586,10 +588,10 @@ Open project: ${window.location.origin}${link}
                                                     toggleSelect(file.id);
                                                 }}
                                                 className={cn(
-                                                    "absolute top-2 left-2 w-6 h-6 rounded border-2 flex items-center justify-center transition-all",
+                                                    "absolute top-3 left-3 w-7 h-7 rounded border-2 flex items-center justify-center transition-all",
                                                     selectedFiles[file.id]
-                                                        ? "bg-[#5C6B52] border-[#5C6B52] text-white"
-                                                        : "border-white/50 bg-black/30 opacity-0 group-hover:opacity-100"
+                                                        ? "bg-[#5C6B52] border-[#5C6B52] text-white shadow-md scale-100 opacity-100"
+                                                        : "border-white/70 bg-black/40 opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 hover:bg-black/60"
                                                 )}
                                             >
                                                 {selectedFiles[file.id] && <Check className="w-4 h-4" />}
@@ -685,18 +687,24 @@ Open project: ${window.location.origin}${link}
                         {/* Content */}
                         <div className="absolute inset-0 flex items-center justify-center p-4">
                             {galleryFiles[selectedIndex]?.mime_type?.startsWith('video/') ? (
-                                <video
+                                <motion.video
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.3 }}
                                     src={galleryFiles[selectedIndex]?.file_url}
                                     controls
                                     autoPlay
-                                    className="max-w-full max-h-full"
+                                    className="max-w-full max-h-full rounded-md shadow-2xl"
                                     onClick={(e) => e.stopPropagation()}
                                 />
                             ) : (
-                                <img
+                                <motion.img
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.3 }}
                                     src={galleryFiles[selectedIndex]?.file_url}
                                     alt=""
-                                    className="max-w-full max-h-full object-contain"
+                                    className="max-w-full max-h-full object-contain rounded-md shadow-2xl drop-shadow-2xl"
                                     onClick={(e) => e.stopPropagation()}
                                 />
                             )}

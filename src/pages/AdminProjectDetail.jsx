@@ -307,6 +307,7 @@ export default function AdminProjectDetail() {
             clientName: user?.full_name || client?.company_name || 'N/A',
             location: project.title,
             calendarEventId: project.calendar_event_id || null,
+            durationMinutes: booking ? ((invoiceTemplates.length ? booking?.service?.duration_minutes : null) || 60) : 60,
           });
           if (calendarResponse?.calendarEventId && !project.calendar_event_id) {
             await base44.entities.Project.update(project.id, {
@@ -637,6 +638,7 @@ export default function AdminProjectDetail() {
         clientName: user?.full_name || client?.company_name || 'N/A',
         location: project.title,
         calendarEventId: project.calendar_event_id || null,
+        durationMinutes: booking ? ((invoiceTemplates.length ? booking?.service?.duration_minutes : null) || 60) : 60,
       });
       if (response.calendarEventId && !project.calendar_event_id) {
         await base44.entities.Project.update(project.id, { calendar_event_id: response.calendarEventId });

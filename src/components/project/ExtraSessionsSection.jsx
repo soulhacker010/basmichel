@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { format } from 'date-fns';
+import { format, addMinutes } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { Plus, Calendar, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -128,10 +128,19 @@ export default function ExtraSessionsSection({ projectId }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const sessionTypeId = sessionTypes.find(st => st.name === 'Extra Sessie')?.id || sessionTypes?.[0]?.id || null;
+    const sessionType = sessionTypes.find(st => st.name === 'Extra Sessie') || sessionTypes?.[0];
+    const sessionTypeId = sessionType?.id || null;
+    let finalEndDatetime = formData.end_datetime;
+    
+    if (!finalEndDatetime && formData.start_datetime) {
+      const start = new Date(formData.start_datetime);
+      const minutes = sessionType?.duration_minutes || 60;
+      finalEndDatetime = format(addMinutes(start, minutes), "yyyy-MM-dd'T'HH:mm");
+    }
 
     createSessionMutation.mutate({
       ...formData,
+      end_datetime: finalEndDatetime || null,
       project_id: projectId,
       client_id: project?.client_id || null,
       session_type_id: sessionTypeId,
