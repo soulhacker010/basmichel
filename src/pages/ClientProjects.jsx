@@ -72,7 +72,9 @@ export default function ClientProjects() {
       const matchesSearch =
         project.title?.toLowerCase().includes(search.toLowerCase()) ||
         project.address?.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+      const matchesStatus = statusFilter === 'all' || 
+        project.status === statusFilter ||
+        (statusFilter === 'wordt_bewerkt' && project.status === 'shoot_uitgevoerd');
       return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
