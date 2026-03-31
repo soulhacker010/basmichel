@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,8 @@ export default function InvoiceDialog({
   isSaving,
 }) {
   const queryClient = useQueryClient();
+  const [showTemplateInput, setShowTemplateInput] = useState(false);
+  const [templateName, setTemplateName] = useState('');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -304,34 +306,57 @@ export default function InvoiceDialog({
               <Plus className="w-4 h-4 mr-2" />
               Item toevoegen
             </Button>
-            <Button
-              variant="outline"
-              onClick={async () => {
-                const name = prompt('Naam voor dit sjabloon:');
-                if (!name) return;
-                try {
-                  await base44.entities.Template.create({
-                    name,
-                    type: 'factuur',
-                    content: JSON.stringify({
-                      items: invoiceData.items,
-                      vat_percentage: invoiceData.vat_percentage,
-                      discount_amount: invoiceData.discount_amount,
-                    }),
-                    is_default: false,
-                  });
-                  queryClient.invalidateQueries({ queryKey: ['invoiceTemplates'] });
-                  toast.success('Sjabloon opgeslagen!');
-                } catch (err) {
-                  console.error('Save template error:', err);
-                  toast.error('Kon sjabloon niet opslaan');
-                }
-              }}
-              disabled={invoiceData.items.every(item => !item.title && !item.unit_price)}
-              className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
-            >
-              Opslaan als sjabloon
-            </Button>
+            {showTemplateInput ? (
+              <div className="space-y-2 border border-blue-100 bg-blue-50/50 p-3 rounded-lg">
+                <Label className="text-blue-900">Naam voor nieuw sjabloon</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    value={templateName} 
+                    onChange={e => setTemplateName(e.target.value)} 
+                    placeholder="bijv. Standaard 2026"
+                    className="bg-white"
+                    autoFocus
+                  />
+                  <Button 
+                    onClick={async () => {
+                      if (!templateName) return;
+                      try {
+                        await base44.entities.Template.create({
+                          name: templateName,
+                          type: 'factuur',
+                          content: JSON.stringify({
+                            items: invoiceData.items,
+                            vat_percentage: invoiceData.vat_percentage,
+                            discount_amount: invoiceData.discount_amount,
+                          }),
+                          is_default: false,
+                        });
+                        queryClient.invalidateQueries({ queryKey: ['invoiceTemplates'] });
+                        toast.success('Sjabloon opgeslagen!');
+                        setShowTemplateInput(false);
+                        setTemplateName('');
+                      } catch (err) {
+                        console.error('Save template error:', err);
+                        toast.error('Kon sjabloon niet opslaan');
+                      }
+                    }}
+                    className="bg-[#5C6B52] hover:bg-[#4A5641] text-white"
+                  >
+                    Opslaan
+                  </Button>
+                  <Button variant="ghost" onClick={() => setShowTemplateInput(false)}>Annuleren</Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => setShowTemplateInput(true)}
+                disabled={invoiceData.items.every(item => !item.title && !item.unit_price)}
+                className="w-full text-[#5C6B52] border-[#A8B5A0] hover:bg-[#E8EDE5]"
+              >
+                Opslaan als sjabloon
+              </Button>
+            )}
           </div>
 
           {/* D. SAMENVATTING */}

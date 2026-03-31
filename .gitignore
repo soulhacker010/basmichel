@@ -38,3 +38,5 @@ PROJECT_NOTES.md
 .windsurfrules
 .windsurf/workflows/codacy-check-coverage.md
 .windsurf/workflows/codacy-fix-issues.md
+git_diff_utf8.txt
+git_diff.txt
