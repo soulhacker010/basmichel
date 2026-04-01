@@ -387,9 +387,9 @@ Open project: ${window.location.origin}${link}
     }
 
     return (
-        <div className="min-h-screen bg-[#0A0A0A]">
+        <div className="min-h-screen bg-[#0A0A0A] overflow-x-hidden w-full">
             {/* Hero Header */}
-            <div className="relative h-[50vh] min-h-[400px] overflow-hidden">
+            <div className="relative h-[50vh] min-h-[400px] w-full overflow-hidden">
                 {coverImage ? (
                     <>
                         <img
@@ -437,33 +437,35 @@ Open project: ${window.location.origin}${link}
                     {project.address && (
                         <p className="text-white/60">{project.address}</p>
                     )}
-                    <Button
-                        onClick={() => {
-                            const section = document.getElementById('gallery-section');
-                            if (section) {
-                                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            }
-                        }}
-                        className="mt-6 bg-white/95 hover:bg-white text-gray-900 font-medium shadow-lg"
-                    >
-                        <Images className="w-4 h-4 mr-2" />
-                        View Gallery
-                    </Button>
-                    <Button
-                        onClick={() => setRevisionOpen(true)}
-                        className="mt-4 bg-white/10 hover:bg-white/20 text-white border border-white/30"
-                    >
-                        <MessageSquare className="w-4 h-4 mr-2" />
-                        Revisie aanvragen
-                    </Button>
+                    <div className="flex flex-wrap gap-3 mt-6">
+                        <Button
+                            onClick={() => {
+                                const section = document.getElementById('gallery-section');
+                                if (section) {
+                                    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+                            }}
+                            className="bg-white/95 hover:bg-white text-gray-900 font-medium shadow-lg"
+                        >
+                            <Images className="w-4 h-4 mr-2" />
+                            View Gallery
+                        </Button>
+                        <Button
+                            onClick={() => setRevisionOpen(true)}
+                            className="bg-white/10 hover:bg-white/20 text-white border border-white/30"
+                        >
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            Revisie aanvragen
+                        </Button>
+                    </div>
                 </div>
             </div>
 
             {/* Gallery Section */}
-            <div id="gallery-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div id="gallery-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
                 {/* Category Tabs + Actions */}
-                <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-                    <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 w-full">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2 -mb-2 w-full sm:w-auto scrollbar-none snap-x mask-fade-right pr-4">
                         {categories.map(cat => {
                             const count = cat.key === 'all'
                                 ? deliveryFiles.length
@@ -570,10 +572,12 @@ Open project: ${window.location.origin}${link}
                                             <img
                                                 src={file.file_url}
                                                 alt={file.filename}
-                                                className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700 block"
+                                                className="w-full h-auto object-cover group-hover:scale-105 transition-all duration-700 block opacity-0"
                                                 loading="lazy"
-                                                onLoad={(e) => e.target.classList.add('opacity-100')}
-                                                style={{ opacity: 0, transition: 'opacity 0.5s ease-in-out, transform 0.7s ease-in-out' }}
+                                                onLoad={(e) => {
+                                                    e.target.classList.remove('opacity-0');
+                                                    e.target.classList.add('opacity-100');
+                                                }}
                                             />
                                         )}
 
