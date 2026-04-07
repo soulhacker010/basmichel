@@ -57,6 +57,8 @@ export default function ClientInvoices() {
       return combined.filter(inv => {
         if (seen.has(inv.id)) return false;
         seen.add(inv.id);
+        // Only show invoices that have been sent or paid — hide drafts/concepts
+        if (inv.status === 'concept') return false;
         return true;
       });
     },

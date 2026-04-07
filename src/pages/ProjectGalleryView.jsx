@@ -537,14 +537,14 @@ Open project: ${window.location.origin}${link}
                 ) : (
                     <>
                         {galleryFiles.length > 0 && (
-                            <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                 {galleryFiles.map((file, index) => (
                                     <motion.div
                                         key={file.id}
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: index * 0.03 }}
-                                        className="relative group cursor-pointer overflow-hidden rounded-xl break-inside-avoid shadow-sm hover:shadow-lg transition-all duration-500 bg-white/5"
+                                        className="relative group cursor-pointer overflow-hidden rounded-xl shadow-sm hover:shadow-lg transition-all duration-500 bg-white/5 aspect-[4/3]"
                                         onClick={() => {
                                             if (file.mime_type === 'text/url') {
                                                 window.open(file.file_url, '_blank');
@@ -555,11 +555,11 @@ Open project: ${window.location.origin}${link}
                                     >
                                         {/* Thumbnail */}
                                         {file.mime_type === 'text/url' ? (
-                                            <div className="w-full aspect-square bg-white/10 flex items-center justify-center">
+                                            <div className="w-full h-full bg-white/10 flex items-center justify-center">
                                                 <ExternalLink className="w-8 h-8 text-white/50" />
                                             </div>
                                         ) : file.mime_type?.startsWith('video/') ? (
-                                            <div className="relative w-full aspect-square">
+                                            <div className="relative w-full h-full">
                                                 <video
                                                     src={file.file_url}
                                                     className="w-full h-full object-cover"
@@ -572,7 +572,7 @@ Open project: ${window.location.origin}${link}
                                             <img
                                                 src={file.file_url}
                                                 alt={file.filename}
-                                                className="w-full h-auto object-cover group-hover:scale-105 transition-all duration-700 block opacity-0"
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700 block opacity-0"
                                                 loading="lazy"
                                                 onLoad={(e) => {
                                                     e.target.classList.remove('opacity-0');
