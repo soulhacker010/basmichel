@@ -117,6 +117,18 @@ export default function AdminProjectDetail() {
     queryFn: () => base44.auth.me(),
   });
 
+  // Load business settings from Template entity (reliable storage)
+  const { data: businessSettings } = useQuery({
+    queryKey: ['businessSettings'],
+    queryFn: async () => {
+      const templates = await base44.entities.Template.filter({ type: 'business_settings' });
+      if (templates.length > 0) {
+        try { return JSON.parse(templates[0].content); } catch { return {}; }
+      }
+      return {};
+    },
+  });
+
   const { data: client } = useQuery({
     queryKey: ['client', project?.client_id],
     queryFn: async () => {
@@ -246,9 +258,13 @@ export default function AdminProjectDetail() {
         }
 
         if (user?.email) {
+          // Get admin email for BCC copy
+          const adminEmail = businessSettings?.business_email || adminUser?.email || '';
+
           // Project klaar e-mail
           await base44.integrations.Core.SendEmail({
             to: user.email,
+            ...(adminEmail ? { bcc: adminEmail } : {}),
             from_name: 'Bas Michel Fotografie',
             subject: `Je project is klaar - ${project.title}`,
             body: `<p>Beste ${user.full_name || 'klant'},</p><p>Goed nieuws! Je project <strong>${project.title}</strong> is klaar en staat voor je klaar in het portaal.</p><p><em>Dit is een automatische e-mail — reageren heeft geen effect. Log in via het portaal om je bestanden te bekijken of een revisie aan te vragen.</em></p><p>Met vriendelijke groet,<br/>Bas Michel Fotografie</p>`,
@@ -263,6 +279,7 @@ export default function AdminProjectDetail() {
 
             await base44.integrations.Core.SendEmail({
               to: user.email,
+              ...(adminEmail ? { bcc: adminEmail } : {}),
               from_name: 'Bas Michel Fotografie',
               subject: `Nieuwe factuur ${invoiceNumber} – ${project.title}`,
               body: `
@@ -457,15 +474,15 @@ export default function AdminProjectDetail() {
         project_id: projectId,
         client_id: project?.client_id || null,
         invoice_number: project.project_number,
-        business_name: adminUser?.business_name || 'Bas Michel',
-        business_address: adminUser?.address || '',
-        business_phone: adminUser?.phone || '',
-        business_website: adminUser?.website || '',
-        business_email: adminUser?.email || 'basmichelsite@gmail.com',
-        bank_account_name: adminUser?.bank_account_name || 'Bas Michel',
-        bank_iban: adminUser?.bank_iban || '',
-        kvk_number: adminUser?.kvk_number || '',
-        vat_number: adminUser?.vat_number || '',
+        business_name: businessSettings?.business_name || adminUser?.business_name || 'Bas Michel',
+        business_address: businessSettings?.address || adminUser?.address || '',
+        business_phone: businessSettings?.phone || adminUser?.phone || '',
+        business_website: businessSettings?.website || adminUser?.website || '',
+        business_email: businessSettings?.business_email || adminUser?.email || 'basmichelsite@gmail.com',
+        bank_account_name: businessSettings?.bank_account_name || adminUser?.bank_account_name || 'Bas Michel',
+        bank_iban: businessSettings?.bank_iban || adminUser?.bank_iban || '',
+        kvk_number: businessSettings?.kvk_number || adminUser?.kvk_number || '',
+        vat_number: businessSettings?.vat_number || adminUser?.vat_number || '',
         client_name: data.use_custom_recipient ? data.recipient_name : (user?.full_name || client?.company_name || ''),
         client_email: data.use_custom_recipient ? data.recipient_email : (user?.email || ''),
         client_address: data.use_custom_recipient ? data.recipient_address : (project.address || ''),

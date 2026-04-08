@@ -164,6 +164,10 @@ export default function AdminBookings() {
     fetchMonthEvents();
   }, [currentDate]);
 
+  // DISABLED: Orphan session auto-cleanup was silently deleting valid sessions
+  // when their linked projects were removed. Sessions should persist independently.
+  // If cleanup is needed in the future, it should require manual admin confirmation.
+  /*
   useEffect(() => {
     if (cleanupRunningRef.current) return;
     if (!sessions.length || !projects.length) return;
@@ -198,6 +202,7 @@ export default function AdminBookings() {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
     });
   }, [sessions, projects, queryClient]);
+  */
 
   const createSessionMutation = useMutation({
     mutationFn: async (data) => {

@@ -62,25 +62,57 @@ export default function AdminSettings() {
     loadUser();
   }, []);
 
+  // Load saved business settings from Template entity
+  const { data: businessSettings } = useQuery({
+    queryKey: ['businessSettings'],
+    queryFn: async () => {
+      const templates = await base44.entities.Template.filter({ type: 'business_settings' });
+      if (templates.length > 0) {
+        try { return JSON.parse(templates[0].content); } catch { return {}; }
+      }
+      return {};
+    },
+  });
+
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
       const formData = new FormData(e.target);
-      await base44.auth.updateMe({
-        // Note: full_name is read-only, but we can save custom fields
-        business_name: formData.get('business_name'),
-        business_email: formData.get('business_email'),
-        bank_account_name: formData.get('bank_account_name'),
-        phone: formData.get('phone'),
-        address: formData.get('address'),
-        website: formData.get('website'),
-        kvk_number: formData.get('kvk_number'),
-        vat_number: formData.get('vat_number'),
-        bank_iban: formData.get('bank_iban'),
-      });
+      const settings = {
+        business_name: formData.get('business_name') || '',
+        business_email: formData.get('business_email') || '',
+        bank_account_name: formData.get('bank_account_name') || '',
+        phone: formData.get('phone') || '',
+        address: formData.get('address') || '',
+        website: formData.get('website') || '',
+        kvk_number: formData.get('kvk_number') || '',
+        vat_number: formData.get('vat_number') || '',
+        bank_iban: formData.get('bank_iban') || '',
+      };
+
+      // Save to Template entity (reliable storage)
+      const existing = await base44.entities.Template.filter({ type: 'business_settings' });
+      if (existing.length > 0) {
+        await base44.entities.Template.update(existing[0].id, {
+          content: JSON.stringify(settings),
+        });
+      } else {
+        await base44.entities.Template.create({
+          name: 'Bedrijfsinstellingen',
+          type: 'business_settings',
+          content: JSON.stringify(settings),
+          is_default: false,
+        });
+      }
+
+      // Also try auth.updateMe as backup
+      try { await base44.auth.updateMe(settings); } catch {}
+
+      queryClient.invalidateQueries({ queryKey: ['businessSettings'] });
       toast.success('Instellingen opgeslagen');
     } catch (error) {
+      console.error('Save settings error:', error);
       toast.error('Er ging iets mis');
     } finally {
       setSaving(false);
@@ -264,7 +296,7 @@ export default function AdminSettings() {
                 <Input
                   id="business_name"
                   name="business_name"
-                  defaultValue={user?.business_name || 'Bas Michel'}
+                  defaultValue={businessSettings?.business_name || user?.business_name || 'Bas Michel'}
                   className="mt-1.5"
                 />
                 <p className="text-xs text-gray-400 mt-1">Deze gegevens verschijnen op de factuur</p>
@@ -274,7 +306,7 @@ export default function AdminSettings() {
                 <Input
                   id="business_email"
                   name="business_email"
-                  defaultValue={user?.business_email || user?.email || ''}
+                  defaultValue={businessSettings?.business_email || user?.business_email || user?.email || ''}
                   className="mt-1.5"
                   placeholder="administratie@bedrijf.nl"
                 />
@@ -284,7 +316,7 @@ export default function AdminSettings() {
                 <Input
                   id="bank_account_name"
                   name="bank_account_name"
-                  defaultValue={user?.bank_account_name || user?.business_name || 'Bas Michel'}
+                  defaultValue={businessSettings?.bank_account_name || user?.bank_account_name || 'Bas Michel'}
                   className="mt-1.5"
                   placeholder="Naam op bankrekening"
                 />
@@ -294,7 +326,7 @@ export default function AdminSettings() {
                 <Textarea
                   id="address"
                   name="address"
-                  defaultValue={user?.address || ''}
+                  defaultValue={businessSettings?.address || user?.address || ''}
                   className="mt-1.5"
                   rows={3}
                   placeholder="Straatnaam 123&#10;1234 AB Plaats"
@@ -305,7 +337,7 @@ export default function AdminSettings() {
                 <Input
                   id="website"
                   name="website"
-                  defaultValue={user?.website || 'https://basmichel.nl'}
+                  defaultValue={businessSettings?.website || user?.website || 'https://basmichel.nl'}
                   className="mt-1.5"
                 />
               </div>
@@ -315,7 +347,7 @@ export default function AdminSettings() {
                   <Input
                     id="kvk_number"
                     name="kvk_number"
-                    defaultValue={user?.kvk_number || ''}
+                    defaultValue={businessSettings?.kvk_number || user?.kvk_number || ''}
                     className="mt-1.5"
                   />
                 </div>
@@ -324,7 +356,7 @@ export default function AdminSettings() {
                   <Input
                     id="vat_number"
                     name="vat_number"
-                    defaultValue={user?.vat_number || ''}
+                    defaultValue={businessSettings?.vat_number || user?.vat_number || ''}
                     className="mt-1.5"
                   />
                 </div>
@@ -335,7 +367,7 @@ export default function AdminSettings() {
                   <Input
                     id="bank_iban"
                     name="bank_iban"
-                    defaultValue={user?.bank_iban || ''}
+                    defaultValue={businessSettings?.bank_iban || user?.bank_iban || ''}
                     className="mt-1.5"
                   />
                 </div>
