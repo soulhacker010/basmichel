@@ -277,8 +277,12 @@ export default function AdminProjectDetail() {
             const totalAmount = projectInvoice.total_amount ? `€ ${projectInvoice.total_amount.toFixed(2)}` : '-';
             const invoiceNumber = projectInvoice.invoice_number || project.project_number || '-';
 
+            const targetEmail = client?.invoice_admin_email || user.email;
+            const ccEmail = client?.invoice_admin_email && client.invoice_admin_email !== user.email ? { cc: user.email } : {};
+
             await base44.integrations.Core.SendEmail({
-              to: user.email,
+              to: targetEmail,
+              ...ccEmail,
               ...(adminEmail ? { bcc: adminEmail } : {}),
               from_name: 'Bas Michel Fotografie',
               subject: `Nieuwe factuur ${invoiceNumber} – ${project.title}`,
