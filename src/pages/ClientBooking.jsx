@@ -276,6 +276,7 @@ export default function ClientBooking() {
             session_type_id: selectedService.id,
             client_id: clientId,
             start_datetime: startDatetime.toISOString(),
+            end_datetime: endDatetime.toISOString(),
             location: `${formData.address}${formData.city ? `, ${formData.city}` : ''}`,
             notes: formData.notes || '',
           }

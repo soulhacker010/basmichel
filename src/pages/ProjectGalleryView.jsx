@@ -171,39 +171,55 @@ export default function ProjectGalleryView() {
         setSelectedFiles(newSelected);
     };
 
+    // Resolve a fetch-safe URL for a file: signed R2 URL if possible, else direct URL
+    const getFetchUrl = async (file) => {
+        if (file.file_key) {
+            try {
+                const res = await base44.functions.invoke('storage', {
+                    action: 'getSignedDownloadUrl',
+                    fileKey: file.file_key,
+                    filename: file.filename,
+                });
+                const data = res?.data || res;
+                if (data?.url) return data.url;
+            } catch (e) {
+                console.warn('Could not get signed URL, falling back to public URL', e);
+            }
+        }
+        return file.file_url;
+    };
+
     // Download selected files
     const handleDownload = async () => {
         const filesToDownload = selectableFiles.filter(f => selectedFiles[f.id]);
         if (filesToDownload.length === 0) {
-            toast.error('No files selected for download');
+            toast.error('Geen bestanden geselecteerd');
             return;
         }
 
         setDownloading(true);
         try {
             if (filesToDownload.length === 1) {
-                // Single file download
                 const file = filesToDownload[0];
-                const response = await fetch(file.file_url);
+                const url = await getFetchUrl(file);
+                const response = await fetch(url);
                 const blob = await response.blob();
                 saveAs(blob, file.filename);
             } else {
-                // Multiple files - create ZIP
                 const zip = new JSZip();
-
                 for (const file of filesToDownload) {
-                    const response = await fetch(file.file_url);
+                    const url = await getFetchUrl(file);
+                    const response = await fetch(url);
                     const blob = await response.blob();
-                    zip.file(file.filename, blob);
+                    zip.file(file.filename || file.id, blob);
                 }
-
                 const content = await zip.generateAsync({ type: 'blob' });
                 saveAs(content, `${project?.title || 'gallery'}.zip`);
             }
-            toast.success(`Downloaded ${filesToDownload.length} file(s)`);
+            toast.success(`${filesToDownload.length} bestand(en) gedownload`);
             setSelectedFiles({});
         } catch (error) {
-            toast.error('Download failed');
+            toast.error('Download mislukt');
             console.error(error);
         } finally {
             setDownloading(false);
@@ -212,11 +228,12 @@ export default function ProjectGalleryView() {
 
     const handleDownloadSingle = async (file) => {
         try {
-            const response = await fetch(file.file_url);
+            const url = await getFetchUrl(file);
+            const response = await fetch(url);
             const blob = await response.blob();
             saveAs(blob, file.filename);
         } catch (error) {
-            toast.error('Download failed');
+            toast.error('Download mislukt');
             console.error(error);
         }
     };
@@ -724,11 +741,7 @@ Open project: ${window.location.origin}${link}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 const file = galleryFiles[selectedIndex];
-                                if (file) {
-                                    fetch(file.file_url)
-                                        .then(res => res.blob())
-                                        .then(blob => saveAs(blob, file.filename));
-                                }
+                                if (file) handleDownloadSingle(file);
                             }}
                             className="absolute bottom-4 right-4 p-3 text-white/70 hover:text-white transition-colors hover:bg-white/10 rounded-full"
                         >

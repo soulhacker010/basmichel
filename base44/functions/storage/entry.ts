@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { action, fileName, fileType, fileKey, uploadId, parts, numParts } = await req.json();
+    const { action, fileName, fileType, fileKey, uploadId, parts, numParts, filename } = await req.json();
 
     // 1. Create Multipart Upload (for large files)
     if (action === "createMultipartUpload") {
@@ -155,6 +155,28 @@ Deno.serve(async (req) => {
         uploadUrl,
         fileKey: key,
         publicUrl: R2_PUBLIC_URL ? `${R2_PUBLIC_URL}/${key}` : null,
+      });
+    }
+
+    // Get a short-lived signed GET URL for a file (used for browser downloads to bypass CORS)
+    if (action === "getSignedDownloadUrl") {
+      if (!fileKey) {
+        return Response.json({ error: "Missing fileKey" }, { status: 400 });
+      }
+
+      const R2_BUCKET_NAME = Deno.env.get("R2_BUCKET_NAME");
+      if (!R2_BUCKET_NAME) throw new Error("R2_BUCKET_NAME is not set");
+
+      const command = new GetObjectCommand({
+        Bucket: R2_BUCKET_NAME,
+        Key: fileKey,
+        ResponseContentDisposition: `attachment; filename="${filename || fileKey.split("/").pop() || "download"}"`,
+      });
+
+      const url = await getSignedUrl(getS3Client(), command, { expiresIn: 300 });
+
+      return Response.json({ success: true, url }, {
+        headers: { "Access-Control-Allow-Origin": "*" },
       });
     }
 

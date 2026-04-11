@@ -44,5 +44,23 @@ Deno.serve(async (req) => {
     }
   }
 
+  // sold → sold_archived: sold_date older than 14 days
+  const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+  for (const project of projects) {
+    if (project.status !== 'sold') continue;
+    if (!project.sold_date) continue;
+    if (new Date(project.sold_date) > fourteenDaysAgo) continue;
+
+    await base44.asServiceRole.entities.Project.update(project.id, { status: 'sold_archived' });
+    await base44.asServiceRole.entities.Notification.create({
+      type: 'project_verkocht_gearchiveerd',
+      title: 'Project gearchiveerd na verkoop',
+      message: `Project "${project.title}" is na 14 dagen gearchiveerd. Bestanden zijn verwijderd en de factuur blijft beschikbaar.`,
+      project_id: project.id,
+    });
+    updated++;
+  }
+
   return Response.json({ updated, message: `${updated} project(en) bijgewerkt` });
 });

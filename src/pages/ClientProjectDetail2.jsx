@@ -159,6 +159,22 @@ export default function ClientProjectDetail2() {
     enabled: showReschedule,
   });
 
+  const { data: projectSessions = [] } = useQuery({
+    queryKey: ['projectSessions', projectId],
+    queryFn: () => base44.entities.Session.filter({ project_id: projectId }),
+    enabled: showReschedule && !!projectId,
+  });
+
+  const projectSessionTypeId = projectSessions[0]?.session_type_id;
+
+  const { data: projectSessionType } = useQuery({
+    queryKey: ['sessionType', projectSessionTypeId],
+    queryFn: () => base44.entities.SessionType.get(projectSessionTypeId),
+    enabled: showReschedule && !!projectSessionTypeId,
+  });
+
+  const sessionDurationMinutes = projectSessionType?.duration_minutes || 60;
+
   const [calendarBusyTimes, setCalendarBusyTimes] = useState([]);
   const [loadingBusyTimes, setLoadingBusyTimes] = useState(false);
 
@@ -197,10 +213,18 @@ export default function ClientProjectDetail2() {
   }, [showReschedule, weekOffset]);
 
   const markSoldMutation = useMutation({
-    mutationFn: () => base44.entities.Project.update(projectId, {
-      status: 'sold',
-      sold_date: new Date().toISOString(),
-    }),
+    mutationFn: async () => {
+      await base44.entities.Project.update(projectId, {
+        status: 'sold',
+        sold_date: new Date().toISOString(),
+      });
+      await base44.entities.Notification.create({
+        type: 'project_verkocht',
+        title: 'Project gemarkeerd als verkocht',
+        message: `${user?.full_name || user?.email || 'Klant'} heeft project "${project?.title}" als verkocht gemarkeerd. Bestanden worden na 14 dagen automatisch verwijderd.`,
+        project_id: projectId,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -611,7 +635,7 @@ Open project: ${window.location.origin}${link}
     const endMinute = workdayConfig.end_time ? parseInt(workdayConfig.end_time.split(':')[1]) : 0;
 
     const slots = [];
-    const duration = 60; // default 60 mins for reschedule
+    const duration = sessionDurationMinutes;
 
     let currentTime = setMinutes(setHours(date, startHour), startMinute || 0);
     const endTime = setMinutes(setHours(date, endHour), endMinute || 0);
@@ -672,7 +696,7 @@ Open project: ${window.location.origin}${link}
 
     setIsRescheduling(true);
     try {
-      const endDatetime = addMinutes(selectedTime, 60);
+      const endDatetime = addMinutes(selectedTime, sessionDurationMinutes);
 
       // Delete old sessions to free the old calendar slot
       const oldSessions = await base44.entities.Session.filter({ project_id: projectId });
@@ -697,9 +721,9 @@ Open project: ${window.location.origin}${link}
         shoot_time: format(selectedTime, 'HH:mm'),
       });
 
-      // Create new session to block the new time slot
+      // Create new session to block the new time slot — use the project's original session type
       const sessionTypes = await base44.entities.SessionType.filter({ is_active: true });
-      const defaultSessionType = sessionTypes[0];
+      const defaultSessionType = projectSessionType || sessionTypes[0];
 
       if (defaultSessionType) {
         await base44.entities.Session.create({

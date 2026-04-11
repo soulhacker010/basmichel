@@ -120,12 +120,24 @@ Deno.serve(async (req) => {
                 }
 
                 // 3. Update Project Entity (Keep as Invoice Record)
-                // We DO NOT delete the project. We mark it as 'archived_sold' so it stays as an invoice record.
+                // We DO NOT delete the project. We mark it as 'sold_archived' so it stays as an invoice record.
                 await base44.entities.Project.update(project.id, {
                     status: 'sold_archived',
-                    // Optional: Clear other fields if needed to save DB space, but for an invoice record, keeping metadata is usually desired.
                 });
                 verbose.push(`-- Updated Project status to 'sold_archived' (Kept as Invoice Record)`);
+
+                // 4. Notify admin that project has been archived after sale
+                try {
+                    await base44.entities.Notification.create({
+                        type: 'project_verkocht_gearchiveerd',
+                        title: 'Project gearchiveerd na verkoop',
+                        message: `Project "${project.title}" is na 14 dagen gearchiveerd. Bestanden zijn verwijderd en de factuur blijft beschikbaar.`,
+                        project_id: project.id,
+                    });
+                    verbose.push(`-- Created archive notification`);
+                } catch (e) {
+                    verbose.push(`-- Failed to create notification: ${e.message}`);
+                }
             }
 
             return Response.json({

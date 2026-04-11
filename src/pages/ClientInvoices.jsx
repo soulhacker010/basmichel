@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
 
 export default function ClientInvoices() {
   const [user, setUser] = useState(null);
@@ -23,6 +24,7 @@ export default function ClientInvoices() {
   const [filter, setFilter] = useState('all');
   const [selectedInvoices, setSelectedInvoices] = useState([]);
   const [paymentLoadingId, setPaymentLoadingId] = useState(null);
+  const [bulkPaymentLoading, setBulkPaymentLoading] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -74,6 +76,17 @@ export default function ClientInvoices() {
     enabled: !!clientId,
   });
 
+  const { data: liveBusinessSettings } = useQuery({
+    queryKey: ['businessSettings'],
+    queryFn: async () => {
+      const templates = await base44.entities.Template.filter({ type: 'business_settings' });
+      if (templates.length > 0) {
+        try { return JSON.parse(templates[0].content); } catch { return {}; }
+      }
+      return {};
+    },
+  });
+
   const getProjectTitle = (projectId) => {
     const project = projects.find(p => p.id === projectId);
     return project?.title || '-';
@@ -94,18 +107,19 @@ export default function ClientInvoices() {
     const win = window.open('', '_blank');
     if (!win) return;
 
+      const live = liveBusinessSettings || {};
       const business = {
-        name: invoice.business_name || 'Bas Michel',
-        address: invoice.business_address || '',
+        name: invoice.business_name || live.business_name || 'Bas Michel',
+        address: invoice.business_address || live.address || '',
         postcode: '',
         city: '',
         country: 'Nederland',
-        email: invoice.business_email || 'basmichelsite@gmail.com',
-        website: invoice.business_website || 'basmichel.nl',
-        kvk: invoice.kvk_number || '',
-        vat: invoice.vat_number || '',
-        iban: invoice.bank_iban || '',
-        tnv: invoice.bank_account_name || invoice.business_name || 'Bas Michel',
+        email: invoice.business_email || live.business_email || 'basmichelsite@gmail.com',
+        website: invoice.business_website || live.website || 'basmichel.nl',
+        kvk: invoice.kvk_number || live.kvk_number || '',
+        vat: invoice.vat_number || live.vat_number || '',
+        iban: invoice.bank_iban || live.bank_iban || '',
+        tnv: invoice.bank_account_name || live.bank_account_name || invoice.business_name || live.business_name || 'Bas Michel',
       };
 
     const items = Array.isArray(invoice.items) ? invoice.items : [];
@@ -273,6 +287,42 @@ export default function ClientInvoices() {
     .filter(i => selectedInvoices.includes(i.id))
     .reduce((sum, i) => sum + (i.total_amount || 0), 0);
 
+  const handleBulkPayment = async () => {
+    setBulkPaymentLoading(true);
+    const toProcess = invoices.filter(i => selectedInvoices.includes(i.id));
+    try {
+      for (const invoice of toProcess) {
+        let paymentUrl = invoice.payment_link || invoice.mollie_payment_link_url;
+        if (!paymentUrl) {
+          try {
+            const response = await base44.functions.invoke('molliePayment', {
+              action: 'createPaymentLink',
+              invoiceId: invoice.id,
+              amount: invoice.total_amount,
+              description: `Factuur ${invoice.invoice_number || ''}`,
+              redirectUrl: window.location.href,
+            });
+            const data = response?.data || response;
+            if (data?.paymentLinkUrl) {
+              paymentUrl = data.paymentLinkUrl;
+            } else {
+              toast.error(`Betaallink aanmaken mislukt voor factuur ${invoice.invoice_number || ''}`);
+              continue;
+            }
+          } catch (err) {
+            toast.error(`Fout bij factuur ${invoice.invoice_number || ''}`);
+            continue;
+          }
+        }
+        window.open(paymentUrl, '_blank');
+      }
+      queryClient.invalidateQueries({ queryKey: ['clientInvoices', clientId] });
+      setSelectedInvoices([]);
+    } finally {
+      setBulkPaymentLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
@@ -428,10 +478,10 @@ export default function ClientInvoices() {
                             queryClient.invalidateQueries({ queryKey: ['clientInvoices', clientId] });
                             window.open(data.paymentLinkUrl, '_blank');
                           } else if (data?.error) {
-                            console.error('Payment link error:', data.error);
+                            toast.error('Betaallink aanmaken mislukt. Probeer opnieuw.');
                           }
                         } catch (err) {
-                          console.error('Create payment link error:', err);
+                          toast.error('Er ging iets mis. Probeer opnieuw.');
                         } finally {
                           setPaymentLoadingId(null);
                         }
@@ -463,9 +513,13 @@ export default function ClientInvoices() {
               >
                 Annuleren
               </Button>
-              <Button className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full px-6 h-11">
+              <Button
+                className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full px-6 h-11"
+                disabled={bulkPaymentLoading}
+                onClick={handleBulkPayment}
+              >
                 <CreditCard className="w-4 h-4 mr-2" />
-                Samen betalen
+                {bulkPaymentLoading ? 'Laden...' : 'Samen betalen'}
               </Button>
             </div>
           </div>
