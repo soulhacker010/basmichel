@@ -6,7 +6,6 @@ import { createPageUrl } from '@/utils';
 import {
   FileText,
   Download,
-  CreditCard,
   CheckCircle2,
   Clock,
   AlertCircle
@@ -22,9 +21,7 @@ export default function ClientInvoices() {
   const [user, setUser] = useState(null);
   const [clientId, setClientId] = useState(null);
   const [filter, setFilter] = useState('all');
-  const [selectedInvoices, setSelectedInvoices] = useState([]);
   const [paymentLoadingId, setPaymentLoadingId] = useState(null);
-  const [bulkPaymentLoading, setBulkPaymentLoading] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -277,51 +274,6 @@ export default function ClientInvoices() {
   const openInvoices = invoices.filter(i => i.status === 'verzonden');
   const totalOpen = openInvoices.reduce((sum, i) => sum + (i.total_amount || 0), 0);
 
-  const toggleInvoiceSelection = (id) => {
-    setSelectedInvoices(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
-  };
-
-  const selectedTotal = invoices
-    .filter(i => selectedInvoices.includes(i.id))
-    .reduce((sum, i) => sum + (i.total_amount || 0), 0);
-
-  const handleBulkPayment = async () => {
-    setBulkPaymentLoading(true);
-    const toProcess = invoices.filter(i => selectedInvoices.includes(i.id));
-    try {
-      for (const invoice of toProcess) {
-        let paymentUrl = invoice.payment_link || invoice.mollie_payment_link_url;
-        if (!paymentUrl) {
-          try {
-            const response = await base44.functions.invoke('molliePayment', {
-              action: 'createPaymentLink',
-              invoiceId: invoice.id,
-              amount: invoice.total_amount,
-              description: `Factuur ${invoice.invoice_number || ''}`,
-              redirectUrl: window.location.href,
-            });
-            const data = response?.data || response;
-            if (data?.paymentLinkUrl) {
-              paymentUrl = data.paymentLinkUrl;
-            } else {
-              toast.error(`Betaallink aanmaken mislukt voor factuur ${invoice.invoice_number || ''}`);
-              continue;
-            }
-          } catch (err) {
-            toast.error(`Fout bij factuur ${invoice.invoice_number || ''}`);
-            continue;
-          }
-        }
-        window.open(paymentUrl, '_blank');
-      }
-      queryClient.invalidateQueries({ queryKey: ['clientInvoices', clientId] });
-      setSelectedInvoices([]);
-    } finally {
-      setBulkPaymentLoading(false);
-    }
-  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -333,23 +285,14 @@ export default function ClientInvoices() {
 
       {/* Open Amount Banner */}
       {totalOpen > 0 && (
-        <div className="mb-8 bg-[#FEF9F3] rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-5">
-            <div className="w-14 h-14 rounded-xl bg-amber-100 flex items-center justify-center">
-              <AlertCircle className="w-7 h-7 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-sm text-amber-700 font-medium">Openstaand bedrag</p>
-              <p className="text-2xl font-light text-amber-900">€{totalOpen.toFixed(2)}</p>
-            </div>
+        <div className="mb-8 bg-[#FEF9F3] rounded-2xl p-6 flex items-center gap-5">
+          <div className="w-14 h-14 rounded-xl bg-amber-100 flex items-center justify-center">
+            <AlertCircle className="w-7 h-7 text-amber-600" />
           </div>
-          <Button
-            className="bg-amber-600 hover:bg-amber-700 text-white rounded-full px-6 h-11"
-            onClick={() => setSelectedInvoices(openInvoices.map(i => i.id))}
-          >
-            <CreditCard className="w-4 h-4 mr-2" />
-            Alles betalen
-          </Button>
+          <div>
+            <p className="text-sm text-amber-700 font-medium">Openstaand bedrag</p>
+            <p className="text-2xl font-light text-amber-900">€{totalOpen.toFixed(2)}</p>
+          </div>
         </div>
       )}
 
@@ -396,23 +339,6 @@ export default function ClientInvoices() {
               className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-sm transition-shadow"
             >
               <div className="flex items-center gap-4">
-                {invoice.status === 'verzonden' && (
-                  <div
-                    className="cursor-pointer"
-                    onClick={() => toggleInvoiceSelection(invoice.id)}
-                  >
-                    <div className={cn(
-                      "w-6 h-6 rounded-lg flex items-center justify-center transition-all",
-                      selectedInvoices.includes(invoice.id)
-                        ? "bg-[#5C6B52]"
-                        : "bg-gray-100 hover:bg-gray-200"
-                    )}>
-                      {selectedInvoices.includes(invoice.id) && (
-                        <CheckCircle2 className="w-4 h-4 text-white" />
-                      )}
-                    </div>
-                  </div>
-                )}
                 <div className={cn(
                   "w-12 h-12 rounded-xl flex items-center justify-center",
                   invoice.status === 'betaald' ? "bg-green-50" : "bg-amber-50"
@@ -497,34 +423,6 @@ export default function ClientInvoices() {
         </div>
       )}
 
-      {/* Pay Selected */}
-      {selectedInvoices.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-5 shadow-xl z-40">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-400">{selectedInvoices.length} facturen geselecteerd</p>
-              <p className="text-2xl font-light text-gray-900">€{selectedTotal.toFixed(2)}</p>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedInvoices([])}
-                className="rounded-full px-6"
-              >
-                Annuleren
-              </Button>
-              <Button
-                className="bg-[#5C6B52] hover:bg-[#4A5A42] text-white rounded-full px-6 h-11"
-                disabled={bulkPaymentLoading}
-                onClick={handleBulkPayment}
-              >
-                <CreditCard className="w-4 h-4 mr-2" />
-                {bulkPaymentLoading ? 'Laden...' : 'Samen betalen'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
