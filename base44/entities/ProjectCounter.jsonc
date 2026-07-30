@@ -1,0 +1,13 @@
+{
+  "name": "ProjectCounter",
+  "type": "object",
+  "properties": {
+    "last_number": {
+      "type": "number",
+      "description": "Laatste gebruikte projectnummer"
+    }
+  },
+  "required": [
+    "last_number"
+  ]
+}

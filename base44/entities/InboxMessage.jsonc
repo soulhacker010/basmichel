@@ -1,0 +1,40 @@
+{
+  "name": "InboxMessage",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Gekoppelde klant-ID"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Onderwerp"
+    },
+    "message": {
+      "type": "string",
+      "description": "Bericht"
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "Naam afzender"
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "E-mail afzender"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Gelezen"
+    },
+    "is_archived": {
+      "type": "boolean",
+      "default": false,
+      "description": "Gearchiveerd"
+    }
+  },
+  "required": [
+    "subject",
+    "message"
+  ]
+}

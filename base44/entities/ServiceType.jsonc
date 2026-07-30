@@ -1,0 +1,45 @@
+{
+  "name": "ServiceType",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Naam van de dienst"
+    },
+    "slug": {
+      "type": "string",
+      "description": "URL-vriendelijke naam"
+    },
+    "description": {
+      "type": "string",
+      "description": "Beschrijving"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "default": 60,
+      "description": "Standaard duur in minuten"
+    },
+    "price": {
+      "type": "number",
+      "description": "Prijs exclusief BTW"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Actief en boekbaar"
+    },
+    "color": {
+      "type": "string",
+      "default": "#A8B5A0",
+      "description": "Kleur voor kalender"
+    },
+    "order": {
+      "type": "number",
+      "default": 0,
+      "description": "Volgorde"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

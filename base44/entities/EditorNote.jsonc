@@ -1,0 +1,29 @@
+{
+  "name": "EditorNote",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "Gekoppeld project-ID"
+    },
+    "editor_id": {
+      "type": "string",
+      "description": "Editor die de notitie maakte"
+    },
+    "note": {
+      "type": "string",
+      "description": "Notitie tekst"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Bijgevoegde afbeeldingen URLs"
+    }
+  },
+  "required": [
+    "project_id",
+    "note"
+  ]
+}

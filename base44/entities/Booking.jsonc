@@ -1,0 +1,72 @@
+{
+  "name": "Booking",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "Gekoppeld project-ID"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "Gekoppelde klant-ID"
+    },
+    "service_type": {
+      "type": "string",
+      "enum": [
+        "woningfotografie",
+        "bedrijfsfotografie",
+        "drone_fotografie",
+        "video_tour",
+        "plattegrond",
+        "virtual_staging"
+      ],
+      "description": "Type dienst"
+    },
+    "start_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Startdatum en -tijd"
+    },
+    "end_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Einddatum en -tijd"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "default": 60,
+      "description": "Duur in minuten"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "bevestigd",
+        "voltooid",
+        "geannuleerd"
+      ],
+      "default": "bevestigd",
+      "description": "Boekingsstatus"
+    },
+    "address": {
+      "type": "string",
+      "description": "Adres"
+    },
+    "city": {
+      "type": "string",
+      "description": "Stad"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Opmerkingen"
+    },
+    "google_calendar_event_id": {
+      "type": "string",
+      "description": "Google Calendar event ID"
+    }
+  },
+  "required": [
+    "client_id",
+    "service_type",
+    "start_datetime"
+  ]
+}

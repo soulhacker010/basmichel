@@ -1,0 +1,64 @@
+{
+  "name": "Quote",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Offertetitel"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "Gekoppelde klant-ID"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Gekoppeld project-ID"
+    },
+    "template_id": {
+      "type": "string",
+      "description": "Gekoppeld sjabloon-ID"
+    },
+    "lines": {
+      "type": "array",
+      "description": "Offerteregels",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_price": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "concept",
+        "verzonden",
+        "geaccepteerd",
+        "afgewezen",
+        "verlopen"
+      ],
+      "default": "concept",
+      "description": "Status"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date",
+      "description": "Geldig tot"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notities"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

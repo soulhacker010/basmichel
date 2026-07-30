@@ -1,0 +1,40 @@
+{
+  "name": "Editor",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Gekoppelde gebruikers-ID"
+    },
+    "name": {
+      "type": "string",
+      "description": "Editor naam"
+    },
+    "email": {
+      "type": "string",
+      "description": "Editor email"
+    },
+    "specialization": {
+      "type": "string",
+      "enum": [
+        "photo_editor",
+        "video_editor",
+        "floorplan_editor"
+      ],
+      "description": "Editor specialisatie"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "active",
+        "removed"
+      ],
+      "default": "pending",
+      "description": "Editor status"
+    }
+  },
+  "required": [
+    "email"
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Gekoppelde gebruiker-ID"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "Gekoppelde klant-ID"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "boeking_bevestigd",
+        "project_klaar",
+        "nieuwe_factuur",
+        "betaling_ontvangen"
+      ],
+      "description": "Type melding"
+    },
+    "title": {
+      "type": "string",
+      "description": "Titel"
+    },
+    "message": {
+      "type": "string",
+      "description": "Bericht"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Gerelateerd project-ID"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Gelezen"
+    },
+    "link": {
+      "type": "string",
+      "description": "Link naar gerelateerde pagina"
+    }
+  },
+  "required": [
+    "type",
+    "title"
+  ]
+}

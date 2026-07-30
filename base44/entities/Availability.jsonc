@@ -1,0 +1,70 @@
+{
+  "name": "Availability",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "werkdag",
+        "vakantie",
+        "geblokkeerd"
+      ],
+      "description": "Type beschikbaarheid"
+    },
+    "day_of_week": {
+      "type": "number",
+      "description": "Dag van de week (0=zondag, 1=maandag, etc.)"
+    },
+    "start_time": {
+      "type": "string",
+      "description": "Starttijd (HH:mm)"
+    },
+    "end_time": {
+      "type": "string",
+      "description": "Eindtijd (HH:mm)"
+    },
+    "break_start": {
+      "type": "string",
+      "description": "Pauze starttijd (HH:mm)"
+    },
+    "break_end": {
+      "type": "string",
+      "description": "Pauze eindtijd (HH:mm)"
+    },
+    "date_from": {
+      "type": "string",
+      "format": "date",
+      "description": "Startdatum (voor vakantie/blokkering)"
+    },
+    "date_until": {
+      "type": "string",
+      "format": "date",
+      "description": "Einddatum (voor vakantie/blokkering)"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Reden"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Actief"
+    },
+    "preset": {
+      "type": "string",
+      "enum": [
+        "zomer",
+        "winter",
+        "aangepast"
+      ],
+      "default": "aangepast",
+      "description": "Preset"
+    },
+    "buffer_minutes": {
+      "type": "number",
+      "default": 30,
+      "description": "Buffer tussen sessies in minuten"
+    }
+  },
+  "required": []
+}

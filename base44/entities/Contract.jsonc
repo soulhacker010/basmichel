@@ -1,0 +1,50 @@
+{
+  "name": "Contract",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Contracttitel"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "Gekoppelde klant-ID"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Gekoppeld project-ID"
+    },
+    "template_id": {
+      "type": "string",
+      "description": "Gekoppeld sjabloon-ID"
+    },
+    "content": {
+      "type": "string",
+      "description": "Contractinhoud (HTML)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "concept",
+        "verzonden",
+        "ondertekend",
+        "geannuleerd"
+      ],
+      "default": "concept",
+      "description": "Contractstatus"
+    },
+    "sent_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Verzenddatum"
+    },
+    "signed_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Ondertekendatum"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

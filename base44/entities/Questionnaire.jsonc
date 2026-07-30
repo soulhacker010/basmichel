@@ -1,0 +1,71 @@
+{
+  "name": "Questionnaire",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Vragenlijsttitel"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "Gekoppelde klant-ID"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Gekoppeld project-ID"
+    },
+    "template_id": {
+      "type": "string",
+      "description": "Gekoppeld sjabloon-ID"
+    },
+    "questions": {
+      "type": "array",
+      "description": "Vragen (JSON)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "answers": {
+      "type": "object",
+      "description": "Antwoorden (JSON)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "concept",
+        "verzonden",
+        "ingevuld"
+      ],
+      "default": "concept",
+      "description": "Status"
+    },
+    "sent_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Verzenddatum"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "name": "Template",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Sjabloonnaam"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "factuur",
+        "contract",
+        "vragenlijst",
+        "offerte",
+        "email"
+      ],
+      "description": "Sjabloontype"
+    },
+    "content": {
+      "type": "string",
+      "description": "Sjablooninhoud (HTML/JSON)"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Standaard sjabloon"
+    },
+    "variables": {
+      "type": "array",
+      "description": "Beschikbare variabelen",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "name",
+    "type"
+  ]
+}

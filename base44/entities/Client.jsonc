@@ -1,0 +1,51 @@
+{
+  "name": "Client",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Gekoppelde gebruikers-ID"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Bedrijfsnaam (makelaarskantoor)"
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "Contactpersoon"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Telefoonnummer"
+    },
+    "address": {
+      "type": "string",
+      "description": "Adres"
+    },
+    "city": {
+      "type": "string",
+      "description": "Stad"
+    },
+    "postal_code": {
+      "type": "string",
+      "description": "Postcode"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notities over de klant"
+    },
+    "kvk_number": {
+      "type": "string",
+      "description": "KvK-nummer"
+    },
+    "btw_number": {
+      "type": "string",
+      "description": "BTW-nummer"
+    },
+    "invoice_admin_email": {
+      "type": "string",
+      "description": "E-mail adres voor factuur admin"
+    }
+  },
+  "required": []
+}

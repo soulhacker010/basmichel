@@ -1,0 +1,41 @@
+{
+  "name": "MediaItem",
+  "type": "object",
+  "properties": {
+    "gallery_id": {
+      "type": "string",
+      "description": "Gekoppelde galerij-ID"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "afbeelding",
+        "video",
+        "plattegrond"
+      ],
+      "default": "afbeelding",
+      "description": "Type media"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL van het bestand"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "URL van de thumbnail"
+    },
+    "order": {
+      "type": "number",
+      "default": 0,
+      "description": "Volgorde in de galerij"
+    },
+    "filename": {
+      "type": "string",
+      "description": "Originele bestandsnaam"
+    }
+  },
+  "required": [
+    "gallery_id",
+    "file_url"
+  ]
+}

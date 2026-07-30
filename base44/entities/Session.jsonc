@@ -1,0 +1,55 @@
+{
+  "name": "Session",
+  "type": "object",
+  "properties": {
+    "session_type_id": {
+      "type": "string",
+      "description": "Gekoppeld sessietype-ID"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "Gekoppelde klant-ID"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Gekoppeld project-ID"
+    },
+    "start_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Startdatum en -tijd"
+    },
+    "end_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Einddatum en -tijd"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "aanvraag",
+        "wachten_op_klant",
+        "bevestigd",
+        "afgerond",
+        "geannuleerd"
+      ],
+      "default": "aanvraag",
+      "description": "Sessiestatus"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notities"
+    },
+    "location": {
+      "type": "string",
+      "description": "Locatie"
+    },
+    "google_calendar_event_id": {
+      "type": "string",
+      "description": "Google Calendar event ID"
+    }
+  },
+  "required": [
+    "start_datetime"
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "name": "DiscountCode",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "Kortingscode"
+    },
+    "description": {
+      "type": "string",
+      "description": "Beschrijving"
+    },
+    "discount_type": {
+      "type": "string",
+      "enum": [
+        "percentage",
+        "vast_bedrag"
+      ],
+      "default": "percentage",
+      "description": "Type korting"
+    },
+    "discount_value": {
+      "type": "number",
+      "description": "Kortingswaarde"
+    },
+    "valid_from": {
+      "type": "string",
+      "format": "date",
+      "description": "Geldig vanaf"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date",
+      "description": "Geldig tot"
+    },
+    "max_uses": {
+      "type": "number",
+      "description": "Maximaal aantal keer te gebruiken"
+    },
+    "times_used": {
+      "type": "number",
+      "default": 0,
+      "description": "Aantal keer gebruikt"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Actief"
+    }
+  },
+  "required": [
+    "code",
+    "discount_value"
+  ]
+}

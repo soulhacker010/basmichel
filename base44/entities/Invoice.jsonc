@@ -1,0 +1,89 @@
+{
+  "name": "Invoice",
+  "type": "object",
+  "properties": {
+    "invoice_number": {
+      "type": "string",
+      "description": "Factuurnummer"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "Gekoppelde klant-ID"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Gekoppeld project-ID"
+    },
+    "description": {
+      "type": "string",
+      "description": "Omschrijving"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Bedrag exclusief BTW"
+    },
+    "vat_amount": {
+      "type": "number",
+      "description": "BTW bedrag"
+    },
+    "total_amount": {
+      "type": "number",
+      "description": "Totaalbedrag inclusief BTW"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "concept",
+        "verzonden",
+        "betaald",
+        "verlopen"
+      ],
+      "default": "concept",
+      "description": "Factuurstatus"
+    },
+    "invoice_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Factuurdatum"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Vervaldatum"
+    },
+    "paid_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Betaaldatum"
+    },
+    "payment_link": {
+      "type": "string",
+      "description": "Revolut betaallink"
+    },
+    "lines": {
+      "type": "array",
+      "description": "Factuurregels",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_price": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "client_id",
+    "total_amount"
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "name": "Project",
+  "type": "object",
+  "properties": {
+    "project_number": {
+      "type": "string",
+      "description": "Uniek projectnummer (automatisch gegenereerd, start bij 202700)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Projecttitel (meestal adres)"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "Gekoppelde klant-ID"
+    },
+    "address": {
+      "type": "string",
+      "description": "Adres van de locatie"
+    },
+    "city": {
+      "type": "string",
+      "description": "Stad"
+    },
+    "postal_code": {
+      "type": "string",
+      "description": "Postcode"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "geboekt",
+        "shoot_uitgevoerd",
+        "wordt_bewerkt",
+        "klaar"
+      ],
+      "default": "geboekt",
+      "description": "Projectstatus"
+    },
+    "booking_id": {
+      "type": "string",
+      "description": "Gekoppelde boeking-ID"
+    },
+    "shoot_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Datum van de shoot"
+    },
+    "shoot_time": {
+      "type": "string",
+      "description": "Starttijd van de shoot (HH:mm)"
+    },
+    "delivery_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Verwachte opleverdatum"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Interne notities"
+    },
+    "client_notes": {
+      "type": "string",
+      "description": "Notities van de klant"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Datum waarop status op Klaar is gezet"
+    },
+    "reminder_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Of factuurherinnering is verzonden"
+    },
+    "drive_folder_id": {
+      "type": "string",
+      "description": "Google Drive hoofdmap ID"
+    },
+    "drive_raw_folder_id": {
+      "type": "string",
+      "description": "Google Drive raw bestanden map ID"
+    },
+    "drive_edited_folder_id": {
+      "type": "string",
+      "description": "Google Drive bewerkte bestanden map ID"
+    }
+  },
+  "required": [
+    "title",
+    "client_id"
+  ]
+}

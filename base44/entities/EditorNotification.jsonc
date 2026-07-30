@@ -1,0 +1,47 @@
+{
+  "name": "EditorNotification",
+  "type": "object",
+  "properties": {
+    "editor_id": {
+      "type": "string",
+      "description": "Editor-ID"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Project-ID"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "raw_files_uploaded",
+        "project_status_changed",
+        "note_added"
+      ],
+      "description": "Type notificatie"
+    },
+    "title": {
+      "type": "string",
+      "description": "Titel"
+    },
+    "message": {
+      "type": "string",
+      "description": "Bericht"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Gelezen"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Extra informatie (bijv. locatie waar bestanden zijn geupload)"
+    }
+  },
+  "required": [
+    "editor_id",
+    "project_id",
+    "type",
+    "title",
+    "message"
+  ]
+}

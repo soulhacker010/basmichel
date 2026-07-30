@@ -1,0 +1,46 @@
+{
+  "name": "ProjectFile",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "description": "Gekoppeld project-ID"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "bewerkte_fotos",
+        "bewerkte_videos",
+        "360_matterport",
+        "meetrapport",
+        "raw_fotos",
+        "raw_videos",
+        "360_raw",
+        "pointcloud"
+      ],
+      "description": "Bestandscategorie"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL van het bestand"
+    },
+    "filename": {
+      "type": "string",
+      "description": "Originele bestandsnaam"
+    },
+    "file_size": {
+      "type": "number",
+      "description": "Bestandsgrootte in bytes"
+    },
+    "mime_type": {
+      "type": "string",
+      "description": "MIME type van het bestand"
+    }
+  },
+  "required": [
+    "project_id",
+    "category",
+    "file_url",
+    "filename"
+  ]
+}

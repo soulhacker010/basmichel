@@ -1,0 +1,37 @@
+{
+  "name": "SessionType",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Naam van het sessietype"
+    },
+    "description": {
+      "type": "string",
+      "description": "Beschrijving"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "default": 60,
+      "description": "Duur in minuten"
+    },
+    "is_public": {
+      "type": "boolean",
+      "default": false,
+      "description": "Openbaar zichtbaar"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Actief"
+    },
+    "color": {
+      "type": "string",
+      "default": "#A8B5A0",
+      "description": "Kleur voor kalender"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "BlockedTime",
+  "type": "object",
+  "properties": {
+    "start_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Startdatum en -tijd"
+    },
+    "end_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Einddatum en -tijd"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Reden"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "default": false,
+      "description": "Herhalend"
+    }
+  },
+  "required": [
+    "start_datetime",
+    "end_datetime"
+  ]
+}

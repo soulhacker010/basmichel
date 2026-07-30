@@ -1,0 +1,48 @@
+{
+  "name": "Gallery",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Galerijttitel"
+    },
+    "slug": {
+      "type": "string",
+      "description": "URL-vriendelijke naam"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "Gekoppelde klant-ID"
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Gekoppeld project-ID"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "concept",
+        "gepubliceerd"
+      ],
+      "default": "concept",
+      "description": "Galerijstatus"
+    },
+    "publish_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Publicatiedatum en -tijd"
+    },
+    "cover_image_url": {
+      "type": "string",
+      "description": "URL van de omslagafbeelding"
+    },
+    "description": {
+      "type": "string",
+      "description": "Beschrijving van de galerij"
+    }
+  },
+  "required": [
+    "title",
+    "project_id"
+  ]
+}
