@@ -40,3 +40,4 @@ PROJECT_NOTES.md
 .windsurf/workflows/codacy-fix-issues.md
 git_diff_utf8.txt
 git_diff.txt
+base44/.app.jsonc
